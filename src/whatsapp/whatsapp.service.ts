@@ -7,7 +7,6 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   makeWASocket,
-  useMultiFileAuthState,
   fetchLatestBaileysVersion,
   DisconnectReason,
   type WASocket,
@@ -16,6 +15,8 @@ import {
 import { Boom } from '@hapi/boom';
 import * as qrcodeTerminal from 'qrcode-terminal';
 import pino from 'pino';
+import { createPrismaAuthState } from './prisma-auth-state';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WhatsappService implements OnModuleInit, OnModuleDestroy {
@@ -23,7 +24,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private sock!: WASocket;
   private readyAt = 0;
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(private readonly eventEmitter: EventEmitter2, private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
     await this.connect();
@@ -34,7 +35,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connect() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth');
+    const { state, saveCreds } = await createPrismaAuthState(this.prisma);
     const { version, isLatest } = await fetchLatestBaileysVersion();
     this.logger.log(
       `Usando WA v${version.join('.')} (latest=${isLatest})`,

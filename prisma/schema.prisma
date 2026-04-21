@@ -71,3 +71,14 @@ model Meal {
 
   @@index([user_id])
 }
+
+model WhatsappAuth {
+  id String @id @default(uuid())
+  type String
+  name String
+  data Json
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([type, name])
+}
