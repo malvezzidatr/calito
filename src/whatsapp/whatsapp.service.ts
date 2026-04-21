@@ -80,11 +80,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.sock.ev.on('messages.upsert', ({ messages, type }) => {
+
       if (type !== 'notify') return;
 
       for (const msg of messages) {
-        if (msg.key.fromMe) continue;
-
         const ts = Number(msg.messageTimestamp ?? 0);
         if (ts < this.readyAt) continue;
 
@@ -97,6 +96,26 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     if (!this.sock) {
       throw new Error('WhatsApp ainda não conectado');
     }
+
+    try {
+      await this.sock.presenceSubscribe(to);
+      await this.sock.sendPresenceUpdate('composing', to);
+    } catch (err) {
+      this.logger.warn(`Falha ao enviar presence: ${(err as Error).message}`);
+    }
+
+    const typingMs = Math.min(
+      6000,
+      800 + text.length * 40 + Math.floor(Math.random() * 1500),
+    );
+    await new Promise((resolve) => setTimeout(resolve, typingMs));
+
+    try {
+      await this.sock.sendPresenceUpdate('paused', to);
+    } catch {
+      // presence paused falhando não é crítico
+    }
+
     return this.sock.sendMessage(to, { text });
   }
 
