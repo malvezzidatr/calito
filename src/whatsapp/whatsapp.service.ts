@@ -1,0 +1,128 @@
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  makeWASocket,
+  fetchLatestBaileysVersion,
+  DisconnectReason,
+  type WASocket,
+  type WAMessage,
+} from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import * as qrcodeTerminal from 'qrcode-terminal';
+import pino from 'pino';
+import { createPrismaAuthState } from './prisma-auth-state';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class WhatsappService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(WhatsappService.name);
+  private sock!: WASocket;
+  private readyAt = 0;
+
+  constructor(private readonly eventEmitter: EventEmitter2, private readonly prisma: PrismaService) {}
+
+  async onModuleInit() {
+    await this.connect();
+  }
+
+  async onModuleDestroy() {
+    this.sock?.end(undefined);
+  }
+
+  private async connect() {
+    const { state, saveCreds } = await createPrismaAuthState(this.prisma);
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    this.logger.log(
+      `Usando WA v${version.join('.')} (latest=${isLatest})`,
+    );
+
+    this.sock = makeWASocket({
+      version,
+      auth: state,
+      logger: pino({ level: 'silent' }),
+    });
+
+    this.sock.ev.on('creds.update', saveCreds);
+
+    this.sock.ev.on('connection.update', (update) => {
+      const { connection, lastDisconnect, qr } = update;
+
+      if (qr) {
+        this.logger.log('QR code gerado — escaneia com o WhatsApp:');
+        qrcodeTerminal.generate(qr, { small: true });
+      }
+
+      if (connection === 'open') {
+        this.readyAt = Math.floor(Date.now() / 1000);
+        this.logger.log('WhatsApp conectado');
+      }
+
+      if (connection === 'close') {
+        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+        const loggedOut = statusCode === DisconnectReason.loggedOut;
+
+        if (loggedOut) {
+          this.logger.error(
+            'Sessão encerrada pelo usuário. Apague a pasta ./auth e refaça o pareamento.',
+          );
+          return;
+        }
+
+        this.logger.warn(
+          `Conexão caiu (code=${statusCode}). Reconectando...`,
+        );
+        void this.connect();
+      }
+    });
+
+    this.sock.ev.on('messages.upsert', ({ messages, type }) => {
+
+      if (type !== 'notify') return;
+
+      for (const msg of messages) {
+        const ts = Number(msg.messageTimestamp ?? 0);
+        if (ts < this.readyAt) continue;
+
+        this.eventEmitter.emit('whatsapp.message', msg);
+      }
+    });
+  }
+
+  async sendText(to: string, text: string) {
+    if (!this.sock) {
+      throw new Error('WhatsApp ainda não conectado');
+    }
+
+    try {
+      await this.sock.presenceSubscribe(to);
+      await this.sock.sendPresenceUpdate('composing', to);
+    } catch (err) {
+      this.logger.warn(`Falha ao enviar presence: ${(err as Error).message}`);
+    }
+
+    const typingMs = Math.min(
+      6000,
+      800 + text.length * 40 + Math.floor(Math.random() * 1500),
+    );
+    await new Promise((resolve) => setTimeout(resolve, typingMs));
+
+    try {
+      await this.sock.sendPresenceUpdate('paused', to);
+    } catch {
+      // presence paused falhando não é crítico
+    }
+
+    return this.sock.sendMessage(to, { text });
+  }
+
+  getSocket(): WASocket {
+    return this.sock;
+  }
+}
+
+export type IncomingMessage = WAMessage;
