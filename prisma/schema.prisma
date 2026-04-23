@@ -27,24 +27,24 @@ enum ActivityLevel {
 model User {
   id String @id @default(uuid())
   phone String @unique
-  name String
+  name String?
   status UserStatus @default(INACTIVE)
-  onboarding_step String
+  onboarding_step String?
   subscription_id String?
 
-  weight Float
-  height Float
-  age Int
-  gender Gender
-  activity_level ActivityLevel
+  weight Float?
+  height Float?
+  age Int?
+  gender Gender?
+  activity_level ActivityLevel?
 
-  calorie_goal Int
-  protein_goal Int
-  carbs_goal Int
-  fat_goal Int
+  calorie_goal Int?
+  protein_goal Int?
+  carbs_goal Int?
+  fat_goal Int?
 
   consent_given Boolean @default(false) 
-  consent_date DateTime
+  consent_date DateTime?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   meals Meal[]
