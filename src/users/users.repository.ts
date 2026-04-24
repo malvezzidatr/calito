@@ -15,4 +15,12 @@ export class UsersRepository {
       orderBy: { created_at: 'desc' },
     });
   }
+
+  findByPhone(phone: string) {
+   return this.prisma.user.findUnique({
+    where: {
+      phone
+    }
+   })
+  }
 }
