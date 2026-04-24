@@ -1,27 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  WhatsappService,
-  type IncomingMessage,
-} from '../whatsapp/whatsapp.service';
+import { type IncomingMessage } from '../whatsapp/whatsapp.service';
+import { OnboardingService } from '../onboarding/onboarding.service';
 
 @Injectable()
 export class MessagesHandler {
   private readonly logger = new Logger(MessagesHandler.name);
 
-  constructor(private readonly whatsapp: WhatsappService) {}
+  constructor(private readonly onboarding: OnboardingService) {}
 
   @OnEvent('whatsapp.message')
   async handle(msg: IncomingMessage) {
     const from = msg.key.remoteJid;
-    if (!from || from === 'status@broadcast') return;
+    if (!from || from === 'status@broadcast' || from.endsWith('@g.us')) return;
+
+    // Quando o WhatsApp usa LID (remoteJid = <id>@lid), o telefone real
+    // vem em remoteJidAlt como <phone>@s.whatsapp.net.
+    const fromPhone = msg.key.remoteJidAlt ?? from;
     const text = this.extractText(msg);
 
     this.logger.log(`Msg de ${from}: ${text ?? '[não-texto]'}`);
 
+    // Dev-only: só processa mensagens com prefixo "calito" pra não criar
+    // User de terceiros no banco enquanto se testa no número pessoal.
+    // Remover quando o bot for pra número dedicado (Épico 9 / deploy).
     if (!text || !/^\s*calito\b/i.test(text)) return;
+    const realText = text.replace(/^\s*calito\b\s*/i, '');
 
-    await this.whatsapp.sendText(from, 'Oi');
+    const phone = fromPhone.split('@')[0];
+    const result = await this.onboarding.routeMessage(phone, realText);
+
+    if (result === 'delegate_to_ai') {
+      this.logger.log(`TODO AI pipeline — phone=${phone}, text=${realText}`);
+    }
   }
 
   private extractText(msg: IncomingMessage): string | undefined {
