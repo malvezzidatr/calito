@@ -22,6 +22,13 @@ enum ActivityLevel {
   LIGHT
   MODERATE
   INTENSE
+  VERY_INTENSE
+}
+
+enum Goal {
+  LOSE
+  MAINTAIN
+  GAIN
 }
 
 model User {
@@ -38,6 +45,7 @@ model User {
   gender Gender?
   activity_level ActivityLevel?
 
+  goal Goal?
   calorie_goal Int?
   protein_goal Int?
   carbs_goal Int?

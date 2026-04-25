@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from 'src/users/users.repository';
 import { OnboardingStep } from './onboarding.constants';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
-import { CONSENT_FAREWELL, CONSENT_INVALID, GOAL_QUESTION, LGPD_MESSAGE } from './onboarding.messages';
+import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, ONBOARDING_PENDING_CALCULATION, WEIGHT_QUESTION } from './onboarding.messages';
+import { ActivityLevel, Gender } from '@prisma/client';
 
 @Injectable()
 export class OnboardingService {
@@ -46,7 +47,6 @@ export class OnboardingService {
     }
 
     private async handleWaitingConsent(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_consent — phone=${phone}, text=${text}`);
         const normalized = text.trim().toLowerCase();
         const YES = new Set(['sim', 's', 'yes']);
         const NO = new Set(['não', 'nao', 'n', 'no']);
@@ -66,26 +66,145 @@ export class OnboardingService {
     }
 
     private async handleWaitingGoal(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_goal — phone=${phone}, text=${text}`);
+        const normalized = text.trim();
+        switch (normalized) {
+            case "1":
+                await this.users.update(phone, {
+                    goal: 'LOSE',
+                    onboarding_step: OnboardingStep.WaitingWeight
+                });
+                await this.whatsapp.sendText(jid, GOAL_IS_LOSE);
+                break;
+            case "2":
+                await this.users.update(phone, {
+                    goal: 'MAINTAIN',
+                    onboarding_step: OnboardingStep.WaitingWeight
+                });
+                await this.whatsapp.sendText(jid, GOAL_IS_MAINTAIN);
+                break;
+
+            case "3":
+                await this.users.update(phone, {
+                    goal: 'GAIN',
+                    onboarding_step: OnboardingStep.WaitingWeight
+                });
+                await this.whatsapp.sendText(jid, GOAL_IS_GAIN);
+                break;
+
+            default:
+                await this.whatsapp.sendText(jid, INVALID_OPTION);
+                await this.whatsapp.sendText(jid, GOAL_QUESTION);
+                return;
+
+        }
+        await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
+
     }
 
     private async handleWaitingWeight(phone: string, text: string, jid: string) {
         this.logger.log(`TODO waiting_weight — phone=${phone}, text=${text}`);
+        const normalized = text.trim().replace(',', '.');
+        const weight = Number(normalized);
+
+        if (!Number.isFinite(weight)) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
+            await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
+            return;
+        }
+
+        if (weight <= 0 || weight > 350 || weight < 20) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
+            await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
+            return;
+        } 
+
+        await this.users.update(phone, {
+            weight,
+            onboarding_step: OnboardingStep.WaitingHeight,
+        });
+        await this.whatsapp.sendText(jid, HEIGHT_QUESTION);
     }
 
     private async handleWaitingHeight(phone: string, text: string, jid: string) {
         this.logger.log(`TODO waiting_height — phone=${phone}, text=${text}`);
+        const normalized = text.trim().replace(',', '.');
+        const height = Number(normalized);
+
+        if (!Number.isFinite(height)) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
+            await this.whatsapp.sendText(jid, HEIGHT_QUESTION);
+            return;
+        }
+
+        if (height <= 0 || height > 250 || height < 100) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
+            await this.whatsapp.sendText(jid, HEIGHT_QUESTION);
+            return;
+        } 
+
+        await this.users.update(phone, {
+            height,
+            onboarding_step: OnboardingStep.WaitingAge,
+        });
+        await this.whatsapp.sendText(jid, AGE_QUESTION);
     }
 
     private async handleWaitingAge(phone: string, text: string, jid: string) {
         this.logger.log(`TODO waiting_age — phone=${phone}, text=${text}`);
+        const age = Number(text.trim());
+        if (!Number.isInteger(age) || age < 13 || age > 90) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
+            await this.whatsapp.sendText(jid, AGE_QUESTION);
+            return;
+        }
+
+        await this.users.update(phone, {
+            age,
+            onboarding_step: OnboardingStep.WaitingGender,
+        });
+        await this.whatsapp.sendText(jid, GENDER_QUESTION);
     }
 
     private async handleWaitingGender(phone: string, text: string, jid: string) {
         this.logger.log(`TODO waiting_gender — phone=${phone}, text=${text}`);
+        const normalized = text.trim().toUpperCase();
+        let gender: Gender;
+
+        if (normalized === 'M') gender = 'MALE';
+        else if (normalized === 'F') gender = 'FEMALE';
+        else {
+            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
+            await this.whatsapp.sendText(jid, GENDER_QUESTION);
+            return;
+        }
+
+        await this.users.update(phone, {
+            gender,
+            onboarding_step: OnboardingStep.WaitingActivity,
+        });
+        await this.whatsapp.sendText(jid, ACTIVITY_QUESTION);
     }
 
     private async handleWaitingActivity(phone: string, text: string, jid: string) {
         this.logger.log(`TODO waiting_activity — phone=${phone}, text=${text}`);
+        const normalized = text.trim();
+        let activityLevel: ActivityLevel;
+
+        switch (normalized) {
+            case "1": activityLevel = 'SEDENTARY'; break;
+            case "2": activityLevel = 'LIGHT'; break;
+            case "3": activityLevel = 'MODERATE'; break;
+            case "4": activityLevel = 'INTENSE'; break;
+            case "5": activityLevel = 'VERY_INTENSE'; break;
+            default:
+                await this.whatsapp.sendText(jid, INVALID_OPTION);
+                return await this.whatsapp.sendText(jid, ACTIVITY_QUESTION);
+        }
+
+        await this.users.update(phone, {
+            activity_level: activityLevel,
+            // step não muda — continua waiting_activity até HU-07
+        });
+        await this.whatsapp.sendText(jid, ONBOARDING_PENDING_CALCULATION);
     }
 }
