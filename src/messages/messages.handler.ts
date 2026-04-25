@@ -28,7 +28,7 @@ export class MessagesHandler {
     const realText = text.replace(/^\s*calito\b\s*/i, '');
 
     const phone = fromPhone.split('@')[0];
-    const result = await this.onboarding.routeMessage(phone, realText);
+    const result = await this.onboarding.routeMessage(phone, realText, fromPhone);
 
     if (result === 'delegate_to_ai') {
       this.logger.log(`TODO AI pipeline — phone=${phone}, text=${realText}`);
