@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from 'src/users/users.repository';
 import { OnboardingStep } from './onboarding.constants';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
-import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, ONBOARDING_PENDING_CALCULATION, WEIGHT_QUESTION } from './onboarding.messages';
+import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, WEIGHT_QUESTION, welcomeMessage } from './onboarding.messages';
 import { ActivityLevel, Gender } from '@prisma/client';
+import { calcGoals } from './nutrition.calculator';
 
 @Injectable()
 export class OnboardingService {
@@ -166,7 +167,6 @@ export class OnboardingService {
     }
 
     private async handleWaitingGender(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_gender — phone=${phone}, text=${text}`);
         const normalized = text.trim().toUpperCase();
         let gender: Gender;
 
@@ -186,25 +186,48 @@ export class OnboardingService {
     }
 
     private async handleWaitingActivity(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_activity — phone=${phone}, text=${text}`);
         const normalized = text.trim();
         let activityLevel: ActivityLevel;
+        const user = await this.users.findByPhone(phone);
+        if (!user) {
+            return;
+        }
 
+        if (!user.gender || !user.weight || !user.height || !user.age || !user.goal) {
+            this.logger.error(`Onboarding incompleto pra ${phone}`);
+            return;
+        }
+        
         switch (normalized) {
-            case "1": activityLevel = 'SEDENTARY'; break;
-            case "2": activityLevel = 'LIGHT'; break;
-            case "3": activityLevel = 'MODERATE'; break;
-            case "4": activityLevel = 'INTENSE'; break;
-            case "5": activityLevel = 'VERY_INTENSE'; break;
+            case "1": activityLevel = 'SEDENTARY';
+                break;
+            case "2": activityLevel = 'LIGHT';
+                break;
+            case "3": activityLevel = 'MODERATE';
+                break;
+            case "4": activityLevel = 'INTENSE';
+                break;
+            case "5": activityLevel = 'VERY_INTENSE';
+                break;
             default:
                 await this.whatsapp.sendText(jid, INVALID_OPTION);
                 return await this.whatsapp.sendText(jid, ACTIVITY_QUESTION);
         }
 
+        const goals = calcGoals({
+            age: user.age,
+            gender: user.gender,
+            goal: user.goal,
+            height: user.height,
+            weight: user.weight,
+            activityLevel                  
+        });
+
         await this.users.update(phone, {
             activity_level: activityLevel,
-            // step não muda — continua waiting_activity até HU-07
+            ...goals,
+            onboarding_step: null,
         });
-        await this.whatsapp.sendText(jid, ONBOARDING_PENDING_CALCULATION);
+        await this.whatsapp.sendText(jid, welcomeMessage(goals));
     }
 }

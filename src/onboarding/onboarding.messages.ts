@@ -1,3 +1,5 @@
+import { Goals } from "./nutrition.calculator"
+
 export const LGPD_MESSAGE = `Olá! 👋 Sou o Calito, seu parceiro de nutrição!
 
 Antes de começar, preciso te informar:
@@ -52,7 +54,19 @@ export const ACTIVITY_QUESTION = `E qual seu nível de atividade?
 5 - Muito intenso (2x por dia)
 `;
 
-export const ONBOARDING_PENDING_CALCULATION = `Perfil quase pronto! ✓
-Vou calcular suas metas e já te chamo de volta.`;
-
 export const INVALID_OPTION = `Opção inválida. Vamos de novo:`
+
+export const welcomeMessage = (goals: Goals) => `✓ Perfil configurado!
+
+Suas metas diárias:
+🔥 Calorias: ${goals.calorie_goal} kcal
+🥩 Proteína: ${goals.protein_goal}g
+🍚 Carboidrato: ${goals.carbs_goal}g
+🧈 Gordura: ${goals.fat_goal}g
+
+Você vai receber um resumo todo dia às 20h
+com tudo que comeu e quanto falta pra meta.
+
+Pra começar, é só me mandar o que comeu!
+
+Bora! 💪`;
