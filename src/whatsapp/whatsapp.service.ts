@@ -49,7 +49,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
     this.sock.ev.on('creds.update', saveCreds);
 
-    this.sock.ev.on('connection.update', (update) => {
+    this.sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
@@ -67,9 +67,11 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         const loggedOut = statusCode === DisconnectReason.loggedOut;
 
         if (loggedOut) {
-          this.logger.error(
-            'Sessão encerrada pelo usuário. Apague a pasta ./auth e refaça o pareamento.',
+          this.logger.warn(
+            'Sessão encerrada pelo usuário. Limpando credenciais e reiniciando pareamento...',
           );
+          await this.clearAuthState();
+          void this.connect();
           return;
         }
 
@@ -91,6 +93,11 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         this.eventEmitter.emit('whatsapp.message', msg);
       }
     });
+  }
+
+  private async clearAuthState() {
+    const { count } = await this.prisma.whatsappAuth.deleteMany({});
+    this.logger.log(`Credenciais do WhatsApp removidas do banco (${count} registros).`);
   }
 
   async sendText(to: string, text: string) {
