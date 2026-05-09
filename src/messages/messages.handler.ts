@@ -2,12 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { type IncomingMessage } from '../whatsapp/whatsapp.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
+import { IntentClassifier } from 'src/ai/intent.classifier';
+import { IntentRouter } from 'src/ai/intent.router';
 
 @Injectable()
 export class MessagesHandler {
   private readonly logger = new Logger(MessagesHandler.name);
-
-  constructor(private readonly onboarding: OnboardingService) {}
+  constructor(
+    private readonly onboarding: OnboardingService,
+    private readonly classifier: IntentClassifier,
+    private readonly router: IntentRouter
+  ) {}
 
   @OnEvent('whatsapp.message')
   async handle(msg: IncomingMessage) {
@@ -31,7 +36,9 @@ export class MessagesHandler {
     const result = await this.onboarding.routeMessage(phone, realText, fromPhone);
 
     if (result === 'delegate_to_ai') {
-      this.logger.log(`TODO AI pipeline — phone=${phone}, text=${realText}`);
+      const intent = await this.classifier.classify(realText);
+      this.logger.log(`Intent classificada: ${intent}`);
+      await this.router.route(intent, phone, realText, fromPhone);
     }
   }
 
