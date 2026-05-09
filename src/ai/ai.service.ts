@@ -4,7 +4,11 @@ import Groq from 'groq-sdk';
 import { SYSTEM_PROMPT } from './ai.prompts';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
-type ChatOptions = { temperature?: number };
+type ChatOptions = {
+  temperature?: number;
+  responseFormat?: 'json' | 'text';
+  systemPrompt?: string;
+};
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -26,13 +30,16 @@ export class AiService implements OnModuleInit {
 
   async chat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
     const completion = await this.client.chat.completions.create({
-      model: this.model,
-      temperature: opts.temperature ?? this.defaultTemperature,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...messages,
-      ],
-    });
+    model: this.model,
+    temperature: opts.temperature ?? this.defaultTemperature,
+    ...(opts.responseFormat === 'json' && {
+      response_format: { type: 'json_object' as const },
+    }),
+    messages: [
+      { role: 'system', content: opts.systemPrompt ?? SYSTEM_PROMPT },
+      ...messages,
+    ],
+  });
 
     const content = completion.choices[0]?.message?.content;
     if (!content) throw new Error('Resposta vazia do Groq');
