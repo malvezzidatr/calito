@@ -3,7 +3,9 @@ jest.mock('../whatsapp/whatsapp.service', () => ({
 }));
 
 import { Test } from '@nestjs/testing';
-import { MealsService, formatMealConfirmation, pickPraise } from './meals.service';
+import { MealsService } from './meals.service';
+import { formatMealConfirmation } from './meal.format';
+import { pickPraise } from './meal.praise';
 import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
@@ -14,12 +16,14 @@ describe('MealsService', () => {
   let chat: jest.Mock;
   let findByPhone: jest.Mock;
   let create: jest.Mock;
+  let sumDailyByUser: jest.Mock;
   let sendText: jest.Mock;
 
   beforeEach(async () => {
     chat = jest.fn();
     findByPhone = jest.fn();
     create = jest.fn().mockResolvedValue(undefined);
+    sumDailyByUser = jest.fn().mockResolvedValue({ calories: 0, protein: 0, carbs: 0, fat: 0 });
     sendText = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
@@ -27,7 +31,7 @@ describe('MealsService', () => {
         MealsService,
         { provide: AiService,        useValue: { chat } },
         { provide: UsersRepository,  useValue: { findByPhone } },
-        { provide: MealsRepository,  useValue: { create } },
+        { provide: MealsRepository,  useValue: { create, sumDailyByUser } },
         { provide: WhatsappService,  useValue: { sendText } },
       ],
     }).compile();
@@ -126,12 +130,13 @@ describe('formatMealConfirmation', () => {
   };
 
   it('formats lunch with calories and macros', () => {
-    const result = formatMealConfirmation('LUNCH', sampleExtraction);
+    const result = formatMealConfirmation('LUNCH', sampleExtraction, 'Mandou bem!');
     expect(result).toContain('Almoço');
     expect(result).toContain('650kcal');
     expect(result).toContain('P: 45g');
     expect(result).toContain('C: 75g');
     expect(result).toContain('G: 12g');
+    expect(result).toContain('Mandou bem!');
   });
 
   it.each([
@@ -139,7 +144,7 @@ describe('formatMealConfirmation', () => {
     ['DINNER',    'Jantar'],
     ['SNACK',     'Lanche'],
   ] as const)('uses label "%s" for meal_type %s', (mealType, label) => {
-    const result = formatMealConfirmation(mealType, sampleExtraction);
+    const result = formatMealConfirmation(mealType, sampleExtraction, 'praise');
     expect(result).toContain(label);
   });
 });

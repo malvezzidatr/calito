@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MealType } from '@prisma/client';
+import { startOfDay, startOfNextDay } from './day-bounds';
 
 type CreateMealInput = {
   user_id: string;
@@ -30,4 +31,21 @@ export class MealsRepository {
     },
     });
   }
+
+  async sumDailyByUser(user_id: string, day: Date) {
+    const response = await this.prisma.meal.aggregate({
+      where: {
+        user_id,
+        created_at: { gte: startOfDay(day), lt: startOfNextDay(day) },
+      },
+      _sum: { calories: true, protein: true, carbs: true, fat: true },
+    });
+    return {
+      calories: response._sum.calories ?? 0,
+      protein:  response._sum.protein  ?? 0,
+      carbs:    response._sum.carbs    ?? 0,
+      fat:      response._sum.fat      ?? 0,
+    };
+  }
+
 }
