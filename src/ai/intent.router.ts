@@ -42,8 +42,8 @@ export class IntentRouter {
     await this.meals.register(phone, text, jid);
   }
 
-  private async handleQueryDaily(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mostrar o resumo do dia! 🚧');
+  private async handleQueryDaily(phone: string, _text: string, jid: string) {
+    await this.meals.dailyResume(phone, jid);
   }
 
   private async handleQueryPeriod(_phone: string, _text: string, jid: string) {

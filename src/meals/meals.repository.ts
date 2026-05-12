@@ -48,4 +48,15 @@ export class MealsRepository {
     };
   }
 
+  findDailyByUser(user_id: string, day: Date) {
+    return this.prisma.meal.findMany({
+      where: {
+        user_id,
+        created_at: { gte: startOfDay(day), lt: startOfNextDay(day) },
+      },
+      orderBy: { created_at: 'asc' },
+      select: { meal_type: true, calories: true },
+    });
+  }
+
 }

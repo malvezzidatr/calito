@@ -1,4 +1,4 @@
-import { pickGoalAwarePraise, pickPraise, subtractMeal } from '../meal.praise';
+import { pickGoalAwarePraise, pickPraise, pickDailyResumePraise, subtractMeal } from '../meal.praise';
 import { MealExtraction } from '../../ai/meal.prompt';
 
 const baseExtraction: MealExtraction = {
@@ -177,5 +177,47 @@ describe('subtractMeal', () => {
     const totals = { calories: 200, protein: 15, carbs: 25, fat: 5 };
     const result = subtractMeal(totals, baseExtraction);
     expect(result).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+  });
+});
+
+describe('pickDailyResumePraise', () => {
+  it('returns "ainda dá tempo" when below 80% of the calorie goal', () => {
+    const result = pickDailyResumePraise({ totalCalories: 800, calorieGoal: 2000 });
+    expect(result).toBe('Ainda dá tempo de completar a meta! 🚀');
+  });
+
+  it('returns remaining-kcal message when between 80% and 99% of the goal', () => {
+    const result = pickDailyResumePraise({ totalCalories: 1800, calorieGoal: 2000 });
+    expect(result).toBe('Faltam só 200kcal pra fechar a meta! Termina o dia forte 💪');
+  });
+
+  it('returns "faltam" exactly at 80%', () => {
+    const result = pickDailyResumePraise({ totalCalories: 1600, calorieGoal: 2000 });
+    expect(result).toContain('Faltam só 400kcal');
+  });
+
+  it('returns "meta batida" when total reaches exactly the goal', () => {
+    const result = pickDailyResumePraise({ totalCalories: 2000, calorieGoal: 2000 });
+    expect(result).toBe('Meta calórica batida! Mandou bem 💪');
+  });
+
+  it('returns "meta batida" between 100% and 110%', () => {
+    const result = pickDailyResumePraise({ totalCalories: 2150, calorieGoal: 2000 });
+    expect(result).toBe('Meta calórica batida! Mandou bem 💪');
+  });
+
+  it('returns "passou um pouco" at or above 110%', () => {
+    const result = pickDailyResumePraise({ totalCalories: 2200, calorieGoal: 2000 });
+    expect(result).toBe('Passou um pouco da meta hoje, mas tá tranquilo — amanhã é dia novo 🌅');
+  });
+
+  it('returns a goal-less fallback message when calorieGoal is null', () => {
+    const result = pickDailyResumePraise({ totalCalories: 1500, calorieGoal: null });
+    expect(result).toContain('Tô anotando');
+  });
+
+  it('returns a goal-less fallback message when calorieGoal is 0', () => {
+    const result = pickDailyResumePraise({ totalCalories: 1500, calorieGoal: 0 });
+    expect(result).toContain('Tô anotando');
   });
 });

@@ -5,8 +5,8 @@ import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction } from '../ai/meal.prompt';
 import { MealType } from '@prisma/client';
-import { pickPraise, pickGoalAwarePraise, subtractMeal } from './meal.praise';
-import { formatMealConfirmation } from './meal.format';
+import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal } from './meal.praise';
+import { formatMealConfirmation, formatDailyResume } from './meal.format';
 import { validateMealExtraction } from './meal.validation';
 
 @Injectable()
@@ -75,6 +75,40 @@ export class MealsService {
         }
 
         const message = formatMealConfirmation(mealType, extraction, praise);
+        await this.whatsappService.sendText(jid, message);
+    }
+
+    async dailyResume(phone: string, jid: string) {
+        const user = await this.usersRepository.findByPhone(phone);
+        if (!user) {
+            this.logger.warn(`User não encontrado: ${phone}`);
+            return;
+        }
+
+        const today = new Date();
+        const [totals, meals] = await Promise.all([
+            this.mealsRepository.sumDailyByUser(user.id, today),
+            this.mealsRepository.findDailyByUser(user.id, today),
+        ]);
+
+        const praise = pickDailyResumePraise({
+            totalCalories: totals.calories,
+            calorieGoal: user.calorie_goal,
+        });
+
+        const message = formatDailyResume(
+            today,
+            meals,
+            totals,
+            {
+                calorie: user.calorie_goal,
+                protein: user.protein_goal,
+                carbs:   user.carbs_goal,
+                fat:     user.fat_goal,
+            },
+            praise,
+        );
+
         await this.whatsappService.sendText(jid, message);
     }
 

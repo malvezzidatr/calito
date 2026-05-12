@@ -87,6 +87,29 @@ export function pickGoalAwarePraise(ctx: PraiseContext): string {
   return pickPraise(extraction);
 }
 
+export function pickDailyResumePraise(ctx: { totalCalories: number; calorieGoal: number | null }): string {
+  const { totalCalories, calorieGoal } = ctx;
+
+  if (calorieGoal === null || calorieGoal <= 0) {
+    return 'Tô anotando suas refeições! Quando você fechar suas metas no onboarding, comparo aqui 📝';
+  }
+
+  if (totalCalories >= calorieGoal * 1.10) {
+    return 'Passou um pouco da meta hoje, mas tá tranquilo — amanhã é dia novo 🌅';
+  }
+
+  if (totalCalories >= calorieGoal) {
+    return 'Meta calórica batida! Mandou bem 💪';
+  }
+
+  if (totalCalories >= calorieGoal * 0.80) {
+    const faltam = calorieGoal - totalCalories;
+    return `Faltam só ${faltam}kcal pra fechar a meta! Termina o dia forte 💪`;
+  }
+
+  return 'Ainda dá tempo de completar a meta! 🚀';
+}
+
 export function pickPraise(extraction: MealExtraction): string {
   const totalKcal = extraction.calories || 1;
 

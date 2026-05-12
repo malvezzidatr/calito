@@ -17,6 +17,7 @@ describe('MealsService', () => {
   let findByPhone: jest.Mock;
   let create: jest.Mock;
   let sumDailyByUser: jest.Mock;
+  let findDailyByUser: jest.Mock;
   let sendText: jest.Mock;
 
   beforeEach(async () => {
@@ -24,6 +25,7 @@ describe('MealsService', () => {
     findByPhone = jest.fn();
     create = jest.fn().mockResolvedValue(undefined);
     sumDailyByUser = jest.fn().mockResolvedValue({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+    findDailyByUser = jest.fn().mockResolvedValue([]);
     sendText = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
@@ -31,7 +33,7 @@ describe('MealsService', () => {
         MealsService,
         { provide: AiService,        useValue: { chat } },
         { provide: UsersRepository,  useValue: { findByPhone } },
-        { provide: MealsRepository,  useValue: { create, sumDailyByUser } },
+        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser } },
         { provide: WhatsappService,  useValue: { sendText } },
       ],
     }).compile();
@@ -209,6 +211,73 @@ describe('MealsService', () => {
       await service.register('phone-1', 'comida', 'jid-1');
 
       expect(sendText).toHaveBeenCalledWith('jid-1', expect.stringContaining('problema técnico'));
+    });
+  });
+
+  describe('dailyResume', () => {
+    it('returns silently when user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
+
+      await service.dailyResume('5511999', '5511999@s.whatsapp.net');
+
+      expect(sumDailyByUser).not.toHaveBeenCalled();
+      expect(findDailyByUser).not.toHaveBeenCalled();
+      expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('sends the daily resume with totals, meal list and praise', async () => {
+      findByPhone.mockResolvedValue({
+        id: 'user-1',
+        calorie_goal: 2150, protein_goal: 160, carbs_goal: 240, fat_goal: 72,
+      });
+      sumDailyByUser.mockResolvedValue({ calories: 1650, protein: 120, carbs: 200, fat: 50 });
+      findDailyByUser.mockResolvedValue([
+        { meal_type: 'BREAKFAST', calories: 350 },
+        { meal_type: 'LUNCH',     calories: 750 },
+        { meal_type: 'SNACK',     calories: 200 },
+        { meal_type: 'DINNER',    calories: 350 },
+      ]);
+
+      await service.dailyResume('phone-1', 'jid-1');
+
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('📊 Resumo de hoje');
+      expect(message).toContain('🔥 Calorias: 1.650 / 2.150');
+      expect(message).toContain('(faltam 500)');
+      expect(message).toContain('• Café: 350kcal');
+      expect(message).toContain('• Almoço: 750kcal');
+      expect(message).toContain('Ainda dá tempo de completar a meta');
+    });
+
+    it('queries totals and meal list for the same user in parallel', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2000, protein_goal: 100 });
+
+      await service.dailyResume('phone-1', 'jid-1');
+
+      expect(sumDailyByUser).toHaveBeenCalledWith('user-1', expect.any(Date));
+      expect(findDailyByUser).toHaveBeenCalledWith('user-1', expect.any(Date));
+    });
+
+    it('falls back to a goal-less praise when the user has no calorie_goal', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: null });
+      sumDailyByUser.mockResolvedValue({ calories: 1200, protein: 70, carbs: 150, fat: 40 });
+
+      await service.dailyResume('phone-1', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Tô anotando');
+    });
+
+    it('shows the empty-meals placeholder when no meals were registered today', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2000 });
+      findDailyByUser.mockResolvedValue([]);
+
+      await service.dailyResume('phone-1', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Nenhuma refeição registrada hoje');
     });
   });
 });
