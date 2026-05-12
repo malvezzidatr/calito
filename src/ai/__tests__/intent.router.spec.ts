@@ -1,16 +1,16 @@
-jest.mock('../whatsapp/whatsapp.service', () => ({
+jest.mock('../../whatsapp/whatsapp.service', () => ({
   WhatsappService: class {},
 }));
 
-jest.mock('../meals/meals.service', () => ({
+jest.mock('../../meals/meals.service', () => ({
   MealsService: class {},
 }));
 
 import { Test } from '@nestjs/testing';
-import { IntentRouter } from './intent.router';
-import { Intent } from './intents';
-import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MealsService } from '../meals/meals.service';
+import { IntentRouter } from '../intent.router';
+import { Intent } from '../intents';
+import { WhatsappService } from '../../whatsapp/whatsapp.service';
+import { MealsService } from '../../meals/meals.service';
 
 describe('IntentRouter', () => {
   let router: IntentRouter;

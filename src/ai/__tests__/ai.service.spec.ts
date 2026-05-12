@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
-import { AiService } from './ai.service';
+import { AiService } from '../ai.service';
 
 const HAS_KEY = !!process.env.GROQ_API_KEY;
 const describeMaybe = HAS_KEY ? describe : describe.skip;

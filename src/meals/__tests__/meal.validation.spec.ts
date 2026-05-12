@@ -1,4 +1,4 @@
-import { validateMealExtraction, InvalidMealExtractionError } from './meal.validation';
+import { validateMealExtraction, InvalidMealExtractionError } from '../meal.validation';
 
 const validRaw = {
   description: 'arroz e frango',

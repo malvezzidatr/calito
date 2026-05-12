@@ -1,5 +1,5 @@
-import { pickGoalAwarePraise, pickPraise, subtractMeal } from './meal.praise';
-import { MealExtraction } from '../ai/meal.prompt';
+import { pickGoalAwarePraise, pickPraise, subtractMeal } from '../meal.praise';
+import { MealExtraction } from '../../ai/meal.prompt';
 
 const baseExtraction: MealExtraction = {
   description: 'arroz e frango',

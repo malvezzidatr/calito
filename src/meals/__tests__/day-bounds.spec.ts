@@ -1,4 +1,4 @@
-import { startOfDay, startOfNextDay } from './day-bounds';
+import { startOfDay, startOfNextDay } from '../day-bounds';
 
 describe('startOfDay (America/Sao_Paulo)', () => {
   it('returns 00:00 SP (03:00 UTC) for an afternoon instant in SP', () => {

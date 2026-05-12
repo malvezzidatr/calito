@@ -1,15 +1,15 @@
-jest.mock('../whatsapp/whatsapp.service', () => ({
+jest.mock('../../whatsapp/whatsapp.service', () => ({
   WhatsappService: class {},
 }));
 
 import { Test } from '@nestjs/testing';
-import { MealsService } from './meals.service';
-import { formatMealConfirmation } from './meal.format';
-import { pickPraise } from './meal.praise';
-import { MealsRepository } from './meals.repository';
-import { AiService } from '../ai/ai.service';
-import { UsersRepository } from '../users/users.repository';
-import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { MealsService } from '../meals.service';
+import { formatMealConfirmation } from '../meal.format';
+import { pickPraise } from '../meal.praise';
+import { MealsRepository } from '../meals.repository';
+import { AiService } from '../../ai/ai.service';
+import { UsersRepository } from '../../users/users.repository';
+import { WhatsappService } from '../../whatsapp/whatsapp.service';
 
 describe('MealsService', () => {
   let service: MealsService;
