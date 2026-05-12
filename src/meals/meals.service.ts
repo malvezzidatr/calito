@@ -7,6 +7,7 @@ import { MEAL_EXTRACTION_PROMPT, MealExtraction } from '../ai/meal.prompt';
 import { MealType } from '@prisma/client';
 import { pickPraise, pickGoalAwarePraise, subtractMeal } from './meal.praise';
 import { formatMealConfirmation } from './meal.format';
+import { validateMealExtraction } from './meal.validation';
 
 @Injectable()
 export class MealsService {
@@ -32,7 +33,7 @@ export class MealsService {
                 [{ role: 'user', content: text }],
                 { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
             );
-            extraction = JSON.parse(reply);
+            extraction = validateMealExtraction(JSON.parse(reply));
         } catch (err) {
             this.logger.warn(`Falha ao extrair refeição: ${(err as Error).message}`);
             await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
@@ -41,15 +42,21 @@ export class MealsService {
 
         const mealType = extraction.meal_type ?? this.inferMealTypeByHour(new Date());
 
-        await this.mealsRepository.create({
-            user_id: user.id,
-            meal_type: mealType,
-            description: extraction.description,
-            calories: extraction.calories,
-            protein: extraction.protein,
-            carbs: extraction.carbs,
-            fat: extraction.fat,
-        });
+        try {
+            await this.mealsRepository.create({
+                user_id: user.id,
+                meal_type: mealType,
+                description: extraction.description,
+                calories: extraction.calories,
+                protein: extraction.protein,
+                carbs: extraction.carbs,
+                fat: extraction.fat,
+            });
+        } catch (err) {
+            this.logger.error(`Falha ao persistir refeição do user ${user.id}: ${(err as Error).message}`);
+            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao registrar 😬 Pode tentar de novo daqui a pouquinho?');
+            return;
+        }
 
         const totalsAfter  = await this.mealsRepository.sumDailyByUser(user.id, new Date());
         const totalsBefore = subtractMeal(totalsAfter, extraction);

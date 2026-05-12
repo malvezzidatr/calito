@@ -117,6 +117,100 @@ describe('MealsService', () => {
       expect(sendText).not.toHaveBeenCalled();
     });
   });
+
+  describe('persistence integrity', () => {
+    type StoredMeal = {
+      user_id: string;
+      meal_type: string;
+      description: string;
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+      created_at: Date;
+    };
+    let store: StoredMeal[];
+
+    beforeEach(() => {
+      store = [];
+      create.mockImplementation(async (data: Omit<StoredMeal, 'created_at'>) => {
+        store.push({ ...data, created_at: new Date() });
+        return { id: `meal-${store.length}` };
+      });
+      sumDailyByUser.mockImplementation(async (user_id: string) => {
+        const matching = store.filter((m) => m.user_id === user_id);
+        return matching.reduce(
+          (acc, m) => ({
+            calories: acc.calories + m.calories,
+            protein:  acc.protein  + m.protein,
+            carbs:    acc.carbs    + m.carbs,
+            fat:      acc.fat      + m.fat,
+          }),
+          { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        );
+      });
+    });
+
+    it('persists multiple meals for the same user with totals matching the sum of inputs', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2000, protein_goal: 100 });
+      chat
+        .mockResolvedValueOnce(JSON.stringify({ description: 'café', calories: 300, protein: 10, carbs: 30, fat: 12, meal_type: 'BREAKFAST' }))
+        .mockResolvedValueOnce(JSON.stringify({ description: 'almoço', calories: 500, protein: 40, carbs: 50, fat: 10, meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({ description: 'lanche', calories: 200, protein: 5,  carbs: 30, fat: 5,  meal_type: 'SNACK' }));
+
+      await service.register('phone-1', 'café da manhã', 'jid-1');
+      await service.register('phone-1', 'almoço',         'jid-1');
+      await service.register('phone-1', 'lanche',         'jid-1');
+
+      expect(store).toHaveLength(3);
+      expect(store.every((m) => m.user_id === 'user-1')).toBe(true);
+
+      const totals = await sumDailyByUser.mock.results.at(-1)!.value;
+      expect(totals).toEqual({ calories: 1000, protein: 55, carbs: 110, fat: 27 });
+    });
+
+    it('isolates meals between different users', async () => {
+      findByPhone.mockImplementation(async (phone: string) =>
+        phone === 'phone-A'
+          ? { id: 'user-A', calorie_goal: 2000, protein_goal: 100 }
+          : { id: 'user-B', calorie_goal: 2000, protein_goal: 100 },
+      );
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'algo', calories: 400, protein: 20, carbs: 40, fat: 10, meal_type: 'LUNCH',
+      }));
+
+      await service.register('phone-A', 'comida', 'jid-A');
+      await service.register('phone-B', 'comida', 'jid-B');
+
+      expect(store).toHaveLength(2);
+      expect(store.filter((m) => m.user_id === 'user-A')).toHaveLength(1);
+      expect(store.filter((m) => m.user_id === 'user-B')).toHaveLength(1);
+    });
+
+    it('sends a fallback message and does NOT persist when the AI returns an invalid extraction (negative calories)', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'algo', calories: -50, protein: 20, carbs: 40, fat: 10, meal_type: 'LUNCH',
+      }));
+
+      await service.register('phone-1', 'comida', 'jid-1');
+
+      expect(store).toHaveLength(0);
+      expect(sendText).toHaveBeenCalledWith('jid-1', expect.stringContaining('Não consegui entender'));
+    });
+
+    it('sends a technical-error message when persistence throws', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'algo', calories: 400, protein: 20, carbs: 40, fat: 10, meal_type: 'LUNCH',
+      }));
+      create.mockRejectedValueOnce(new Error('DB connection lost'));
+
+      await service.register('phone-1', 'comida', 'jid-1');
+
+      expect(sendText).toHaveBeenCalledWith('jid-1', expect.stringContaining('problema técnico'));
+    });
+  });
 });
 
 describe('formatMealConfirmation', () => {
