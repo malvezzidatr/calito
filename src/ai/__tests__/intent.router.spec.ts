@@ -65,4 +65,23 @@ describe('IntentRouter', () => {
     );
     expect(sendText).not.toHaveBeenCalled();
   });
+
+  describe('unknown handler', () => {
+    it('returns a friendly message that lists the main capabilities', async () => {
+      await router.route('unknown', '5511999', 'oi tudo bem?', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/registrar/i);
+      expect(message).toMatch(/consultar/i);
+      expect(message).toMatch(/objetivo/i);
+      expect(message).toMatch(/editar|apagar/i);
+    });
+
+    it('includes a concrete example for each capability', async () => {
+      await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('"');
+    });
+  });
 });

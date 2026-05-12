@@ -91,6 +91,16 @@ export class IntentRouter {
   }
 
   private async handleUnknown(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Não entendi 🤔 Manda "o que você faz?" pra ver o que sei fazer.');
+    await this.whatsapp.sendText(
+      jid,
+      [
+        'Não entendi muito bem 🤔 Posso te ajudar com:',
+        '',
+        '🍽️ Registrar refeições: "almocei arroz e frango"',
+        '📊 Consultar o dia/semana: "como foi meu dia?"',
+        '🎯 Atualizar objetivo: "quero ganhar massa"',
+        '✏️ Editar/apagar refeições: "era 1 ovo não 2"',
+      ].join('\n'),
+    );
   }
 }
