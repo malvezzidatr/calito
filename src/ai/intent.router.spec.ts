@@ -2,25 +2,36 @@ jest.mock('../whatsapp/whatsapp.service', () => ({
   WhatsappService: class {},
 }));
 
+jest.mock('../meals/meals.service', () => ({
+  MealsService: class {},
+}));
+
 import { Test } from '@nestjs/testing';
 import { IntentRouter } from './intent.router';
 import { Intent } from './intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { MealsService } from '../meals/meals.service';
 
 describe('IntentRouter', () => {
   let router: IntentRouter;
   let sendText: jest.Mock;
+  let register: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
+    register = jest.fn().mockResolvedValue(undefined);
+
     const module = await Test.createTestingModule({
-        providers: [IntentRouter, { provide: WhatsappService, useValue: { sendText }}]
-    }).compile()
+      providers: [
+        IntentRouter,
+        { provide: WhatsappService, useValue: { sendText } },
+        { provide: MealsService, useValue: { register } },
+      ],
+    }).compile();
     router = module.get(IntentRouter);
   });
 
   it.each<[Intent, string]>([
-    ['register_meal',  'registrar sua refeição'],
     ['query_daily',    'resumo do dia'],
     ['query_period',   'resumo da semana'],
     ['query_macro',    'esse macro'],
@@ -38,8 +49,20 @@ describe('IntentRouter', () => {
     await router.route(intent, '5511999', 'qualquer', '5511999@s.whatsapp.net');
     expect(sendText).toHaveBeenCalledTimes(1);
     expect(sendText).toHaveBeenCalledWith(
-        '5511999@s.whatsapp.net',
-        expect.stringContaining(snippet),
+      '5511999@s.whatsapp.net',
+      expect.stringContaining(snippet),
     );
-  })
+  });
+
+  it('routes register_meal to MealsService.register', async () => {
+    await router.route('register_meal', '5511999', 'comi 2 ovos', '5511999@s.whatsapp.net');
+
+    expect(register).toHaveBeenCalledTimes(1);
+    expect(register).toHaveBeenCalledWith(
+      '5511999',
+      'comi 2 ovos',
+      '5511999@s.whatsapp.net',
+    );
+    expect(sendText).not.toHaveBeenCalled();
+  });
 });

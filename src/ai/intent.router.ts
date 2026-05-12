@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Intent } from './intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { MealsService } from '../meals/meals.service';
 
 type IntentHandler = (_phone: string, _text: string, jid: string) => Promise<void>;
 
@@ -9,7 +10,10 @@ export class IntentRouter {
   private readonly logger = new Logger(IntentRouter.name);
   private readonly handlers: Record<Intent, IntentHandler>;
 
-  constructor(private readonly whatsapp: WhatsappService) {
+  constructor(
+    private readonly whatsapp: WhatsappService,
+    private readonly meals: MealsService,
+) {
     this.handlers = {
       register_meal:  this.handleRegisterMeal.bind(this),
       query_daily:    this.handleQueryDaily.bind(this),
@@ -34,8 +38,8 @@ export class IntentRouter {
     await handler(phone, text, jid);
   }
 
-  private async handleRegisterMeal(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou registrar sua refeição! 🚧');
+  private async handleRegisterMeal(phone: string, text: string, jid: string) {
+    await this.meals.register(phone, text, jid);
   }
 
   private async handleQueryDaily(_phone: string, _text: string, jid: string) {

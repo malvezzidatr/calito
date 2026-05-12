@@ -6,9 +6,10 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MessagesModule } from './messages/messages.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { ConfigModule } from '@nestjs/config';
+import { MealsModule } from './meals/meals.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, WhatsappModule, EventEmitterModule.forRoot(), MessagesModule, OnboardingModule, ConfigModule.forRoot({ isGlobal: true })],
+  imports: [MealsModule, PrismaModule, UsersModule, WhatsappModule, EventEmitterModule.forRoot(), MessagesModule, OnboardingModule, ConfigModule.forRoot({ isGlobal: true })],
   controllers: [],
   providers: [],
 })
