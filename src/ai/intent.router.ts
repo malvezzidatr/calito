@@ -50,8 +50,8 @@ export class IntentRouter {
     await this.meals.weeklyResume(phone, jid);
   }
 
-  private async handleQueryMacro(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mostrar esse macro! 🚧');
+  private async handleQueryMacro(phone: string, text: string, jid: string) {
+    await this.meals.macroResume(phone, text, jid);
   }
 
   private async handleUpdateGoal(_phone: string, _text: string, jid: string) {

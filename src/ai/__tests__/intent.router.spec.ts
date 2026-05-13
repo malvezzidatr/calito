@@ -18,25 +18,26 @@ describe('IntentRouter', () => {
   let register: jest.Mock;
   let dailyResume: jest.Mock;
   let weeklyResume: jest.Mock;
+  let macroResume: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
     register = jest.fn().mockResolvedValue(undefined);
     dailyResume = jest.fn().mockResolvedValue(undefined);
     weeklyResume = jest.fn().mockResolvedValue(undefined);
+    macroResume = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
-        { provide: MealsService, useValue: { register, dailyResume, weeklyResume } },
+        { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume } },
       ],
     }).compile();
     router = module.get(IntentRouter);
   });
 
   it.each<[Intent, string]>([
-    ['query_macro',    'esse macro'],
     ['update_goal',    'atualizar seu objetivo'],
     ['edit_meal',      'editar essa refeição'],
     ['delete_meal',    'apagar essa refeição'],
@@ -81,6 +82,14 @@ describe('IntentRouter', () => {
 
     expect(weeklyResume).toHaveBeenCalledTimes(1);
     expect(weeklyResume).toHaveBeenCalledWith('5511999', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
+  it('routes query_macro to MealsService.macroResume forwarding the text', async () => {
+    await router.route('query_macro', '5511999', 'quanta proteína comi hoje?', '5511999@s.whatsapp.net');
+
+    expect(macroResume).toHaveBeenCalledTimes(1);
+    expect(macroResume).toHaveBeenCalledWith('5511999', 'quanta proteína comi hoje?', '5511999@s.whatsapp.net');
     expect(sendText).not.toHaveBeenCalled();
   });
 

@@ -351,4 +351,72 @@ describe('MealsService', () => {
       expect(message).toContain('Nenhuma refeição registrada essa semana');
     });
   });
+
+  describe('macroResume', () => {
+    it('returns silently when user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
+
+      await service.macroResume('5511999', 'quanta proteína comi?', '5511999@s.whatsapp.net');
+
+      expect(sumDailyByUser).not.toHaveBeenCalled();
+      expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('sends a friendly fallback when no macro keyword is found in the text', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2150, protein_goal: 160, carbs_goal: 240, fat_goal: 72 });
+
+      await service.macroResume('phone-1', 'sei lá o que', 'jid-1');
+
+      expect(sumDailyByUser).not.toHaveBeenCalled();
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('calorias');
+      expect(message).toContain('proteína');
+      expect(message).toContain('carboidrato');
+      expect(message).toContain('gordura');
+    });
+
+    it('replies with the asked macro total and goal when the user has a goal', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', protein_goal: 160, carbs_goal: 240, fat_goal: 72 });
+      sumDailyByUser.mockResolvedValue({ calories: 1500, protein: 95, carbs: 180, fat: 50 });
+
+      await service.macroResume('phone-1', 'quanta proteína comi hoje?', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('🥩 Proteína: 95g / 160g');
+      expect(message).toContain('Faltam 65g');
+    });
+
+    it('replies with carbs when the text mentions "carbo"', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', protein_goal: 160, carbs_goal: 240, fat_goal: 72 });
+      sumDailyByUser.mockResolvedValue({ calories: 1500, protein: 95, carbs: 200, fat: 50 });
+
+      await service.macroResume('phone-1', 'quanto carbo já comi', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('🍚 Carboidrato: 200g / 240g');
+    });
+
+    it('shows the no-goal fallback when the macro goal is null', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: null, protein_goal: null, carbs_goal: null, fat_goal: null });
+      sumDailyByUser.mockResolvedValue({ calories: 1500, protein: 95, carbs: 180, fat: 50 });
+
+      await service.macroResume('phone-1', 'quanta gordura comi', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('🧈 Gordura: 50g hoje');
+      expect(message).toContain('Quando você fechar suas metas');
+    });
+
+    it('replies with calorie total and goal when the user asks about calories', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2282, protein_goal: 171, carbs_goal: 257, fat_goal: 63 });
+      sumDailyByUser.mockResolvedValue({ calories: 420, protein: 14, carbs: 60, fat: 18 });
+
+      await service.macroResume('phone-1', 'quantas calorias comi hoje?', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('🔥 Calorias: 420 / 2.282');
+      expect(message).toContain('Faltam 1.862');
+    });
+  });
 });

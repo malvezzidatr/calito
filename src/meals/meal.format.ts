@@ -1,6 +1,7 @@
 import { MealType } from '@prisma/client';
 import { MealExtraction } from '../ai/meal.prompt';
 import { DailyTotals } from './meal.praise';
+import { Macro } from './macro.detect';
 
 const MEAL_LABELS: Record<MealType, string> = {
   BREAKFAST: 'Café',
@@ -44,6 +45,13 @@ const shortDateFormatter = new Intl.DateTimeFormat('pt-BR', {
 });
 
 const WEEKDAY_LABELS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+const MACRO_LABELS: Record<Macro, { emoji: string; label: string; unit: 'g' | '' }> = {
+  calorie: { emoji: '🔥', label: 'Calorias',    unit: ''  },
+  protein: { emoji: '🥩', label: 'Proteína',    unit: 'g' },
+  carbs:   { emoji: '🍚', label: 'Carboidrato', unit: 'g' },
+  fat:     { emoji: '🧈', label: 'Gordura',     unit: 'g' },
+};
 
 function formatShortDate(d: Date): string {
   return shortDateFormatter.format(d);
@@ -156,4 +164,24 @@ export function formatWeeklyResume(
 
   lines.push('', praise);
   return lines.join('\n');
+}
+
+export function formatMacroResume(macro: Macro, total: number, goal: number | null): string {
+  const { emoji, label, unit } = MACRO_LABELS[macro];
+  const isKcal = macro === 'calorie';
+  const totalRounded = Math.round(total);
+  const fmt = (n: number) => (isKcal ? n.toLocaleString('pt-BR') : String(n));
+
+  if (goal === null) {
+    return `${emoji} ${label}: ${fmt(totalRounded)}${unit} hoje\n\nQuando você fechar suas metas no onboarding, comparo aqui 📝`;
+  }
+
+  const baseLine = `${emoji} ${label}: ${fmt(totalRounded)}${unit} / ${fmt(goal)}${unit}`;
+
+  if (totalRounded >= goal) {
+    return `${baseLine}\n\nMeta batida! Mandou bem 💪`;
+  }
+
+  const faltam = goal - totalRounded;
+  return `${baseLine}\n\nFaltam ${fmt(faltam)}${unit}, bora completar! 💪`;
 }

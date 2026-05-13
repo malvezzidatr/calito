@@ -6,10 +6,11 @@ import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction } from '../ai/meal.prompt';
 import { MealType } from '@prisma/client';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume } from './meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume } from './meal.format';
 import { validateMealExtraction } from './meal.validation';
 import { startOfDaysAgo, startOfNextDay } from './day-bounds';
 import { buildWeeklySummary } from './weekly.summary';
+import { detectMacro } from './macro.detect';
 
 @Injectable()
 export class MealsService {
@@ -144,6 +145,38 @@ export class MealsService {
         });
 
         const message = formatWeeklyResume(summary, goals, praise);
+        await this.whatsappService.sendText(jid, message);
+    }
+
+    async macroResume(phone: string, text: string, jid: string) {
+        const user = await this.usersRepository.findByPhone(phone);
+        if (!user) {
+            this.logger.warn(`User não encontrado: ${phone}`);
+            return;
+        }
+
+        const macro = detectMacro(text);
+        if (!macro) {
+            await this.whatsappService.sendText(jid, 'Posso te mostrar calorias, proteína, carboidrato ou gordura. Qual deles? 🤔');
+            return;
+        }
+
+        const totals = await this.mealsRepository.sumDailyByUser(user.id, new Date());
+
+        const goalsByMacro: Record<typeof macro, number | null> = {
+            calorie: user.calorie_goal,
+            protein: user.protein_goal,
+            carbs:   user.carbs_goal,
+            fat:     user.fat_goal,
+        };
+        const totalsByMacro: Record<typeof macro, number> = {
+            calorie: totals.calories,
+            protein: totals.protein,
+            carbs:   totals.carbs,
+            fat:     totals.fat,
+        };
+
+        const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro]);
         await this.whatsappService.sendText(jid, message);
     }
 

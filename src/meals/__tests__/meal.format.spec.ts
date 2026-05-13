@@ -2,6 +2,7 @@ import {
   formatDailyResume,
   formatMealConfirmation,
   formatWeeklyResume,
+  formatMacroResume,
   DailyMeal,
   DailyGoals,
   WeeklyDayStats,
@@ -273,5 +274,68 @@ describe('formatWeeklyResume', () => {
 
     expect(result).toContain('Dias dentro da meta: 3 de 7');
     expect(result).not.toContain('Dias dentro da meta: 3 de 7 ✅');
+  });
+});
+
+describe('formatMacroResume', () => {
+  it.each([
+    ['protein', 95,  160,  '🥩 Proteína: 95g / 160g',    'Faltam 65g'],
+    ['carbs',   200, 240,  '🍚 Carboidrato: 200g / 240g', 'Faltam 40g'],
+    ['fat',     50,  72,   '🧈 Gordura: 50g / 72g',       'Faltam 22g'],
+  ] as const)('formats %s when below goal with the right emoji, label and remaining grams', (macro, total, goal, headLine, faltam) => {
+    const result = formatMacroResume(macro, total, goal);
+    expect(result).toContain(headLine);
+    expect(result).toContain(faltam);
+    expect(result).toContain('💪');
+  });
+
+  it('shows "Meta batida!" when total reaches the goal exactly', () => {
+    const result = formatMacroResume('protein', 160, 160);
+    expect(result).toContain('🥩 Proteína: 160g / 160g');
+    expect(result).toContain('Meta batida');
+    expect(result).not.toContain('Faltam');
+  });
+
+  it('shows "Meta batida!" when total goes over the goal', () => {
+    const result = formatMacroResume('protein', 200, 160);
+    expect(result).toContain('🥩 Proteína: 200g / 160g');
+    expect(result).toContain('Meta batida');
+  });
+
+  it('rounds float totals to integers (Prisma decimals)', () => {
+    const result = formatMacroResume('carbs', 199.7, 240);
+    expect(result).toContain('🍚 Carboidrato: 200g / 240g');
+    expect(result).toContain('Faltam 40g');
+  });
+
+  it('shows the no-goal fallback message when goal is null', () => {
+    const result = formatMacroResume('fat', 30, null);
+    expect(result).toContain('🧈 Gordura: 30g hoje');
+    expect(result).toContain('Quando você fechar suas metas no onboarding');
+    expect(result).not.toContain('/');
+    expect(result).not.toContain('Faltam');
+  });
+
+  describe('calorie unit', () => {
+    it('formats calorie totals with the 🔥 emoji, no g suffix and pt-BR thousand separators', () => {
+      const result = formatMacroResume('calorie', 420, 2282);
+      expect(result).toContain('🔥 Calorias: 420 / 2.282');
+      expect(result).toContain('Faltam 1.862');
+      expect(result).not.toContain('g');
+      expect(result).not.toContain('kcal');
+    });
+
+    it('shows "Meta batida" when calorie total reaches the goal', () => {
+      const result = formatMacroResume('calorie', 2300, 2282);
+      expect(result).toContain('🔥 Calorias: 2.300 / 2.282');
+      expect(result).toContain('Meta batida');
+    });
+
+    it('shows the no-goal fallback for calorie without unit suffix', () => {
+      const result = formatMacroResume('calorie', 1500, null);
+      expect(result).toContain('🔥 Calorias: 1.500 hoje');
+      expect(result).toContain('Quando você fechar suas metas no onboarding');
+      expect(result).not.toContain('1.500g');
+    });
   });
 });
