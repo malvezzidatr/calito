@@ -5,9 +5,11 @@ import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction } from '../ai/meal.prompt';
 import { MealType } from '@prisma/client';
-import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal } from './meal.praise';
-import { formatMealConfirmation, formatDailyResume } from './meal.format';
+import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './meal.praise';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume } from './meal.format';
 import { validateMealExtraction } from './meal.validation';
+import { startOfDaysAgo, startOfNextDay } from './day-bounds';
+import { buildWeeklySummary } from './weekly.summary';
 
 @Injectable()
 export class MealsService {
@@ -112,11 +114,44 @@ export class MealsService {
         await this.whatsappService.sendText(jid, message);
     }
 
+    async weeklyResume(phone: string, jid: string) {
+        const user = await this.usersRepository.findByPhone(phone);
+        if (!user) {
+            this.logger.warn(`User não encontrado: ${phone}`);
+            return;
+        }
+
+        const today = new Date();
+        const startInclusive = startOfDaysAgo(today, 6);
+        const endExclusive   = startOfNextDay(today);
+
+        const meals = await this.mealsRepository.findInRangeByUser(user.id, startInclusive, endExclusive);
+
+        const goals: DailyGoals = {
+            calorie: user.calorie_goal,
+            protein: user.protein_goal,
+            carbs:   user.carbs_goal,
+            fat:     user.fat_goal,
+        };
+
+        const summary = buildWeeklySummary(meals, today, goals);
+
+        const praise = pickWeeklyResumePraise({
+            daysWithinGoal: summary.daysWithinGoal,
+            totalDays: summary.days.length,
+            hasAnyMeal: summary.days.some((d) => d.hasMeals),
+            calorieGoal: user.calorie_goal,
+        });
+
+        const message = formatWeeklyResume(summary, goals, praise);
+        await this.whatsappService.sendText(jid, message);
+    }
+
     private inferMealTypeByHour(now: Date): MealType {
-        const h = now.getHours();
-        if (h >= 5 && h < 11) return 'BREAKFAST';
-        if (h >= 11 && h < 15) return 'LUNCH';
-        if (h >= 18 && h < 23) return 'DINNER';
+        const hour = now.getHours();
+        if (hour >= 5 && hour < 11) return 'BREAKFAST';
+        if (hour >= 11 && hour < 15) return 'LUNCH';
+        if (hour >= 18 && hour < 23) return 'DINNER';
         return 'SNACK';
     }
 }

@@ -1,4 +1,4 @@
-import { startOfDay, startOfNextDay } from '../day-bounds';
+import { startOfDay, startOfDaysAgo, startOfNextDay } from '../day-bounds';
 
 describe('startOfDay (America/Sao_Paulo)', () => {
   it('returns 00:00 SP (03:00 UTC) for an afternoon instant in SP', () => {
@@ -33,4 +33,16 @@ describe('startOfNextDay', () => {
     const result = startOfNextDay(new Date('2026-05-31T18:00:00Z'));
     expect(result.toISOString()).toBe('2026-06-01T03:00:00.000Z');
   });
+});
+
+describe('startOfDaysAgo', () => {
+  it('returns start day seven days ago', () => {
+    const result = startOfDaysAgo(new Date('2026-05-31T18:00:00Z'), 6);
+    expect(result.toISOString()).toBe('2026-05-25T03:00:00.000Z')
+  })
+
+  it('returns start day 1 month ago', () => {
+    const result = startOfDaysAgo(new Date('2026-05-31T18:00:00Z'), 31);
+    expect(result.toISOString()).toBe('2026-04-30T03:00:00.000Z')
+  })
 });

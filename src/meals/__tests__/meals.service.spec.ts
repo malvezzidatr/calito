@@ -4,8 +4,6 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 
 import { Test } from '@nestjs/testing';
 import { MealsService } from '../meals.service';
-import { formatMealConfirmation } from '../meal.format';
-import { pickPraise } from '../meal.praise';
 import { MealsRepository } from '../meals.repository';
 import { AiService } from '../../ai/ai.service';
 import { UsersRepository } from '../../users/users.repository';
@@ -18,6 +16,7 @@ describe('MealsService', () => {
   let create: jest.Mock;
   let sumDailyByUser: jest.Mock;
   let findDailyByUser: jest.Mock;
+  let findInRangeByUser: jest.Mock;
   let sendText: jest.Mock;
 
   beforeEach(async () => {
@@ -26,6 +25,7 @@ describe('MealsService', () => {
     create = jest.fn().mockResolvedValue(undefined);
     sumDailyByUser = jest.fn().mockResolvedValue({ calories: 0, protein: 0, carbs: 0, fat: 0 });
     findDailyByUser = jest.fn().mockResolvedValue([]);
+    findInRangeByUser = jest.fn().mockResolvedValue([]);
     sendText = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
@@ -33,7 +33,7 @@ describe('MealsService', () => {
         MealsService,
         { provide: AiService,        useValue: { chat } },
         { provide: UsersRepository,  useValue: { findByPhone } },
-        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser } },
+        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser } },
         { provide: WhatsappService,  useValue: { sendText } },
       ],
     }).compile();
@@ -280,104 +280,75 @@ describe('MealsService', () => {
       expect(message).toContain('Nenhuma refeição registrada hoje');
     });
   });
-});
 
-describe('formatMealConfirmation', () => {
-  const sampleExtraction = {
-    description: 'arroz e frango',
-    calories: 650,
-    protein: 45,
-    carbs: 75,
-    fat: 12,
-    meal_type: 'LUNCH' as const,
-  };
+  describe('weeklyResume', () => {
+    it('returns silently when user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
 
-  it('formats lunch with calories and macros', () => {
-    const result = formatMealConfirmation('LUNCH', sampleExtraction, 'Mandou bem!');
-    expect(result).toContain('Almoço');
-    expect(result).toContain('650kcal');
-    expect(result).toContain('P: 45g');
-    expect(result).toContain('C: 75g');
-    expect(result).toContain('G: 12g');
-    expect(result).toContain('Mandou bem!');
-  });
+      await service.weeklyResume('5511999', '5511999@s.whatsapp.net');
 
-  it.each([
-    ['BREAKFAST', 'Café'],
-    ['DINNER',    'Jantar'],
-    ['SNACK',     'Lanche'],
-  ] as const)('uses label "%s" for meal_type %s', (mealType, label) => {
-    const result = formatMealConfirmation(mealType, sampleExtraction, 'praise');
-    expect(result).toContain(label);
-  });
-});
-
-describe('pickPraise', () => {
-  beforeEach(() => {
-    jest.spyOn(Math, 'random').mockReturnValue(0);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it('picks from PROTEIN pool when protein contributes >= 40% of calories', () => {
-    const result = pickPraise({
-      description: 'whey com leite',
-      calories: 200,
-      protein: 30,
-      carbs: 10,
-      fat: 4,
-      meal_type: null,
+      expect(findInRangeByUser).not.toHaveBeenCalled();
+      expect(sendText).not.toHaveBeenCalled();
     });
-    expect(result).toMatch(/proteína|músculos|proteica/i);
-  });
 
-  it('picks from CARB pool when carbs contribute >= 55% of calories', () => {
-    const result = pickPraise({
-      description: 'pão e suco',
-      calories: 300,
-      protein: 5,
-      carbs: 50,
-      fat: 4,
-      meal_type: null,
-    });
-    expect(result).toMatch(/energia|carboidrato|treino|combustível/i);
-  });
+    it('queries meals with a 7-day window ending on tomorrow start (end-exclusive)', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-12T15:00:00Z'));
 
-  it('picks from HEAVY pool when calories >= 700 regardless of macros', () => {
-    const result = pickPraise({
-      description: 'whopper e coca',
-      calories: 920,
-      protein: 35,
-      carbs: 70,
-      fat: 45,
-      meal_type: null,
-    });
-    expect(result).toMatch(/anotado|registrei|registrado|reforçado|densa|cheia|fica de olho/i);
-  });
+      findByPhone.mockResolvedValue({
+        id: 'user-1',
+        calorie_goal: 2150, protein_goal: 160, carbs_goal: 240, fat_goal: 72,
+      });
 
-  it('picks from BALANCED pool when no macro dominates', () => {
-    const result = pickPraise({
-      description: 'arroz e frango',
-      calories: 650,
-      protein: 45,
-      carbs: 75,
-      fat: 12,
-      meal_type: null,
-    });
-    expect(result).toMatch(/equilibrada|distribuídos|combinação|lugar|anotado/i);
-  });
+      await service.weeklyResume('phone-1', 'jid-1');
 
-  it('falls back to BALANCED when calories is 0 (avoids divide-by-zero)', () => {
-    const result = pickPraise({
-      description: 'algo estranho',
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      meal_type: null,
+      expect(findInRangeByUser).toHaveBeenCalledTimes(1);
+      const [userId, start, endExcl] = findInRangeByUser.mock.calls[0];
+      expect(userId).toBe('user-1');
+      expect(start.toISOString()).toBe('2026-05-06T03:00:00.000Z');
+      expect(endExcl.toISOString()).toBe('2026-05-13T03:00:00.000Z');
+
+      jest.useRealTimers();
     });
-    expect(result).toMatch(/equilibrada|distribuídos|combinação|lugar|anotado/i);
+
+    it('sends a weekly resume with averages, days-within-goal and praise', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-12T15:00:00Z'));
+
+      findByPhone.mockResolvedValue({
+        id: 'user-1',
+        calorie_goal: 2150, protein_goal: 160, carbs_goal: 240, fat_goal: 72,
+      });
+      findInRangeByUser.mockResolvedValue([
+        { created_at: new Date('2026-05-06T13:00:00Z'), meal_type: 'LUNCH', calories: 2000, protein: 130, carbs: 220, fat: 55 },
+        { created_at: new Date('2026-05-07T13:00:00Z'), meal_type: 'LUNCH', calories: 2050, protein: 130, carbs: 220, fat: 55 },
+        { created_at: new Date('2026-05-08T13:00:00Z'), meal_type: 'LUNCH', calories: 1800, protein: 110, carbs: 200, fat: 50 },
+        { created_at: new Date('2026-05-11T13:00:00Z'), meal_type: 'LUNCH', calories: 1900, protein: 120, carbs: 210, fat: 50 },
+        { created_at: new Date('2026-05-12T13:00:00Z'), meal_type: 'LUNCH', calories: 2100, protein: 140, carbs: 230, fat: 60 },
+      ]);
+
+      await service.weeklyResume('phone-1', 'jid-1');
+
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('📊 Resumo da semana');
+      expect(message).toContain('Média diária');
+      expect(message).toContain('Dias dentro da meta');
+
+      jest.useRealTimers();
+    });
+
+    it('sends the empty-week placeholder when no meals were registered', async () => {
+      findByPhone.mockResolvedValue({
+        id: 'user-1', calorie_goal: 2150, protein_goal: 160, carbs_goal: 240, fat_goal: 72,
+      });
+      findInRangeByUser.mockResolvedValue([]);
+
+      await service.weeklyResume('phone-1', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Nenhuma refeição registrada essa semana');
+    });
   });
 });

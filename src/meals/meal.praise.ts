@@ -126,3 +126,34 @@ export function pickPraise(extraction: MealExtraction): string {
 
   return pool[Math.floor(Math.random() * pool.length)];
 }
+
+export function pickWeeklyResumePraise(ctx: {
+  daysWithinGoal: number;
+  totalDays: number;
+  hasAnyMeal: boolean;
+  calorieGoal: number | null;
+}): string {
+  const { daysWithinGoal, totalDays, hasAnyMeal, calorieGoal } = ctx;
+
+  if (!hasAnyMeal) {
+    return 'Bora começar a registrar pra eu te mostrar como tá indo a semana 🚀';
+  }
+
+  if (calorieGoal === null || calorieGoal <= 0) {
+    return 'Tô anotando suas refeições! Quando você fechar suas metas no onboarding, comparo a semana aqui 📝';
+  }
+
+  if (daysWithinGoal === totalDays) {
+    return 'Semana perfeita! Tá voando 🏆';
+  }
+  if (daysWithinGoal >= 5) {
+    return 'Semana sólida! Mantém essa consistência 🏆';
+  }
+  if (daysWithinGoal >= 3) {
+    return 'Boa semana! Dá pra apertar um pouquinho mais 💪';
+  }
+  if (daysWithinGoal >= 1) {
+    return 'Tem dias bons aí, vamos firmar essa rotina 🚀';
+  }
+  return 'Bora apertar essa semana, foco na meta 💪';
+}

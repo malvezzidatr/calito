@@ -59,4 +59,15 @@ export class MealsRepository {
     });
   }
 
+  findInRangeByUser(user_id: string, startInclusive: Date, endExclusive: Date) {
+    return this.prisma.meal.findMany({
+      where: {
+        user_id,
+        created_at: { gte: startInclusive, lt: endExclusive },
+      },
+      orderBy: { created_at: 'asc' },
+      select: { created_at: true, meal_type: true, calories: true, protein: true, carbs: true, fat: true },
+    });
+  }
+
 }

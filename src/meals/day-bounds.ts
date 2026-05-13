@@ -9,11 +9,15 @@ const dayFormatter = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 });
 
-export function startOfDay(d: Date): Date {
-  const [y, m, day] = dayFormatter.format(d).split('-').map(Number);
+export function startOfDay(date: Date): Date {
+  const [y, m, day] = dayFormatter.format(date).split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, day, SP_OFFSET_HOURS, 0, 0, 0));
 }
 
-export function startOfNextDay(d: Date): Date {
-  return new Date(startOfDay(d).getTime() + DAY_MS);
+export function startOfNextDay(date: Date): Date {
+  return new Date(startOfDay(date).getTime() + DAY_MS);
+}
+
+export function startOfDaysAgo(date: Date, howManyDays: number): Date {
+  return new Date(startOfDay(date).getTime() - howManyDays * DAY_MS);
 }

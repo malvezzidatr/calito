@@ -20,6 +20,39 @@ export type DailyGoals = {
 
 export type DailyMeal = { meal_type: MealType; calories: number };
 
+export type WeeklyDayStats = {
+  date: Date;
+  totals: DailyTotals;
+  hasMeals: boolean;
+  isWithinGoal: boolean;
+};
+
+export type WeeklySummary = {
+  startDate: Date;
+  endDate: Date;
+  days: WeeklyDayStats[];
+  averages: DailyTotals;
+  daysWithinGoal: number;
+  bestDay?: WeeklyDayStats;
+  highestDay?: WeeklyDayStats;
+};
+
+const shortDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: 'America/Sao_Paulo',
+  day: '2-digit',
+  month: '2-digit',
+});
+
+const WEEKDAY_LABELS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+function formatShortDate(d: Date): string {
+  return shortDateFormatter.format(d);
+}
+
+function formatWeekday(spDayStart: Date): string {
+  return WEEKDAY_LABELS_PT[spDayStart.getUTCDay()];
+}
+
 export function formatMealConfirmation(mealType: MealType, extraction: MealExtraction, praise: string): string {
   const label = MEAL_LABELS[mealType];
   return [
@@ -29,12 +62,6 @@ export function formatMealConfirmation(mealType: MealType, extraction: MealExtra
     `🧈 G: ${extraction.fat}g`,
     praise,
   ].join('\n');
-}
-
-function formatDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  return `${dd}/${mm}`;
 }
 
 function macroLine(emoji: string, label: string, total: number, goal: number | null, unit: 'kcal' | 'g'): string {
@@ -68,7 +95,7 @@ export function formatDailyResume(
   praise: string,
 ): string {
   const lines: string[] = [
-    `📊 Resumo de hoje (${formatDate(date)})`,
+    `📊 Resumo de hoje (${formatShortDate(date)})`,
     '',
     macroLine('🔥', 'Calorias',     totals.calories, goals.calorie, 'kcal'),
     macroLine('🥩', 'Proteína',     Math.round(totals.protein), goals.protein, 'g'),
@@ -84,6 +111,47 @@ export function formatDailyResume(
     }
   } else {
     lines.push('', 'Nenhuma refeição registrada hoje 🍽️');
+  }
+
+  lines.push('', praise);
+  return lines.join('\n');
+}
+
+export function formatWeeklyResume(
+  summary: WeeklySummary,
+  goals: DailyGoals,
+  praise: string,
+): string {
+  const header = `📊 Resumo da semana (${formatShortDate(summary.startDate)} - ${formatShortDate(summary.endDate)})`;
+
+  const hasAnyMeal = summary.days.some((d) => d.hasMeals);
+  if (!hasAnyMeal) {
+    return [header, '', 'Nenhuma refeição registrada essa semana 🍽️', '', praise].join('\n');
+  }
+
+  const lines: string[] = [header, ''];
+
+  lines.push(`Média diária: ${Math.round(summary.averages.calories).toLocaleString('pt-BR')}kcal`);
+
+  if (goals.calorie !== null) {
+    lines.push(`Meta: ${goals.calorie.toLocaleString('pt-BR')}kcal`);
+    const emoji = summary.daysWithinGoal >= 5 ? ' ✅' : '';
+    lines.push(`Dias dentro da meta: ${summary.daysWithinGoal} de ${summary.days.length}${emoji}`);
+  }
+
+  lines.push('');
+  lines.push(`🥩 Proteína média: ${Math.round(summary.averages.protein)}g/dia`);
+  lines.push(`🍚 Carboidrato médio: ${Math.round(summary.averages.carbs)}g/dia`);
+  lines.push(`🧈 Gordura média: ${Math.round(summary.averages.fat)}g/dia`);
+
+  if (summary.bestDay || summary.highestDay) {
+    lines.push('');
+    if (summary.bestDay) {
+      lines.push(`Melhor dia: ${formatWeekday(summary.bestDay.date)} (${summary.bestDay.totals.calories.toLocaleString('pt-BR')}kcal)`);
+    }
+    if (summary.highestDay) {
+      lines.push(`Dia mais alto: ${formatWeekday(summary.highestDay.date)} (${summary.highestDay.totals.calories.toLocaleString('pt-BR')}kcal)`);
+    }
   }
 
   lines.push('', praise);

@@ -1,4 +1,4 @@
-import { pickGoalAwarePraise, pickPraise, pickDailyResumePraise, subtractMeal } from '../meal.praise';
+import { pickGoalAwarePraise, pickPraise, pickDailyResumePraise, pickWeeklyResumePraise, subtractMeal } from '../meal.praise';
 import { MealExtraction } from '../../ai/meal.prompt';
 
 const baseExtraction: MealExtraction = {
@@ -219,5 +219,116 @@ describe('pickDailyResumePraise', () => {
   it('returns a goal-less fallback message when calorieGoal is 0', () => {
     const result = pickDailyResumePraise({ totalCalories: 1500, calorieGoal: 0 });
     expect(result).toContain('Tô anotando');
+  });
+});
+
+describe('pickPraise', () => {
+  beforeEach(() => {
+    jest.spyOn(Math, 'random').mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('picks from PROTEIN pool when protein contributes >= 40% of calories', () => {
+    const result = pickPraise({
+      description: 'whey com leite',
+      calories: 200,
+      protein: 30,
+      carbs: 10,
+      fat: 4,
+      meal_type: null,
+    });
+    expect(result).toMatch(/proteína|músculos|proteica/i);
+  });
+
+  it('picks from CARB pool when carbs contribute >= 55% of calories', () => {
+    const result = pickPraise({
+      description: 'pão e suco',
+      calories: 300,
+      protein: 5,
+      carbs: 50,
+      fat: 4,
+      meal_type: null,
+    });
+    expect(result).toMatch(/energia|carboidrato|treino|combustível/i);
+  });
+
+  it('picks from HEAVY pool when calories >= 700 regardless of macros', () => {
+    const result = pickPraise({
+      description: 'whopper e coca',
+      calories: 920,
+      protein: 35,
+      carbs: 70,
+      fat: 45,
+      meal_type: null,
+    });
+    expect(result).toMatch(/anotado|registrei|registrado|reforçado|densa|cheia|fica de olho/i);
+  });
+
+  it('picks from BALANCED pool when no macro dominates', () => {
+    const result = pickPraise({
+      description: 'arroz e frango',
+      calories: 650,
+      protein: 45,
+      carbs: 75,
+      fat: 12,
+      meal_type: null,
+    });
+    expect(result).toMatch(/equilibrada|distribuídos|combinação|lugar|anotado/i);
+  });
+
+  it('falls back to BALANCED when calories is 0 (avoids divide-by-zero)', () => {
+    const result = pickPraise({
+      description: 'algo estranho',
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      meal_type: null,
+    });
+    expect(result).toMatch(/equilibrada|distribuídos|combinação|lugar|anotado/i);
+  });
+});
+
+describe('pickWeeklyResumePraise', () => {
+  it('returns a "começar a registrar" message when no day has meals', () => {
+    const result = pickWeeklyResumePraise({
+      daysWithinGoal: 0,
+      totalDays: 7,
+      hasAnyMeal: false,
+      calorieGoal: 2150,
+    });
+    expect(result).toContain('começar a registrar');
+  });
+
+  it('returns a goal-less message when the user has registered meals but calorieGoal is null', () => {
+    const result = pickWeeklyResumePraise({
+      daysWithinGoal: 0,
+      totalDays: 7,
+      hasAnyMeal: true,
+      calorieGoal: null,
+    });
+    expect(result).toContain('Tô anotando');
+  });
+
+  it.each<[number, RegExp]>([
+    [7, /Semana perfeita/i],
+    [6, /Semana sólida/i],
+    [5, /Semana sólida/i],
+    [4, /Boa semana/i],
+    [3, /Boa semana/i],
+    [2, /Tem dias bons/i],
+    [1, /Tem dias bons/i],
+    [0, /Bora apertar/i],
+  ])('returns the right cascade message for %i days within goal', (daysWithinGoal, expected) => {
+    const result = pickWeeklyResumePraise({
+      daysWithinGoal,
+      totalDays: 7,
+      hasAnyMeal: true,
+      calorieGoal: 2150,
+    });
+    expect(result).toMatch(expected);
   });
 });
