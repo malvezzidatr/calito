@@ -3,8 +3,9 @@ import { UsersRepository } from 'src/users/users.repository';
 import { OnboardingStep } from './onboarding.constants';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
 import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, WEIGHT_QUESTION, welcomeMessage } from './onboarding.messages';
-import { ActivityLevel, Gender } from '@prisma/client';
 import { calcGoals } from './nutrition.calculator';
+import { parseDecimal, parseHeightCm, parseInteger } from './numeric.parser';
+import { matchActivity, matchGender, matchGoal } from './profile.match';
 
 @Injectable()
 export class OnboardingService {
@@ -67,57 +68,31 @@ export class OnboardingService {
     }
 
     private async handleWaitingGoal(phone: string, text: string, jid: string) {
-        const normalized = text.trim();
-        switch (normalized) {
-            case "1":
-                await this.users.update(phone, {
-                    goal: 'LOSE',
-                    onboarding_step: OnboardingStep.WaitingWeight
-                });
-                await this.whatsapp.sendText(jid, GOAL_IS_LOSE);
-                break;
-            case "2":
-                await this.users.update(phone, {
-                    goal: 'MAINTAIN',
-                    onboarding_step: OnboardingStep.WaitingWeight
-                });
-                await this.whatsapp.sendText(jid, GOAL_IS_MAINTAIN);
-                break;
-
-            case "3":
-                await this.users.update(phone, {
-                    goal: 'GAIN',
-                    onboarding_step: OnboardingStep.WaitingWeight
-                });
-                await this.whatsapp.sendText(jid, GOAL_IS_GAIN);
-                break;
-
-            default:
-                await this.whatsapp.sendText(jid, INVALID_OPTION);
-                await this.whatsapp.sendText(jid, GOAL_QUESTION);
-                return;
-
+        const goal = matchGoal(text);
+        if (goal === null) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
+            await this.whatsapp.sendText(jid, GOAL_QUESTION);
+            return;
         }
-        await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
 
+        await this.users.update(phone, {
+            goal,
+            onboarding_step: OnboardingStep.WaitingWeight,
+        });
+
+        const confirmations = { LOSE: GOAL_IS_LOSE, MAINTAIN: GOAL_IS_MAINTAIN, GAIN: GOAL_IS_GAIN };
+        await this.whatsapp.sendText(jid, confirmations[goal]);
+        await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
     }
 
     private async handleWaitingWeight(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_weight — phone=${phone}, text=${text}`);
-        const normalized = text.trim().replace(',', '.');
-        const weight = Number(normalized);
+        const weight = parseDecimal(text);
 
-        if (!Number.isFinite(weight)) {
+        if (weight === null || weight < 20 || weight > 350) {
             await this.whatsapp.sendText(jid, INVALID_OPTION);
             await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
             return;
         }
-
-        if (weight <= 0 || weight > 350 || weight < 20) {
-            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
-            await this.whatsapp.sendText(jid, WEIGHT_QUESTION);
-            return;
-        } 
 
         await this.users.update(phone, {
             weight,
@@ -127,21 +102,13 @@ export class OnboardingService {
     }
 
     private async handleWaitingHeight(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_height — phone=${phone}, text=${text}`);
-        const normalized = text.trim().replace(',', '.');
-        const height = Number(normalized);
+        const height = parseHeightCm(text);
 
-        if (!Number.isFinite(height)) {
+        if (height === null || height < 100 || height > 250) {
             await this.whatsapp.sendText(jid, INVALID_OPTION);
             await this.whatsapp.sendText(jid, HEIGHT_QUESTION);
             return;
         }
-
-        if (height <= 0 || height > 250 || height < 100) {
-            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
-            await this.whatsapp.sendText(jid, HEIGHT_QUESTION);
-            return;
-        } 
 
         await this.users.update(phone, {
             height,
@@ -151,10 +118,9 @@ export class OnboardingService {
     }
 
     private async handleWaitingAge(phone: string, text: string, jid: string) {
-        this.logger.log(`TODO waiting_age — phone=${phone}, text=${text}`);
-        const age = Number(text.trim());
-        if (!Number.isInteger(age) || age < 13 || age > 90) {
-            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
+        const age = parseInteger(text);
+        if (age === null || age < 13 || age > 90) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
             await this.whatsapp.sendText(jid, AGE_QUESTION);
             return;
         }
@@ -167,13 +133,9 @@ export class OnboardingService {
     }
 
     private async handleWaitingGender(phone: string, text: string, jid: string) {
-        const normalized = text.trim().toUpperCase();
-        let gender: Gender;
-
-        if (normalized === 'M') gender = 'MALE';
-        else if (normalized === 'F') gender = 'FEMALE';
-        else {
-            await this.whatsapp.sendText(jid, INVALID_OPTION); // Alterar essa mensagem depois
+        const gender = matchGender(text);
+        if (gender === null) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
             await this.whatsapp.sendText(jid, GENDER_QUESTION);
             return;
         }
@@ -186,32 +148,19 @@ export class OnboardingService {
     }
 
     private async handleWaitingActivity(phone: string, text: string, jid: string) {
-        const normalized = text.trim();
-        let activityLevel: ActivityLevel;
         const user = await this.users.findByPhone(phone);
-        if (!user) {
-            return;
-        }
+        if (!user) return;
 
         if (!user.gender || !user.weight || !user.height || !user.age || !user.goal) {
             this.logger.error(`Onboarding incompleto pra ${phone}`);
             return;
         }
-        
-        switch (normalized) {
-            case "1": activityLevel = 'SEDENTARY';
-                break;
-            case "2": activityLevel = 'LIGHT';
-                break;
-            case "3": activityLevel = 'MODERATE';
-                break;
-            case "4": activityLevel = 'INTENSE';
-                break;
-            case "5": activityLevel = 'VERY_INTENSE';
-                break;
-            default:
-                await this.whatsapp.sendText(jid, INVALID_OPTION);
-                return await this.whatsapp.sendText(jid, ACTIVITY_QUESTION);
+
+        const activityLevel = matchActivity(text);
+        if (activityLevel === null) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
+            await this.whatsapp.sendText(jid, ACTIVITY_QUESTION);
+            return;
         }
 
         const goals = calcGoals({
@@ -220,7 +169,7 @@ export class OnboardingService {
             goal: user.goal,
             height: user.height,
             weight: user.weight,
-            activityLevel                  
+            activityLevel,
         });
 
         await this.users.update(phone, {
