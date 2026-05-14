@@ -104,12 +104,14 @@ export function formatDailyResume(
   goals: DailyGoals,
   praise: string,
 ): string {
+  const header = `📊 Resumo de hoje (${formatShortDate(date)})`;
+
   if (totals.calories === 0) {
-    return EMPTY_DAY_MESSAGE;
+    return `${header}\n\n${EMPTY_DAY_MESSAGE}`;
   }
 
   const lines: string[] = [
-    `📊 Resumo de hoje (${formatShortDate(date)})`,
+    header,
     '',
     macroLine('🔥', 'Calorias',     totals.calories, goals.calorie, 'kcal'),
     macroLine('🥩', 'Proteína',     Math.round(totals.protein), goals.protein, 'g'),
@@ -172,26 +174,35 @@ export function formatWeeklyResume(
   return lines.join('\n');
 }
 
-export function formatMacroResume(macro: Macro, total: number, goal: number | null): string {
+export function formatMacroResume(macro: Macro, total: number, goal: number | null, date: Date): string {
   const { emoji, label, unit } = MACRO_LABELS[macro];
   const isKcal = macro === 'calorie';
   const totalRounded = Math.round(total);
   const fmt = (n: number) => (isKcal ? n.toLocaleString('pt-BR') : String(n));
 
+  const header = `📊 ${label} de hoje (${formatShortDate(date)})`;
+
   if (totalRounded === 0) {
-    return EMPTY_DAY_MESSAGE;
+    return `${header}\n\n${EMPTY_DAY_MESSAGE}`;
   }
 
   if (goal === null) {
-    return `${emoji} ${label}: ${fmt(totalRounded)}${unit} hoje\n\nQuando você fechar suas metas no onboarding, comparo aqui 📝`;
+    return [
+      header,
+      '',
+      `${emoji} ${label}: ${fmt(totalRounded)}${unit}`,
+      '',
+      'Quando você fechar suas metas no onboarding, comparo aqui 📝',
+    ].join('\n');
   }
 
   const baseLine = `${emoji} ${label}: ${fmt(totalRounded)}${unit} / ${fmt(goal)}${unit}`;
 
   if (totalRounded >= goal) {
-    return `${baseLine}\n\nMeta batida! Mandou bem 💪`;
+    return [header, '', baseLine, '', 'Meta batida! Mandou bem 💪'].join('\n');
   }
 
   const faltam = goal - totalRounded;
-  return `${baseLine}\n\nFaltam ${fmt(faltam)}${unit}, bora completar! 💪`;
+  const lineWithFaltam = `${baseLine} (faltam ${fmt(faltam)}${unit})`;
+  return [header, '', lineWithFaltam, '', 'Bora completar essa meta! 💪'].join('\n');
 }

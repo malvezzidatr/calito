@@ -161,7 +161,8 @@ export class MealsService {
             return;
         }
 
-        const totals = await this.mealsRepository.sumDailyByUser(user.id, new Date());
+        const today = new Date();
+        const totals = await this.mealsRepository.sumDailyByUser(user.id, today);
 
         const goalsByMacro: Record<typeof macro, number | null> = {
             calorie: user.calorie_goal,
@@ -176,7 +177,7 @@ export class MealsService {
             fat:     totals.fat,
         };
 
-        const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro]);
+        const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro], today);
         await this.whatsappService.sendText(jid, message);
     }
 

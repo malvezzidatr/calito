@@ -164,11 +164,11 @@ describe('formatDailyResume', () => {
   describe('empty day (totals.calories === 0)', () => {
     const zeroTotals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
-    it('returns the empty-day message and skips header, macros, meal list and praise', () => {
+    it('returns header + empty-day message and skips macros, meal list and praise', () => {
       const result = formatDailyResume(date, [], zeroTotals, baseGoals, 'praise-ignored');
+      expect(result).toContain('📊 Resumo de hoje (12/05)');
       expect(result).toContain('Você ainda não registrou nada hoje');
       expect(result).toContain('Me manda o que comeu');
-      expect(result).not.toContain('📊 Resumo de hoje');
       expect(result).not.toContain('🔥 Calorias');
       expect(result).not.toContain('praise-ignored');
     });
@@ -292,86 +292,91 @@ describe('formatWeeklyResume', () => {
 
 describe('formatMacroResume', () => {
   it.each([
-    ['protein', 95,  160,  '🥩 Proteína: 95g / 160g',    'Faltam 65g'],
-    ['carbs',   200, 240,  '🍚 Carboidrato: 200g / 240g', 'Faltam 40g'],
-    ['fat',     50,  72,   '🧈 Gordura: 50g / 72g',       'Faltam 22g'],
-  ] as const)('formats %s when below goal with the right emoji, label and remaining grams', (macro, total, goal, headLine, faltam) => {
-    const result = formatMacroResume(macro, total, goal);
-    expect(result).toContain(headLine);
-    expect(result).toContain(faltam);
+    ['protein', 95,  160, 'Proteína',    '🥩 Proteína: 95g / 160g (faltam 65g)'],
+    ['carbs',   200, 240, 'Carboidrato', '🍚 Carboidrato: 200g / 240g (faltam 40g)'],
+    ['fat',     50,  72,  'Gordura',     '🧈 Gordura: 50g / 72g (faltam 22g)'],
+  ] as const)('formats %s below goal with header, embedded "faltam" and generic praise', (macro, total, goal, headerLabel, dataLine) => {
+    const result = formatMacroResume(macro, total, goal, date);
+    expect(result).toContain(`📊 ${headerLabel} de hoje (12/05)`);
+    expect(result).toContain(dataLine);
+    expect(result).toContain('Bora completar essa meta!');
     expect(result).toContain('💪');
   });
 
   it('shows "Meta batida!" when total reaches the goal exactly', () => {
-    const result = formatMacroResume('protein', 160, 160);
+    const result = formatMacroResume('protein', 160, 160, date);
+    expect(result).toContain('📊 Proteína de hoje (12/05)');
     expect(result).toContain('🥩 Proteína: 160g / 160g');
     expect(result).toContain('Meta batida');
-    expect(result).not.toContain('Faltam');
+    expect(result).not.toContain('faltam');
   });
 
   it('shows "Meta batida!" when total goes over the goal', () => {
-    const result = formatMacroResume('protein', 200, 160);
+    const result = formatMacroResume('protein', 200, 160, date);
     expect(result).toContain('🥩 Proteína: 200g / 160g');
     expect(result).toContain('Meta batida');
   });
 
   it('rounds float totals to integers (Prisma decimals)', () => {
-    const result = formatMacroResume('carbs', 199.7, 240);
-    expect(result).toContain('🍚 Carboidrato: 200g / 240g');
-    expect(result).toContain('Faltam 40g');
+    const result = formatMacroResume('carbs', 199.7, 240, date);
+    expect(result).toContain('🍚 Carboidrato: 200g / 240g (faltam 40g)');
   });
 
   it('shows the no-goal fallback message when goal is null', () => {
-    const result = formatMacroResume('fat', 30, null);
-    expect(result).toContain('🧈 Gordura: 30g hoje');
+    const result = formatMacroResume('fat', 30, null, date);
+    expect(result).toContain('📊 Gordura de hoje (12/05)');
+    expect(result).toContain('🧈 Gordura: 30g');
     expect(result).toContain('Quando você fechar suas metas no onboarding');
-    expect(result).not.toContain('/');
-    expect(result).not.toContain('Faltam');
+    expect(result).not.toContain('/ ');
+    expect(result).not.toContain('faltam');
   });
 
   describe('calorie unit', () => {
     it('formats calorie totals with the 🔥 emoji, no g suffix and pt-BR thousand separators', () => {
-      const result = formatMacroResume('calorie', 420, 2282);
-      expect(result).toContain('🔥 Calorias: 420 / 2.282');
-      expect(result).toContain('Faltam 1.862');
-      expect(result).not.toContain('g');
+      const result = formatMacroResume('calorie', 420, 2282, date);
+      expect(result).toContain('📊 Calorias de hoje (12/05)');
+      expect(result).toContain('🔥 Calorias: 420 / 2.282 (faltam 1.862)');
       expect(result).not.toContain('kcal');
     });
 
     it('shows "Meta batida" when calorie total reaches the goal', () => {
-      const result = formatMacroResume('calorie', 2300, 2282);
+      const result = formatMacroResume('calorie', 2300, 2282, date);
       expect(result).toContain('🔥 Calorias: 2.300 / 2.282');
       expect(result).toContain('Meta batida');
     });
 
     it('shows the no-goal fallback for calorie without unit suffix', () => {
-      const result = formatMacroResume('calorie', 1500, null);
-      expect(result).toContain('🔥 Calorias: 1.500 hoje');
+      const result = formatMacroResume('calorie', 1500, null, date);
+      expect(result).toContain('🔥 Calorias: 1.500');
       expect(result).toContain('Quando você fechar suas metas no onboarding');
       expect(result).not.toContain('1.500g');
     });
   });
 
   describe('empty day (total rounds to 0)', () => {
-    it.each(['calorie', 'protein', 'carbs', 'fat'] as const)(
-      'returns the empty-day message for %s when total is 0',
-      (macro) => {
-        const result = formatMacroResume(macro, 0, 2000);
-        expect(result).toContain('Você ainda não registrou nada hoje');
-        expect(result).toContain('Me manda o que comeu');
-        expect(result).not.toContain('Faltam');
-        expect(result).not.toContain('Meta batida');
-      },
-    );
+    it.each([
+      ['calorie', 'Calorias'],
+      ['protein', 'Proteína'],
+      ['carbs',   'Carboidrato'],
+      ['fat',     'Gordura'],
+    ] as const)('returns header + empty-day message for %s when total is 0', (macro, headerLabel) => {
+      const result = formatMacroResume(macro, 0, 2000, date);
+      expect(result).toContain(`📊 ${headerLabel} de hoje (12/05)`);
+      expect(result).toContain('Você ainda não registrou nada hoje');
+      expect(result).toContain('Me manda o que comeu');
+      expect(result).not.toContain('faltam');
+      expect(result).not.toContain('Meta batida');
+    });
 
     it('returns the empty-day message even when goal is null (empty wins over no-goal fallback)', () => {
-      const result = formatMacroResume('protein', 0, null);
+      const result = formatMacroResume('protein', 0, null, date);
+      expect(result).toContain('📊 Proteína de hoje (12/05)');
       expect(result).toContain('Você ainda não registrou nada hoje');
       expect(result).not.toContain('onboarding');
     });
 
     it('returns the empty-day message when a fractional total rounds to 0', () => {
-      const result = formatMacroResume('protein', 0.3, 160);
+      const result = formatMacroResume('protein', 0.3, 160, date);
       expect(result).toContain('Você ainda não registrou nada hoje');
     });
   });

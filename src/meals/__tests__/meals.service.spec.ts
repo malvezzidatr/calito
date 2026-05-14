@@ -270,15 +270,15 @@ describe('MealsService', () => {
       expect(message).toContain('Tô anotando');
     });
 
-    it('sends the empty-day message when no meals were registered today', async () => {
+    it('sends header + empty-day message when no meals were registered today', async () => {
       findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2000 });
       findDailyByUser.mockResolvedValue([]);
 
       await service.dailyResume('phone-1', 'jid-1');
 
       const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('📊 Resumo de hoje');
       expect(message).toContain('Você ainda não registrou nada hoje');
-      expect(message).not.toContain('📊 Resumo de hoje');
       expect(message).not.toContain('🔥 Calorias');
     });
   });
@@ -385,8 +385,9 @@ describe('MealsService', () => {
       await service.macroResume('phone-1', 'quanta proteína comi hoje?', 'jid-1');
 
       const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('🥩 Proteína: 95g / 160g');
-      expect(message).toContain('Faltam 65g');
+      expect(message).toContain('📊 Proteína de hoje');
+      expect(message).toContain('🥩 Proteína: 95g / 160g (faltam 65g)');
+      expect(message).toContain('Bora completar essa meta!');
     });
 
     it('replies with carbs when the text mentions "carbo"', async () => {
@@ -406,7 +407,8 @@ describe('MealsService', () => {
       await service.macroResume('phone-1', 'quanta gordura comi', 'jid-1');
 
       const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('🧈 Gordura: 50g hoje');
+      expect(message).toContain('📊 Gordura de hoje');
+      expect(message).toContain('🧈 Gordura: 50g');
       expect(message).toContain('Quando você fechar suas metas');
     });
 
@@ -417,8 +419,8 @@ describe('MealsService', () => {
       await service.macroResume('phone-1', 'quantas calorias comi hoje?', 'jid-1');
 
       const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('🔥 Calorias: 420 / 2.282');
-      expect(message).toContain('Faltam 1.862');
+      expect(message).toContain('📊 Calorias de hoje');
+      expect(message).toContain('🔥 Calorias: 420 / 2.282 (faltam 1.862)');
     });
 
     it('sends the empty-day message when the asked macro has 0 total today', async () => {
