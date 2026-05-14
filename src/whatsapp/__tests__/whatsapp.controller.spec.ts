@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WhatsappController } from './whatsapp.controller';
+import { WhatsappController } from '../whatsapp.controller';
 
 describe('WhatsappController', () => {
   let controller: WhatsappController;

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Intent } from './intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { MealsService } from '../meals/meals.service';
 
 type IntentHandler = (_phone: string, _text: string, jid: string) => Promise<void>;
 
@@ -9,7 +10,10 @@ export class IntentRouter {
   private readonly logger = new Logger(IntentRouter.name);
   private readonly handlers: Record<Intent, IntentHandler>;
 
-  constructor(private readonly whatsapp: WhatsappService) {
+  constructor(
+    private readonly whatsapp: WhatsappService,
+    private readonly meals: MealsService,
+) {
     this.handlers = {
       register_meal:  this.handleRegisterMeal.bind(this),
       query_daily:    this.handleQueryDaily.bind(this),
@@ -34,20 +38,20 @@ export class IntentRouter {
     await handler(phone, text, jid);
   }
 
-  private async handleRegisterMeal(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou registrar sua refeição! 🚧');
+  private async handleRegisterMeal(phone: string, text: string, jid: string) {
+    await this.meals.register(phone, text, jid);
   }
 
-  private async handleQueryDaily(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mostrar o resumo do dia! 🚧');
+  private async handleQueryDaily(phone: string, _text: string, jid: string) {
+    await this.meals.dailyResume(phone, jid);
   }
 
-  private async handleQueryPeriod(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mostrar o resumo da semana! 🚧');
+  private async handleQueryPeriod(phone: string, _text: string, jid: string) {
+    await this.meals.weeklyResume(phone, jid);
   }
 
-  private async handleQueryMacro(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mostrar esse macro! 🚧');
+  private async handleQueryMacro(phone: string, text: string, jid: string) {
+    await this.meals.macroResume(phone, text, jid);
   }
 
   private async handleUpdateGoal(_phone: string, _text: string, jid: string) {
@@ -66,8 +70,8 @@ export class IntentRouter {
     await this.whatsapp.sendText(jid, 'Em breve vou corrigir seu último registro! 🚧');
   }
 
-  private async handleDeleteLast(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou apagar seu último registro! 🚧');
+  private async handleDeleteLast(phone: string, _text: string, jid: string) {
+    await this.meals.deleteLast(phone, jid);
   }
 
   private async handleDeleteAccount(_phone: string, _text: string, jid: string) {
@@ -87,6 +91,16 @@ export class IntentRouter {
   }
 
   private async handleUnknown(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Não entendi 🤔 Manda "o que você faz?" pra ver o que sei fazer.');
+    await this.whatsapp.sendText(
+      jid,
+      [
+        'Não entendi muito bem 🤔 Posso te ajudar com:',
+        '',
+        '🍽️ Registrar refeições: "almocei arroz e frango"',
+        '📊 Consultar o dia/semana: "como foi meu dia?"',
+        '🎯 Atualizar objetivo: "quero ganhar massa"',
+        '✏️ Editar/apagar refeições: "era 1 ovo não 2"',
+      ].join('\n'),
+    );
   }
 }

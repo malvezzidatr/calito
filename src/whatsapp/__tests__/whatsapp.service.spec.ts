@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WhatsappService } from './whatsapp.service';
+import { WhatsappService } from '../whatsapp.service';
 
 describe('WhatsappService', () => {
   let service: WhatsappService;
