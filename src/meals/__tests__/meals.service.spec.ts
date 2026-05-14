@@ -17,6 +17,8 @@ describe('MealsService', () => {
   let sumDailyByUser: jest.Mock;
   let findDailyByUser: jest.Mock;
   let findInRangeByUser: jest.Mock;
+  let findLastByUser: jest.Mock;
+  let deleteById: jest.Mock;
   let sendText: jest.Mock;
 
   beforeEach(async () => {
@@ -26,6 +28,8 @@ describe('MealsService', () => {
     sumDailyByUser = jest.fn().mockResolvedValue({ calories: 0, protein: 0, carbs: 0, fat: 0 });
     findDailyByUser = jest.fn().mockResolvedValue([]);
     findInRangeByUser = jest.fn().mockResolvedValue([]);
+    findLastByUser = jest.fn().mockResolvedValue(null);
+    deleteById = jest.fn().mockResolvedValue(undefined);
     sendText = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
@@ -33,7 +37,7 @@ describe('MealsService', () => {
         MealsService,
         { provide: AiService,        useValue: { chat } },
         { provide: UsersRepository,  useValue: { findByPhone } },
-        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser } },
+        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, deleteById } },
         { provide: WhatsappService,  useValue: { sendText } },
       ],
     }).compile();
@@ -433,6 +437,74 @@ describe('MealsService', () => {
       expect(message).toContain('Você ainda não registrou nada hoje');
       expect(message).not.toContain('🥩 Proteína:');
       expect(message).not.toContain('Faltam');
+    });
+  });
+
+  describe('deleteLast', () => {
+    it('returns silently when user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
+
+      await service.deleteLast('5511999', '5511999@s.whatsapp.net');
+
+      expect(findLastByUser).not.toHaveBeenCalled();
+      expect(deleteById).not.toHaveBeenCalled();
+      expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('sends the empty-delete message when the user has no meal to delete', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue(null);
+
+      await service.deleteLast('phone-1', 'jid-1');
+
+      expect(deleteById).not.toHaveBeenCalled();
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('Não tenho nada pra apagar');
+    });
+
+    it('deletes the last meal and sends a confirmation with type and calories', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', calories: 750 });
+
+      await service.deleteLast('phone-1', 'jid-1');
+
+      expect(findLastByUser).toHaveBeenCalledWith('user-1');
+      expect(deleteById).toHaveBeenCalledTimes(1);
+      expect(deleteById).toHaveBeenCalledWith('meal-42');
+
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('Almoço');
+      expect(message).toContain('750kcal');
+      expect(message).toContain('🗑️');
+    });
+
+    it('deletes only ONE meal per call — the second call hits the new last meal', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser
+        .mockResolvedValueOnce({ id: 'meal-2', meal_type: 'DINNER', calories: 600 })
+        .mockResolvedValueOnce({ id: 'meal-1', meal_type: 'LUNCH',  calories: 750 });
+
+      await service.deleteLast('phone-1', 'jid-1');
+      await service.deleteLast('phone-1', 'jid-1');
+
+      expect(deleteById).toHaveBeenCalledTimes(2);
+      expect(deleteById).toHaveBeenNthCalledWith(1, 'meal-2');
+      expect(deleteById).toHaveBeenNthCalledWith(2, 'meal-1');
+    });
+
+    it('sends a technical-error message when deletion throws and does NOT confirm', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', calories: 750 });
+      deleteById.mockRejectedValueOnce(new Error('DB connection lost'));
+
+      await service.deleteLast('phone-1', 'jid-1');
+
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('problema técnico');
+      expect(message).not.toContain('Almoço');
     });
   });
 });

@@ -70,8 +70,8 @@ export class IntentRouter {
     await this.whatsapp.sendText(jid, 'Em breve vou corrigir seu último registro! 🚧');
   }
 
-  private async handleDeleteLast(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou apagar seu último registro! 🚧');
+  private async handleDeleteLast(phone: string, _text: string, jid: string) {
+    await this.meals.deleteLast(phone, jid);
   }
 
   private async handleDeleteAccount(_phone: string, _text: string, jid: string) {

@@ -55,6 +55,12 @@ const MACRO_LABELS: Record<Macro, { emoji: string; label: string; unit: 'g' | ''
 
 const EMPTY_DAY_MESSAGE = 'Você ainda não registrou nada hoje 🍽️\n\nMe manda o que comeu que eu calculo tudo pra você 💪';
 
+export const EMPTY_DELETE_MESSAGE = 'Não tenho nada pra apagar 🤔';
+
+export function formatDeleteConfirmation(mealType: MealType, calories: number): string {
+  return `Apaguei seu ${MEAL_LABELS[mealType]} de ${calories}kcal 🗑️`;
+}
+
 function formatShortDate(d: Date): string {
   return shortDateFormatter.format(d);
 }

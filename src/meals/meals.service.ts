@@ -6,7 +6,7 @@ import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction } from '../ai/meal.prompt';
 import { MealType } from '@prisma/client';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume } from './meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE } from './meal.format';
 import { validateMealExtraction } from './meal.validation';
 import { startOfDaysAgo, startOfNextDay } from './day-bounds';
 import { buildWeeklySummary } from './weekly.summary';
@@ -179,6 +179,30 @@ export class MealsService {
 
         const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro], today);
         await this.whatsappService.sendText(jid, message);
+    }
+
+    async deleteLast(phone: string, jid: string) {
+        const user = await this.usersRepository.findByPhone(phone);
+        if (!user) {
+            this.logger.warn(`User não encontrado: ${phone}`);
+            return;
+        }
+
+        const lastMeal = await this.mealsRepository.findLastByUser(user.id);
+        if (!lastMeal) {
+            await this.whatsappService.sendText(jid, EMPTY_DELETE_MESSAGE);
+            return;
+        }
+
+        try {
+            await this.mealsRepository.deleteById(lastMeal.id);
+        } catch (err) {
+            this.logger.error(`Falha ao apagar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
+            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
+            return;
+        }
+
+        await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.calories));
     }
 
     private inferMealTypeByHour(now: Date): MealType {

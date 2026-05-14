@@ -3,6 +3,8 @@ import {
   formatMealConfirmation,
   formatWeeklyResume,
   formatMacroResume,
+  formatDeleteConfirmation,
+  EMPTY_DELETE_MESSAGE,
   DailyMeal,
   DailyGoals,
   WeeklyDayStats,
@@ -379,5 +381,23 @@ describe('formatMacroResume', () => {
       const result = formatMacroResume('protein', 0.3, 160, date);
       expect(result).toContain('Você ainda não registrou nada hoje');
     });
+  });
+});
+
+describe('formatDeleteConfirmation', () => {
+  it.each([
+    ['BREAKFAST', 350, 'Apaguei seu Café de 350kcal 🗑️'],
+    ['LUNCH',     750, 'Apaguei seu Almoço de 750kcal 🗑️'],
+    ['SNACK',     200, 'Apaguei seu Lanche de 200kcal 🗑️'],
+    ['DINNER',    420, 'Apaguei seu Jantar de 420kcal 🗑️'],
+  ] as const)('formats deletion confirmation for %s with the right label and kcal', (mealType, calories, expected) => {
+    expect(formatDeleteConfirmation(mealType, calories)).toBe(expected);
+  });
+});
+
+describe('EMPTY_DELETE_MESSAGE', () => {
+  it('is a friendly message that mentions there is nothing to delete', () => {
+    expect(EMPTY_DELETE_MESSAGE).toContain('apagar');
+    expect(EMPTY_DELETE_MESSAGE).toMatch(/🤔|🙂/);
   });
 });

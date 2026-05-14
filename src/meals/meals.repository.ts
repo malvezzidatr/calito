@@ -70,4 +70,18 @@ export class MealsRepository {
     });
   }
 
+  findLastByUser(user_id: string) {
+    return this.prisma.meal.findFirst({
+      where: { user_id },
+      orderBy: { created_at: 'desc' },
+      select: { id: true, meal_type: true, calories: true },
+    });
+  }
+
+  deleteById(meal_id: string) {
+    return this.prisma.meal.delete({
+      where: { id: meal_id },
+    });
+  }
+
 }
