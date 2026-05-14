@@ -160,6 +160,19 @@ describe('formatDailyResume', () => {
       expect(lines[lines.length - 1]).toBe('Faltam só 500kcal!');
     });
   });
+
+  describe('empty day (totals.calories === 0)', () => {
+    const zeroTotals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+    it('returns the empty-day message and skips header, macros, meal list and praise', () => {
+      const result = formatDailyResume(date, [], zeroTotals, baseGoals, 'praise-ignored');
+      expect(result).toContain('Você ainda não registrou nada hoje');
+      expect(result).toContain('Me manda o que comeu');
+      expect(result).not.toContain('📊 Resumo de hoje');
+      expect(result).not.toContain('🔥 Calorias');
+      expect(result).not.toContain('praise-ignored');
+    });
+  });
 });
 
 describe('formatWeeklyResume', () => {
@@ -336,6 +349,30 @@ describe('formatMacroResume', () => {
       expect(result).toContain('🔥 Calorias: 1.500 hoje');
       expect(result).toContain('Quando você fechar suas metas no onboarding');
       expect(result).not.toContain('1.500g');
+    });
+  });
+
+  describe('empty day (total rounds to 0)', () => {
+    it.each(['calorie', 'protein', 'carbs', 'fat'] as const)(
+      'returns the empty-day message for %s when total is 0',
+      (macro) => {
+        const result = formatMacroResume(macro, 0, 2000);
+        expect(result).toContain('Você ainda não registrou nada hoje');
+        expect(result).toContain('Me manda o que comeu');
+        expect(result).not.toContain('Faltam');
+        expect(result).not.toContain('Meta batida');
+      },
+    );
+
+    it('returns the empty-day message even when goal is null (empty wins over no-goal fallback)', () => {
+      const result = formatMacroResume('protein', 0, null);
+      expect(result).toContain('Você ainda não registrou nada hoje');
+      expect(result).not.toContain('onboarding');
+    });
+
+    it('returns the empty-day message when a fractional total rounds to 0', () => {
+      const result = formatMacroResume('protein', 0.3, 160);
+      expect(result).toContain('Você ainda não registrou nada hoje');
     });
   });
 });

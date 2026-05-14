@@ -53,6 +53,8 @@ const MACRO_LABELS: Record<Macro, { emoji: string; label: string; unit: 'g' | ''
   fat:     { emoji: '🧈', label: 'Gordura',     unit: 'g' },
 };
 
+const EMPTY_DAY_MESSAGE = 'Você ainda não registrou nada hoje 🍽️\n\nMe manda o que comeu que eu calculo tudo pra você 💪';
+
 function formatShortDate(d: Date): string {
   return shortDateFormatter.format(d);
 }
@@ -102,6 +104,10 @@ export function formatDailyResume(
   goals: DailyGoals,
   praise: string,
 ): string {
+  if (totals.calories === 0) {
+    return EMPTY_DAY_MESSAGE;
+  }
+
   const lines: string[] = [
     `📊 Resumo de hoje (${formatShortDate(date)})`,
     '',
@@ -171,6 +177,10 @@ export function formatMacroResume(macro: Macro, total: number, goal: number | nu
   const isKcal = macro === 'calorie';
   const totalRounded = Math.round(total);
   const fmt = (n: number) => (isKcal ? n.toLocaleString('pt-BR') : String(n));
+
+  if (totalRounded === 0) {
+    return EMPTY_DAY_MESSAGE;
+  }
 
   if (goal === null) {
     return `${emoji} ${label}: ${fmt(totalRounded)}${unit} hoje\n\nQuando você fechar suas metas no onboarding, comparo aqui 📝`;

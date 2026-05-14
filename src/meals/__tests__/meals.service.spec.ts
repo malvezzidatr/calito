@@ -270,14 +270,16 @@ describe('MealsService', () => {
       expect(message).toContain('Tô anotando');
     });
 
-    it('shows the empty-meals placeholder when no meals were registered today', async () => {
+    it('sends the empty-day message when no meals were registered today', async () => {
       findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2000 });
       findDailyByUser.mockResolvedValue([]);
 
       await service.dailyResume('phone-1', 'jid-1');
 
       const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('Nenhuma refeição registrada hoje');
+      expect(message).toContain('Você ainda não registrou nada hoje');
+      expect(message).not.toContain('📊 Resumo de hoje');
+      expect(message).not.toContain('🔥 Calorias');
     });
   });
 
@@ -417,6 +419,18 @@ describe('MealsService', () => {
       const [, message] = sendText.mock.calls[0];
       expect(message).toContain('🔥 Calorias: 420 / 2.282');
       expect(message).toContain('Faltam 1.862');
+    });
+
+    it('sends the empty-day message when the asked macro has 0 total today', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1', calorie_goal: 2000, protein_goal: 160, carbs_goal: 240, fat_goal: 72 });
+      sumDailyByUser.mockResolvedValue({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+      await service.macroResume('phone-1', 'quanta proteína comi hoje?', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Você ainda não registrou nada hoje');
+      expect(message).not.toContain('🥩 Proteína:');
+      expect(message).not.toContain('Faltam');
     });
   });
 });
