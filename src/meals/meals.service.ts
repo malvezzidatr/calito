@@ -3,10 +3,10 @@ import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MEAL_EXTRACTION_PROMPT, MealExtraction } from '../ai/meal.prompt';
+import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from '../ai/meal.prompt';
 import { MealType } from '@prisma/client';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE } from './meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './meal.format';
 import { validateMealExtraction } from './meal.validation';
 import { startOfDaysAgo, startOfNextDay } from './day-bounds';
 import { buildWeeklySummary } from './weekly.summary';
@@ -202,7 +202,62 @@ export class MealsService {
             return;
         }
 
-        await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.calories));
+        await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.description, lastMeal.calories));
+    }
+
+    async editLast(phone: string, text: string, jid: string) {
+        const user = await this.usersRepository.findByPhone(phone);
+        if (!user) {
+            this.logger.warn(`User não encontrado: ${phone}`);
+            return;
+        }
+
+        const lastMeal = await this.mealsRepository.findLastByUser(user.id);
+        if (!lastMeal) {
+            await this.whatsappService.sendText(jid, EMPTY_EDIT_MESSAGE);
+            return;
+        }
+
+        let extraction: MealExtraction;
+        try {
+            const reply = await this.aiService.chat(
+                [{ role: 'user', content: buildEditUserMessage(lastMeal.description, text) }],
+                { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
+            );
+            extraction = validateMealExtraction(JSON.parse(reply));
+        } catch (err) {
+            this.logger.warn(`Falha ao re-extrair refeição ${lastMeal.id}: ${(err as Error).message}`);
+            await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+            return;
+        }
+
+        if (this.isSameDescription(extraction.description, lastMeal.description)) {
+            await this.whatsappService.sendText(jid, VAGUE_EDIT_MESSAGE);
+            return;
+        }
+
+        const mealType = extraction.meal_type ?? lastMeal.meal_type;
+
+        try {
+            await this.mealsRepository.updateById(lastMeal.id, {
+                meal_type: mealType,
+                description: extraction.description,
+                calories: extraction.calories,
+                protein: extraction.protein,
+                carbs: extraction.carbs,
+                fat: extraction.fat,
+            });
+        } catch (err) {
+            this.logger.error(`Falha ao atualizar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
+            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+            return;
+        }
+
+        await this.whatsappService.sendText(jid, formatEditConfirmation(mealType, extraction));
+    }
+
+    private isSameDescription(a: string, b: string): boolean {
+        return a.trim().toLowerCase() === b.trim().toLowerCase();
     }
 
     private inferMealTypeByHour(now: Date): MealType {

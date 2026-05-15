@@ -56,9 +56,21 @@ const MACRO_LABELS: Record<Macro, { emoji: string; label: string; unit: 'g' | ''
 const EMPTY_DAY_MESSAGE = 'Você ainda não registrou nada hoje 🍽️\n\nMe manda o que comeu que eu calculo tudo pra você 💪';
 
 export const EMPTY_DELETE_MESSAGE = 'Não tenho nada pra apagar 🤔';
+export const EMPTY_EDIT_MESSAGE = 'Não tenho nada pra editar 🤔';
+export const VAGUE_EDIT_MESSAGE = 'Não entendi o que você quer mudar 🤔 Me diz junto, ex: "era 1 ovo, não 2"';
 
-export function formatDeleteConfirmation(mealType: MealType, calories: number): string {
-  return `Apaguei seu ${MEAL_LABELS[mealType]} de ${calories}kcal 🗑️`;
+export function formatDeleteConfirmation(mealType: MealType, description: string, calories: number): string {
+  return `Apaguei seu ${MEAL_LABELS[mealType]} de ${description} (${calories}kcal) 🗑️`;
+}
+
+export function formatEditConfirmation(mealType: MealType, extraction: MealExtraction): string {
+  return [
+    `✏️ Atualizei seu ${MEAL_LABELS[mealType]} — ${extraction.description}`,
+    `🔥 ${extraction.calories}kcal`,
+    `🥩 P: ${extraction.protein}g`,
+    `🍚 C: ${extraction.carbs}g`,
+    `🧈 G: ${extraction.fat}g`,
+  ].join('\n');
 }
 
 function formatShortDate(d: Date): string {

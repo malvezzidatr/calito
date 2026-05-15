@@ -46,16 +46,31 @@ describe('NutritionCalculator', () => {
     });
 
     describe('splitMacros', () => {
-        it('splits 30% P / 45% C / 25% G from calories', () => {
-            const { protein_goal, carbs_goal, fat_goal } = splitMacros(2319.45);
-            expect(protein_goal).toBe(174);
-            expect(carbs_goal).toBe(261);
-            expect(fat_goal).toBe(64);
+        it('calculates protein at 1.8g/kg for male', () => {
+            const { protein_goal } = splitMacros({ calories: 2500, weight: 80, gender: 'MALE' });
+            expect(protein_goal).toBe(144);
+        });
+
+        it('calculates protein at 1.0g/kg for female', () => {
+            const { protein_goal } = splitMacros({ calories: 1730, weight: 65, gender: 'FEMALE' });
+            expect(protein_goal).toBe(65);
+        });
+
+        it('calculates fat at 1.0g/kg regardless of gender', () => {
+            const maleFat = splitMacros({ calories: 2500, weight: 80, gender: 'MALE' }).fat_goal;
+            const femaleFat = splitMacros({ calories: 1730, weight: 65, gender: 'FEMALE' }).fat_goal;
+            expect(maleFat).toBe(80);
+            expect(femaleFat).toBe(65);
+        });
+
+        it('fills remaining calories with carbs', () => {
+            const { carbs_goal } = splitMacros({ calories: 1730, weight: 65, gender: 'FEMALE' });
+            expect(carbs_goal).toBe(221);
         });
 
         it('uses 4 kcal/g for P/C and 9 kcal/g for G (sum matches calories)', () => {
             const calories = 2000;
-            const { protein_goal, carbs_goal, fat_goal } = splitMacros(calories);
+            const { protein_goal, carbs_goal, fat_goal } = splitMacros({ calories, weight: 70, gender: 'MALE' });
             const total = protein_goal * 4 + carbs_goal * 4 + fat_goal * 9;
             expect(Math.abs(total - calories)).toBeLessThanOrEqual(5);
         });
