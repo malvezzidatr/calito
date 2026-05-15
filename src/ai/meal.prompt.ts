@@ -7,6 +7,15 @@ export type MealExtraction = {
   meal_type: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | null;
 };
 
+export function buildEditUserMessage(originalDescription: string, correction: string): string {
+  return [
+    `Descrição original: "${originalDescription}"`,
+    `Correção do usuário: "${correction}"`,
+    '',
+    'Aplique a correção sobre a descrição original e retorne os macros do prato corrigido seguindo o formato e as regras do sistema.',
+  ].join('\n');
+}
+
 export const MEAL_EXTRACTION_PROMPT = `Você é um extrator nutricional para um bot de WhatsApp.
 
 Sua única tarefa: receber a mensagem do usuário descrevendo o que ele comeu e devolver os dados nutricionais estimados em JSON, exatamente neste formato:

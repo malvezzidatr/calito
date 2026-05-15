@@ -13,6 +13,15 @@ type CreateMealInput = {
   fat: number;
 };
 
+type UpdateMealInput = {
+  meal_type: MealType;
+  description: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+};
+
 
 @Injectable()
 export class MealsRepository {
@@ -74,13 +83,27 @@ export class MealsRepository {
     return this.prisma.meal.findFirst({
       where: { user_id },
       orderBy: { created_at: 'desc' },
-      select: { id: true, meal_type: true, calories: true },
+      select: { id: true, meal_type: true, description: true, calories: true },
     });
   }
 
   deleteById(meal_id: string) {
     return this.prisma.meal.delete({
       where: { id: meal_id },
+    });
+  }
+
+  updateById(meal_id: string, data: UpdateMealInput) {
+    return this.prisma.meal.update({
+      where: { id: meal_id },
+      data: {
+        meal_type: data.meal_type,
+        description: data.description,
+        calories: data.calories,
+        protein: data.protein,
+        carbs: data.carbs,
+        fat: data.fat,
+      },
     });
   }
 

@@ -19,6 +19,7 @@ describe('MealsService', () => {
   let findInRangeByUser: jest.Mock;
   let findLastByUser: jest.Mock;
   let deleteById: jest.Mock;
+  let updateById: jest.Mock;
   let sendText: jest.Mock;
 
   beforeEach(async () => {
@@ -30,6 +31,7 @@ describe('MealsService', () => {
     findInRangeByUser = jest.fn().mockResolvedValue([]);
     findLastByUser = jest.fn().mockResolvedValue(null);
     deleteById = jest.fn().mockResolvedValue(undefined);
+    updateById = jest.fn().mockResolvedValue(undefined);
     sendText = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
@@ -37,7 +39,7 @@ describe('MealsService', () => {
         MealsService,
         { provide: AiService,        useValue: { chat } },
         { provide: UsersRepository,  useValue: { findByPhone } },
-        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, deleteById } },
+        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, deleteById, updateById } },
         { provide: WhatsappService,  useValue: { sendText } },
       ],
     }).compile();
@@ -463,9 +465,9 @@ describe('MealsService', () => {
       expect(message).toContain('Não tenho nada pra apagar');
     });
 
-    it('deletes the last meal and sends a confirmation with type and calories', async () => {
+    it('deletes the last meal and sends a confirmation with type, description and calories', async () => {
       findByPhone.mockResolvedValue({ id: 'user-1' });
-      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', calories: 750 });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz e frango', calories: 750 });
 
       await service.deleteLast('phone-1', 'jid-1');
 
@@ -476,6 +478,7 @@ describe('MealsService', () => {
       const [jid, message] = sendText.mock.calls[0];
       expect(jid).toBe('jid-1');
       expect(message).toContain('Almoço');
+      expect(message).toContain('arroz e frango');
       expect(message).toContain('750kcal');
       expect(message).toContain('🗑️');
     });
@@ -483,8 +486,8 @@ describe('MealsService', () => {
     it('deletes only ONE meal per call — the second call hits the new last meal', async () => {
       findByPhone.mockResolvedValue({ id: 'user-1' });
       findLastByUser
-        .mockResolvedValueOnce({ id: 'meal-2', meal_type: 'DINNER', calories: 600 })
-        .mockResolvedValueOnce({ id: 'meal-1', meal_type: 'LUNCH',  calories: 750 });
+        .mockResolvedValueOnce({ id: 'meal-2', meal_type: 'DINNER', description: 'omelete', calories: 600 })
+        .mockResolvedValueOnce({ id: 'meal-1', meal_type: 'LUNCH',  description: 'arroz e frango', calories: 750 });
 
       await service.deleteLast('phone-1', 'jid-1');
       await service.deleteLast('phone-1', 'jid-1');
@@ -496,7 +499,7 @@ describe('MealsService', () => {
 
     it('sends a technical-error message when deletion throws and does NOT confirm', async () => {
       findByPhone.mockResolvedValue({ id: 'user-1' });
-      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', calories: 750 });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz e frango', calories: 750 });
       deleteById.mockRejectedValueOnce(new Error('DB connection lost'));
 
       await service.deleteLast('phone-1', 'jid-1');
@@ -505,6 +508,162 @@ describe('MealsService', () => {
       const [, message] = sendText.mock.calls[0];
       expect(message).toContain('problema técnico');
       expect(message).not.toContain('Almoço');
+    });
+  });
+
+  describe('editLast', () => {
+    it('returns silently when user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
+
+      await service.editLast('5511999', 'era 1 ovo', '5511999@s.whatsapp.net');
+
+      expect(findLastByUser).not.toHaveBeenCalled();
+      expect(chat).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+      expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('sends the empty-edit message when the user has no meal to edit', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue(null);
+
+      await service.editLast('phone-1', 'era 1 ovo', 'jid-1');
+
+      expect(chat).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('Não tenho nada pra editar');
+    });
+
+    it('re-extracts macros using original description + correction and updates the same meal', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'BREAKFAST', description: '2 ovos', calories: 140 });
+      chat.mockResolvedValue(JSON.stringify({
+        description: '1 ovo',
+        calories: 70,
+        protein: 6,
+        carbs: 0,
+        fat: 5,
+        meal_type: null,
+      }));
+
+      await service.editLast('phone-1', 'era 1 ovo, não 2', 'jid-1');
+
+      expect(chat).toHaveBeenCalledTimes(1);
+      const [messages] = chat.mock.calls[0];
+      expect(messages[0].content).toContain('2 ovos');
+      expect(messages[0].content).toContain('era 1 ovo, não 2');
+
+      expect(updateById).toHaveBeenCalledTimes(1);
+      expect(updateById).toHaveBeenCalledWith('meal-42', {
+        meal_type: 'BREAKFAST',
+        description: '1 ovo',
+        calories: 70,
+        protein: 6,
+        carbs: 0,
+        fat: 5,
+      });
+
+      const [jid, confirmation] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(confirmation).toContain('✏️');
+      expect(confirmation).toContain('Café');
+      expect(confirmation).toContain('1 ovo');
+      expect(confirmation).toContain('70kcal');
+    });
+
+    it('keeps the original meal_type when the AI returns null', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz e frango', calories: 750 });
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'arroz e peixe',
+        calories: 500,
+        protein: 35,
+        carbs: 60,
+        fat: 8,
+        meal_type: null,
+      }));
+
+      await service.editLast('phone-1', 'era peixe, não frango', 'jid-1');
+
+      expect(updateById).toHaveBeenCalledWith('meal-42', expect.objectContaining({ meal_type: 'LUNCH' }));
+    });
+
+    it('sends a friendly fallback and does NOT update when the AI returns invalid JSON', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz e frango', calories: 750 });
+      chat.mockResolvedValue('isso não é json');
+
+      await service.editLast('phone-1', 'era diferente', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui entender');
+    });
+
+    it('sends a friendly fallback and does NOT update when the AI returns invalid extraction (negative calories)', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz e frango', calories: 750 });
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'algo', calories: -10, protein: 20, carbs: 40, fat: 10, meal_type: 'LUNCH',
+      }));
+
+      await service.editLast('phone-1', 'era algo', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui entender');
+    });
+
+    it('sends VAGUE_EDIT_MESSAGE and does NOT update when the new description is identical to the original', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz, feijão e frango', calories: 750 });
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'arroz, feijão e frango',
+        calories: 760,
+        protein: 46,
+        carbs: 50,
+        fat: 5,
+        meal_type: 'LUNCH',
+      }));
+
+      await service.editLast('phone-1', 'edite minha última refeição', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não entendi o que você quer mudar');
+    });
+
+    it('ignores casing and whitespace when comparing descriptions', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'Arroz e Frango', calories: 750 });
+      chat.mockResolvedValue(JSON.stringify({
+        description: '  arroz e frango  ',
+        calories: 740, protein: 45, carbs: 75, fat: 12, meal_type: 'LUNCH',
+      }));
+
+      await service.editLast('phone-1', 'edita aí', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não entendi o que você quer mudar');
+    });
+
+    it('sends a technical-error message when update throws and does NOT confirm', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz e frango', calories: 750 });
+      chat.mockResolvedValue(JSON.stringify({
+        description: 'arroz e peixe', calories: 500, protein: 35, carbs: 60, fat: 8, meal_type: 'LUNCH',
+      }));
+      updateById.mockRejectedValueOnce(new Error('DB connection lost'));
+
+      await service.editLast('phone-1', 'era peixe', 'jid-1');
+
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('problema técnico');
+      expect(message).not.toContain('✏️');
     });
   });
 });

@@ -4,7 +4,10 @@ import {
   formatWeeklyResume,
   formatMacroResume,
   formatDeleteConfirmation,
+  formatEditConfirmation,
   EMPTY_DELETE_MESSAGE,
+  EMPTY_EDIT_MESSAGE,
+  VAGUE_EDIT_MESSAGE,
   DailyMeal,
   DailyGoals,
   WeeklyDayStats,
@@ -386,12 +389,12 @@ describe('formatMacroResume', () => {
 
 describe('formatDeleteConfirmation', () => {
   it.each([
-    ['BREAKFAST', 350, 'Apaguei seu Café de 350kcal 🗑️'],
-    ['LUNCH',     750, 'Apaguei seu Almoço de 750kcal 🗑️'],
-    ['SNACK',     200, 'Apaguei seu Lanche de 200kcal 🗑️'],
-    ['DINNER',    420, 'Apaguei seu Jantar de 420kcal 🗑️'],
-  ] as const)('formats deletion confirmation for %s with the right label and kcal', (mealType, calories, expected) => {
-    expect(formatDeleteConfirmation(mealType, calories)).toBe(expected);
+    ['BREAKFAST', 'pão com manteiga',          350, 'Apaguei seu Café de pão com manteiga (350kcal) 🗑️'],
+    ['LUNCH',     'arroz, feijão e frango',    750, 'Apaguei seu Almoço de arroz, feijão e frango (750kcal) 🗑️'],
+    ['SNACK',     '1 maçã',                    200, 'Apaguei seu Lanche de 1 maçã (200kcal) 🗑️'],
+    ['DINNER',    'omelete com queijo',        420, 'Apaguei seu Jantar de omelete com queijo (420kcal) 🗑️'],
+  ] as const)('formats deletion confirmation for %s with label, description and kcal', (mealType, description, calories, expected) => {
+    expect(formatDeleteConfirmation(mealType, description, calories)).toBe(expected);
   });
 });
 
@@ -399,5 +402,54 @@ describe('EMPTY_DELETE_MESSAGE', () => {
   it('is a friendly message that mentions there is nothing to delete', () => {
     expect(EMPTY_DELETE_MESSAGE).toContain('apagar');
     expect(EMPTY_DELETE_MESSAGE).toMatch(/🤔|🙂/);
+  });
+});
+
+describe('formatEditConfirmation', () => {
+  it('shows label, description and the updated macros', () => {
+    const result = formatEditConfirmation('LUNCH', {
+      description: '1 ovo e 1 banana',
+      calories: 160,
+      protein: 7,
+      carbs: 23,
+      fat: 5,
+      meal_type: 'LUNCH',
+    });
+    expect(result).toBe(
+      [
+        '✏️ Atualizei seu Almoço — 1 ovo e 1 banana',
+        '🔥 160kcal',
+        '🥩 P: 7g',
+        '🍚 C: 23g',
+        '🧈 G: 5g',
+      ].join('\n'),
+    );
+  });
+
+  it.each([
+    ['BREAKFAST', 'Café'],
+    ['LUNCH',     'Almoço'],
+    ['SNACK',     'Lanche'],
+    ['DINNER',    'Jantar'],
+  ] as const)('uses the right label for %s', (mealType, label) => {
+    const result = formatEditConfirmation(mealType, {
+      description: 'algo', calories: 100, protein: 5, carbs: 10, fat: 2, meal_type: mealType,
+    });
+    expect(result).toContain(`✏️ Atualizei seu ${label} — algo`);
+  });
+});
+
+describe('EMPTY_EDIT_MESSAGE', () => {
+  it('is a friendly message that mentions there is nothing to edit', () => {
+    expect(EMPTY_EDIT_MESSAGE).toContain('editar');
+    expect(EMPTY_EDIT_MESSAGE).toMatch(/🤔|🙂/);
+  });
+});
+
+describe('VAGUE_EDIT_MESSAGE', () => {
+  it('asks the user to include what they want to change with an example', () => {
+    expect(VAGUE_EDIT_MESSAGE).toMatch(/mudar|trocar|corrigir/i);
+    expect(VAGUE_EDIT_MESSAGE).toContain('ex:');
+    expect(VAGUE_EDIT_MESSAGE).toMatch(/🤔|🙂/);
   });
 });
