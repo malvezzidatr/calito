@@ -4,13 +4,13 @@ import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from '../ai/meal.prompt';
-import { MealType } from '@prisma/client';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './meal.praise';
 import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './meal.format';
 import { validateMealExtraction } from './meal.validation';
 import { startOfDaysAgo, startOfNextDay } from './day-bounds';
 import { buildWeeklySummary } from './weekly.summary';
 import { detectMacro } from './macro.detect';
+import { inferMealTypeByHour } from './meal-type.infer';
 
 @Injectable()
 export class MealsService {
@@ -43,7 +43,7 @@ export class MealsService {
             return;
         }
 
-        const mealType = extraction.meal_type ?? this.inferMealTypeByHour(new Date());
+        const mealType = extraction.meal_type ?? inferMealTypeByHour(new Date());
 
         try {
             await this.mealsRepository.create({
@@ -258,13 +258,5 @@ export class MealsService {
 
     private isSameDescription(a: string, b: string): boolean {
         return a.trim().toLowerCase() === b.trim().toLowerCase();
-    }
-
-    private inferMealTypeByHour(now: Date): MealType {
-        const hour = now.getHours();
-        if (hour >= 5 && hour < 11) return 'BREAKFAST';
-        if (hour >= 11 && hour < 15) return 'LUNCH';
-        if (hour >= 18 && hour < 23) return 'DINNER';
-        return 'SNACK';
     }
 }

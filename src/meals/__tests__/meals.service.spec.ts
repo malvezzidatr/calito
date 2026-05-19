@@ -81,7 +81,7 @@ describe('MealsService', () => {
 
     it('falls back to time-based meal_type when AI returns null', async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-05-09T12:30:00'));
+      jest.setSystemTime(new Date('2026-05-09T15:30:00Z'));
 
       findByPhone.mockResolvedValue({ id: 'user-1' });
       chat.mockResolvedValue(JSON.stringify({
