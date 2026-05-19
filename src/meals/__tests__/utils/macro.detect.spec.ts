@@ -1,4 +1,4 @@
-import { detectMacro } from '../macro.detect';
+import { detectMacro } from '../../utils/macro.detect';
 
 describe('detectMacro', () => {
   it.each([

@@ -12,8 +12,8 @@ import {
   DailyGoals,
   WeeklyDayStats,
   WeeklySummary,
-} from '../meal.format';
-import { DailyTotals } from '../meal.praise';
+} from '../../utils/meal.format';
+import { DailyTotals } from '../../utils/meal.praise';
 
 const baseTotals: DailyTotals = { calories: 1650, protein: 120, carbs: 200, fat: 50 };
 const baseGoals: DailyGoals = { calorie: 2150, protein: 160, carbs: 240, fat: 72 };

@@ -1,4 +1,4 @@
-import { MealExtraction } from '../ai/meal.prompt';
+import { MealExtraction } from '../../ai/prompts/meal.prompt';
 
 export type DailyTotals = {
   calories: number;

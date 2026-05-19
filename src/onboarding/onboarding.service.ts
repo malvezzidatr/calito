@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from 'src/users/users.repository';
-import { OnboardingStep } from './onboarding.constants';
+import { OnboardingStep } from './utils/onboarding.constants';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
-import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, WEIGHT_QUESTION, welcomeMessage } from './onboarding.messages';
-import { calcGoals } from './nutrition.calculator';
-import { parseDecimal, parseHeightCm, parseInteger } from './numeric.parser';
-import { matchActivity, matchGender, matchGoal } from './profile.match';
+import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, WEIGHT_QUESTION, welcomeMessage } from './utils/onboarding.messages';
+import { calcGoals } from './utils/nutrition.calculator';
+import { parseDecimal, parseHeightCm, parseInteger } from './utils/numeric.parser';
+import { matchActivity, matchGender, matchGoal } from './utils/profile.match';
 
 @Injectable()
 export class OnboardingService {

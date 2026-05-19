@@ -1,4 +1,4 @@
-import { inferMealTypeByHour } from '../meal-type.infer';
+import { inferMealTypeByHour } from '../../utils/meal-type.infer';
 
 const spHourToUtc = (hour: number, minute = 0): Date => {
   const utcHour = (hour + 3) % 24;

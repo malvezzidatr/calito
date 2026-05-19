@@ -1,4 +1,4 @@
-import { matchActivity, matchGender, matchGoal } from '../profile.match';
+import { matchActivity, matchGender, matchGoal } from '../../utils/profile.match';
 
 describe('matchGender', () => {
   it.each([

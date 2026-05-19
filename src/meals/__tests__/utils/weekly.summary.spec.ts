@@ -1,6 +1,6 @@
 import { MealType } from '@prisma/client';
-import { buildWeeklySummary, WeeklyMealRow } from '../weekly.summary';
-import { DailyGoals } from '../meal.format';
+import { buildWeeklySummary, WeeklyMealRow } from '../../utils/weekly.summary';
+import { DailyGoals } from '../../utils/meal.format';
 
 const today = new Date('2026-05-12T15:00:00Z'); // 12/05 12h SP (Tuesday)
 const goals2150: DailyGoals = { calorie: 2150, protein: 160, carbs: 240, fat: 72 };

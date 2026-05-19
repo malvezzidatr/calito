@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AiService } from './ai.service';
-import { INTENT_CLASSIFIER_PROMPT } from './intent.prompt';
+import { INTENT_CLASSIFIER_PROMPT } from './prompts/intent.prompt';
 import { Intent, isIntent } from './intents';
 
 @Injectable()

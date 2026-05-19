@@ -3,14 +3,14 @@ import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from '../ai/meal.prompt';
-import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './meal.format';
-import { validateMealExtraction } from './meal.validation';
-import { startOfDaysAgo, startOfNextDay } from './day-bounds';
-import { buildWeeklySummary } from './weekly.summary';
-import { detectMacro } from './macro.detect';
-import { inferMealTypeByHour } from './meal-type.infer';
+import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from '../ai/prompts/meal.prompt';
+import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './utils/meal.format';
+import { validateMealExtraction } from './utils/meal.validation';
+import { startOfDaysAgo, startOfNextDay } from './utils/day-bounds';
+import { buildWeeklySummary } from './utils/weekly.summary';
+import { detectMacro } from './utils/macro.detect';
+import { inferMealTypeByHour } from './utils/meal-type.infer';
 
 @Injectable()
 export class MealsService {
