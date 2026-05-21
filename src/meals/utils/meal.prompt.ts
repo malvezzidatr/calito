@@ -7,6 +7,14 @@ export type MealExtraction = {
   meal_type: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | null;
 };
 
+export type MealClarification = { needs_clarification: string };
+
+export type MealExtractionResult = MealExtraction | MealClarification;
+
+export function isMealClarification(result: MealExtractionResult): result is MealClarification {
+  return 'needs_clarification' in result;
+}
+
 export function buildEditUserMessage(originalDescription: string, correction: string): string {
   return [
     `Descrição original: "${originalDescription}"`,
@@ -18,7 +26,9 @@ export function buildEditUserMessage(originalDescription: string, correction: st
 
 export const MEAL_EXTRACTION_PROMPT = `Você é um extrator nutricional para um bot de WhatsApp.
 
-Sua única tarefa: receber a mensagem do usuário descrevendo o que ele comeu e devolver os dados nutricionais estimados em JSON, exatamente neste formato:
+Sua tarefa: receber a mensagem do usuário descrevendo o que ele comeu e devolver UM dos dois formatos JSON abaixo.
+
+FORMATO 1 — extração (use quando tiver confiança nas porções):
 
 {
   "description": "<texto>",
@@ -27,6 +37,12 @@ Sua única tarefa: receber a mensagem do usuário descrevendo o que ele comeu e 
   "carbs": <número>,
   "fat": <número>,
   "meal_type": "<BREAKFAST|LUNCH|DINNER|SNACK ou null>"
+}
+
+FORMATO 2 — pedido de esclarecimento (use quando o usuário não informou quantidades de itens com porção variável, conforme regra detalhada abaixo):
+
+{
+  "needs_clarification": "<pergunta amigável em pt-BR, em uma linha, com exemplo de formato>"
 }
 
 Regras de cada campo:
@@ -77,29 +93,54 @@ PÃES E SUPLEMENTOS
 
 Como usar a tabela:
 1. Identifique cada alimento mencionado.
-2. Se o usuário disse quantidade explícita (ex: "3 ovos", "200g de frango"), escale a partir da porção de referência.
-3. Se NÃO disse, use a porção média descrita acima (ex: arroz no almoço = 4 colheres).
-4. Some os itens. Não invente porções "porque é refeição grande" — confie nas referências.
-5. Para alimentos fora da tabela, estime com base em conhecimento nutricional padrão.
+2. **REGRA OURO: TODO item precisa de quantidade explícita do usuário.** Quantidade explícita = número ("3 ovos", "200g de frango"), número por extenso ("um whey", "duas bananas", "meia maçã"), ou descritor de porção ("uma fatia de pão", "1 colher de arroz", "1 copo de leite"). Sem isso, NÃO chute "provavelmente é 1" — você pode estar errando por 3x.
+3. Se TODOS os itens têm quantidade explícita, siga FORMATO 1: escale a partir da porção de referência e some.
+4. Se QUALQUER item não tem quantidade explícita, use FORMATO 2 listando no exemplo TODOS os itens com quantidades sugeridas (não só o que faltou).
+5. Não invente porções "porque é refeição grande" — confie nas referências.
+6. Para alimentos fora da tabela: se o usuário deu quantidade, estime com base em conhecimento nutricional padrão; se não deu, peça clarification igual aos outros.
 
 Exemplos (a linha "Cálculo:" é só pra te guiar — NUNCA inclua ela na resposta):
 
 Mensagem: "almocei arroz, feijão e frango grelhado"
-Cálculo: 4 colheres de arroz (160/4/36/0) + 1 concha de feijão (75/5/14/0) + 1 filé de frango (200/37/0/4) = 435/46/50/4
-Resposta: {"description":"arroz, feijão e frango grelhado","calories":435,"protein":46,"carbs":50,"fat":4,"meal_type":"LUNCH"}
+Análise: arroz, feijão e frango sem quantidade — todos da categoria (b). Precisa pedir clarification. Exemplo deve listar todos os itens.
+Resposta: {"needs_clarification":"Me manda de novo com as quantidades 🤔 Ex: 4 colheres de arroz, 1 concha de feijão e 1 filé de frango"}
+
+Mensagem: "comi 1 bife com salada"
+Análise: bife sem tamanho + salada sem porção — ambos da categoria (b). Precisa pedir clarification. Exemplo deve listar todos os itens.
+Resposta: {"needs_clarification":"Me manda de novo com as quantidades 🤔 Ex: 1 bife médio de 100g com 1 prato de salada"}
+
+Mensagem: "comi 2 ovos e arroz no almoço"
+Análise: "2 ovos" tem quantidade ✓. "arroz" SEM quantidade ✗. Pede clarification. Como não temos memória de conversa, o exemplo precisa incluir TODOS os itens.
+Resposta: {"needs_clarification":"Me manda de novo com a quantidade do arroz 🤔 Ex: 2 ovos e 4 colheres de arroz no almoço"}
+
+Mensagem: "comi 1 maçã e pão francês"
+Análise: "1 maçã" tem quantidade ✓. "pão francês" SEM quantidade ✗ — pode ser 1, pode ser 3. Pede clarification.
+Resposta: {"needs_clarification":"Me manda de novo com a quantidade do pão 🤔 Ex: 1 maçã e 1 pão francês"}
+
+Mensagem: "tomei um whey com leite no café"
+Análise: "um whey" tem quantidade ✓. "leite" SEM quantidade ✗ — pode ser 1 copo, pode ser meio. Pede clarification.
+Resposta: {"needs_clarification":"Me manda de novo com a quantidade do leite 🤔 Ex: 1 scoop de whey com 1 copo de leite"}
 
 Mensagem: "comi 2 ovos e uma banana"
+Análise: "2 ovos" ✓ e "uma banana" ✓ — ambos com quantidade explícita. Segue FORMATO 1.
 Cálculo: 2 ovos (140/12/0/10) + 1 banana (90/1/23/0) = 230/13/23/10
 Resposta: {"description":"2 ovos e 1 banana","calories":230,"protein":13,"carbs":23,"fat":10,"meal_type":null}
 
-Mensagem: "tomei um whey com leite no café"
+Mensagem: "tomei 1 scoop de whey com 1 copo de leite"
+Análise: ambos com quantidade explícita. Segue FORMATO 1.
 Cálculo: 1 scoop whey (120/24/3/1.5) + 1 copo de leite integral (120/6/9/7) = 240/30/12/8.5
-Resposta: {"description":"1 whey com leite","calories":240,"protein":30,"carbs":12,"fat":9,"meal_type":"BREAKFAST"}
+Resposta: {"description":"1 whey com 1 copo de leite","calories":240,"protein":30,"carbs":12,"fat":9,"meal_type":"BREAKFAST"}
+
+Mensagem: "comi 4 colheres de arroz, 1 concha de feijão e 1 filé de frango"
+Análise: tudo com quantidade explícita. Segue FORMATO 1.
+Cálculo: 4 colheres de arroz (160/4/36/0) + 1 concha de feijão (75/5/14/0) + 1 filé de frango (200/37/0/4) = 435/46/50/4
+Resposta: {"description":"arroz, feijão e frango grelhado","calories":435,"protein":46,"carbs":50,"fat":4,"meal_type":"LUNCH"}
 
 Regras finais:
 - Retorne APENAS o JSON, sem texto adicional, sem markdown, sem comentário.
-- Todos os campos numéricos são SEMPRE números, sem aspas e sem unidade ("g", "kcal", etc).
+- A pergunta do FORMATO 2 deve ser amigável, em pt-BR, em uma linha. **IMPORTANTE — não temos memória de conversa:** o exemplo deve repetir TODOS os itens da refeição original (não só o que faltou), e o texto deve deixar claro que o usuário precisa remandar a mensagem completa (use "Me manda de novo com..." em vez de "Me passa..."). Se o usuário responder só com a quantidade, o bot perderá os outros itens.
+- Todos os campos numéricos do FORMATO 1 são SEMPRE números, sem aspas e sem unidade ("g", "kcal", etc).
 - Arredonde para inteiros (gordura pode ter 1 casa decimal se ficar abaixo de 5g).
-- Se não conseguir estimar um macro, use 0. Nunca use null em campos numéricos.
-- meal_type é o ÚNICO campo que pode ser null.
+- No FORMATO 1, se não conseguir estimar um macro, use 0. Nunca use null em campos numéricos.
+- meal_type é o ÚNICO campo que pode ser null no FORMATO 1.
 `;

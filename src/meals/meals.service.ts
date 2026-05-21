@@ -4,7 +4,7 @@ import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from './utils/meal.prompt';
+import { MEAL_EXTRACTION_PROMPT, MealExtraction, MealExtractionResult, buildEditUserMessage, isMealClarification } from './utils/meal.prompt';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
 import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './utils/meal.format';
 import { validateMealExtraction } from './utils/meal.validation';
@@ -26,19 +26,25 @@ export class MealsService {
 
     async register(phone: string, text: string, jid: string) {
         await this.withUser(phone, async (user) => {
-            let extraction: MealExtraction;
+            let result: MealExtractionResult;
             try {
                 const reply = await this.aiService.chat(
                     [{ role: 'user', content: text }],
                     { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
                 );
-                extraction = validateMealExtraction(JSON.parse(reply));
+                result = validateMealExtraction(JSON.parse(reply));
             } catch (err) {
                 this.logger.warn(`Falha ao extrair refeição: ${(err as Error).message}`);
                 await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
                 return;
             }
 
+            if (isMealClarification(result)) {
+                await this.whatsappService.sendText(jid, result.needs_clarification);
+                return;
+            }
+
+            const extraction: MealExtraction = result;
             const mealType = extraction.meal_type ?? inferMealTypeByHour(new Date());
 
             try {
@@ -194,18 +200,25 @@ export class MealsService {
                 return;
             }
 
-            let extraction: MealExtraction;
+            let result: MealExtractionResult;
             try {
                 const reply = await this.aiService.chat(
                     [{ role: 'user', content: buildEditUserMessage(lastMeal.description, text) }],
                     { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
                 );
-                extraction = validateMealExtraction(JSON.parse(reply));
+                result = validateMealExtraction(JSON.parse(reply));
             } catch (err) {
                 this.logger.warn(`Falha ao re-extrair refeição ${lastMeal.id}: ${(err as Error).message}`);
                 await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
                 return;
             }
+
+            if (isMealClarification(result)) {
+                await this.whatsappService.sendText(jid, result.needs_clarification);
+                return;
+            }
+
+            const extraction: MealExtraction = result;
 
             if (this.isSameDescription(extraction.description, lastMeal.description)) {
                 await this.whatsappService.sendText(jid, VAGUE_EDIT_MESSAGE);

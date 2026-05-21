@@ -1,4 +1,4 @@
-import { MealExtraction } from './meal.prompt';
+import { MealExtractionResult } from './meal.prompt';
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] as const;
 type MealTypeEnum = typeof MEAL_TYPES[number];
@@ -14,11 +14,15 @@ function isFiniteNonNegative(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n >= 0;
 }
 
-export function validateMealExtraction(raw: unknown): MealExtraction {
+export function validateMealExtraction(raw: unknown): MealExtractionResult {
   if (raw === null || typeof raw !== 'object') {
     throw new InvalidMealExtractionError('payload is not an object');
   }
   const r = raw as Record<string, unknown>;
+
+  if (typeof r.needs_clarification === 'string' && r.needs_clarification.trim() !== '') {
+    return { needs_clarification: r.needs_clarification.trim() };
+  }
 
   if (typeof r.description !== 'string' || r.description.trim() === '') {
     throw new InvalidMealExtractionError('description must be a non-empty string');
@@ -44,6 +48,6 @@ export function validateMealExtraction(raw: unknown): MealExtraction {
     protein: r.protein as number,
     carbs: r.carbs as number,
     fat: r.fat as number,
-    meal_type: r.meal_type as MealExtraction['meal_type'],
+    meal_type: r.meal_type as 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | null,
   };
 }
