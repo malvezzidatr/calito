@@ -1,5 +1,5 @@
 import { MealType } from '@prisma/client';
-import { MealExtraction } from '../ai/meal.prompt';
+import { MealExtraction } from './meal.prompt';
 import { DailyTotals } from './meal.praise';
 import { Macro } from './macro.detect';
 

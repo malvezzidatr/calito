@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Groq from 'groq-sdk';
-import { SYSTEM_PROMPT } from './ai.prompts';
+import { SYSTEM_PROMPT } from './prompts/ai.prompts';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type ChatOptions = {

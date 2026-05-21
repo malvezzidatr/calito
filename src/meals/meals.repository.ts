@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MealType } from '@prisma/client';
-import { startOfDay, startOfNextDay } from './day-bounds';
+import { startOfDay, startOfNextDay } from './utils/day-bounds';
 
 type CreateMealInput = {
   user_id: string;

@@ -1,4 +1,4 @@
-import { calcTMB, calcTDEE, adjustByGoal, splitMacros, calcGoals } from '../nutrition.calculator';
+import { calcTMB, calcTDEE, adjustByGoal, splitMacros, calcGoals } from '../../utils/nutrition.calculator';
 
 describe('NutritionCalculator', () => {
     describe('calcTMB', () => {

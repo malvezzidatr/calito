@@ -1,4 +1,5 @@
-import { validateMealExtraction, InvalidMealExtractionError } from '../meal.validation';
+import { validateMealExtraction, InvalidMealExtractionError } from '../../utils/meal.validation';
+import { MealExtraction, MealExtractionResult, isMealClarification } from '../../utils/meal.prompt';
 
 const validRaw = {
   description: 'arroz e frango',
@@ -9,6 +10,13 @@ const validRaw = {
   meal_type: 'LUNCH',
 };
 
+function asExtraction(result: MealExtractionResult): MealExtraction {
+  if (isMealClarification(result)) {
+    throw new Error(`Expected MealExtraction, got clarification: ${result.needs_clarification}`);
+  }
+  return result;
+}
+
 describe('validateMealExtraction', () => {
   describe('happy path', () => {
     it('accepts a fully-formed extraction', () => {
@@ -16,24 +24,54 @@ describe('validateMealExtraction', () => {
     });
 
     it('accepts meal_type === null', () => {
-      const result = validateMealExtraction({ ...validRaw, meal_type: null });
+      const result = asExtraction(validateMealExtraction({ ...validRaw, meal_type: null }));
       expect(result.meal_type).toBeNull();
     });
 
     it('accepts zero values for macros (user ate something with no protein etc)', () => {
-      const result = validateMealExtraction({ ...validRaw, fat: 0, carbs: 0 });
+      const result = asExtraction(validateMealExtraction({ ...validRaw, fat: 0, carbs: 0 }));
       expect(result.fat).toBe(0);
       expect(result.carbs).toBe(0);
     });
 
     it('trims surrounding whitespace from description', () => {
-      const result = validateMealExtraction({ ...validRaw, description: '  arroz e frango  ' });
+      const result = asExtraction(validateMealExtraction({ ...validRaw, description: '  arroz e frango  ' }));
       expect(result.description).toBe('arroz e frango');
     });
 
     it('accepts decimal values for macros', () => {
-      const result = validateMealExtraction({ ...validRaw, protein: 24.5 });
+      const result = asExtraction(validateMealExtraction({ ...validRaw, protein: 24.5 }));
       expect(result.protein).toBe(24.5);
+    });
+  });
+
+  describe('clarification path', () => {
+    it('returns clarification when needs_clarification is a non-empty string', () => {
+      const result = validateMealExtraction({ needs_clarification: 'Me passa as quantidades' });
+      expect(result).toEqual({ needs_clarification: 'Me passa as quantidades' });
+    });
+
+    it('trims surrounding whitespace from clarification question', () => {
+      const result = validateMealExtraction({ needs_clarification: '  Me passa as quantidades  ' });
+      expect(result).toEqual({ needs_clarification: 'Me passa as quantidades' });
+    });
+
+    it('clarification wins when both clarification and extraction fields are present', () => {
+      const result = validateMealExtraction({
+        ...validRaw,
+        needs_clarification: 'Me passa as quantidades',
+      });
+      expect(result).toEqual({ needs_clarification: 'Me passa as quantidades' });
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['whitespace only', '   '],
+      ['null', null],
+      ['number', 42],
+    ])('ignores %s clarification and validates extraction normally', (_label, needs_clarification) => {
+      const result = validateMealExtraction({ ...validRaw, needs_clarification });
+      expect(isMealClarification(result)).toBe(false);
     });
   });
 

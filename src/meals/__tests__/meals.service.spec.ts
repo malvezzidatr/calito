@@ -81,7 +81,7 @@ describe('MealsService', () => {
 
     it('falls back to time-based meal_type when AI returns null', async () => {
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2026-05-09T12:30:00'));
+      jest.setSystemTime(new Date('2026-05-09T15:30:00Z'));
 
       findByPhone.mockResolvedValue({ id: 'user-1' });
       chat.mockResolvedValue(JSON.stringify({
@@ -123,6 +123,21 @@ describe('MealsService', () => {
       expect(chat).not.toHaveBeenCalled();
       expect(create).not.toHaveBeenCalled();
       expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('sends the clarification question and does NOT persist when AI asks for clarification', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        needs_clarification: 'Me passa as quantidades 🤔 Ex: 4 colheres de arroz, 1 concha de feijão, 1 filé de frango',
+      }));
+
+      await service.register('5511999', 'comi arroz, feijão e frango', '5511999@s.whatsapp.net');
+
+      expect(create).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('5511999@s.whatsapp.net');
+      expect(message).toBe('Me passa as quantidades 🤔 Ex: 4 colheres de arroz, 1 concha de feijão, 1 filé de frango');
     });
   });
 
@@ -600,6 +615,21 @@ describe('MealsService', () => {
       expect(updateById).not.toHaveBeenCalled();
       const [, message] = sendText.mock.calls[0];
       expect(message).toContain('Não consegui entender');
+    });
+
+    it('sends the clarification question and does NOT update when AI asks for clarification', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: '2 ovos', calories: 140 });
+      chat.mockResolvedValue(JSON.stringify({
+        needs_clarification: 'Me passa quanto de arroz 🤔 Ex: 4 colheres no almoço',
+      }));
+
+      await service.editLast('phone-1', 'troca por arroz', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toBe('Me passa quanto de arroz 🤔 Ex: 4 colheres no almoço');
     });
 
     it('sends a friendly fallback and does NOT update when the AI returns invalid extraction (negative calories)', async () => {

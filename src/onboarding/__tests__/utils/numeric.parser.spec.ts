@@ -1,4 +1,4 @@
-import { parseDecimal, parseHeightCm, parseInteger } from '../numeric.parser';
+import { parseDecimal, parseHeightCm, parseInteger } from '../../utils/numeric.parser';
 
 describe('parseDecimal', () => {
   it.each([

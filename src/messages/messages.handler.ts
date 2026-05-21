@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { type IncomingMessage } from '../whatsapp/whatsapp.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
 import { IntentClassifier } from 'src/ai/intent.classifier';
-import { IntentRouter } from 'src/ai/intent.router';
+import { IntentRouter } from './intent.router';
 
 @Injectable()
 export class MessagesHandler {
