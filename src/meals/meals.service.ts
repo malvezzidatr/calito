@@ -3,7 +3,7 @@ import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from '../ai/prompts/meal.prompt';
+import { MEAL_EXTRACTION_PROMPT, MealExtraction, buildEditUserMessage } from './utils/meal.prompt';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
 import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './utils/meal.format';
 import { validateMealExtraction } from './utils/meal.validation';

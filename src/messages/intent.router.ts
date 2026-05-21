@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Intent } from './intents';
+import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
 

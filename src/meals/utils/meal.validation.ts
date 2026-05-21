@@ -1,4 +1,4 @@
-import { MealExtraction } from '../../ai/prompts/meal.prompt';
+import { MealExtraction } from './meal.prompt';
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] as const;
 type MealTypeEnum = typeof MEAL_TYPES[number];

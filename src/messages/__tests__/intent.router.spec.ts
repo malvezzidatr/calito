@@ -8,7 +8,7 @@ jest.mock('../../meals/meals.service', () => ({
 
 import { Test } from '@nestjs/testing';
 import { IntentRouter } from '../intent.router';
-import { Intent } from '../intents';
+import { Intent } from '../../ai/intents';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { MealsService } from '../../meals/meals.service';
 
