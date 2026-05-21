@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
@@ -24,236 +25,221 @@ export class MealsService {
     ) {}
 
     async register(phone: string, text: string, jid: string) {
-        let extraction: MealExtraction;
-        const user = await this.usersRepository.findByPhone(phone);
-        if (!user) {
-            this.logger.warn(`User não encontrado: ${phone}`);
-            return;
-        }
+        await this.withUser(phone, async (user) => {
+            let extraction: MealExtraction;
+            try {
+                const reply = await this.aiService.chat(
+                    [{ role: 'user', content: text }],
+                    { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
+                );
+                extraction = validateMealExtraction(JSON.parse(reply));
+            } catch (err) {
+                this.logger.warn(`Falha ao extrair refeição: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
+                return;
+            }
 
-        try {
-            const reply = await this.aiService.chat(
-                [{ role: 'user', content: text }],
-                { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
-            );
-            extraction = validateMealExtraction(JSON.parse(reply));
-        } catch (err) {
-            this.logger.warn(`Falha ao extrair refeição: ${(err as Error).message}`);
-            await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
-            return;
-        }
+            const mealType = extraction.meal_type ?? inferMealTypeByHour(new Date());
 
-        const mealType = extraction.meal_type ?? inferMealTypeByHour(new Date());
+            try {
+                await this.mealsRepository.create({
+                    user_id: user.id,
+                    meal_type: mealType,
+                    description: extraction.description,
+                    calories: extraction.calories,
+                    protein: extraction.protein,
+                    carbs: extraction.carbs,
+                    fat: extraction.fat,
+                });
+            } catch (err) {
+                this.logger.error(`Falha ao persistir refeição do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao registrar 😬 Pode tentar de novo daqui a pouquinho?');
+                return;
+            }
 
-        try {
-            await this.mealsRepository.create({
-                user_id: user.id,
-                meal_type: mealType,
-                description: extraction.description,
-                calories: extraction.calories,
-                protein: extraction.protein,
-                carbs: extraction.carbs,
-                fat: extraction.fat,
-            });
-        } catch (err) {
-            this.logger.error(`Falha ao persistir refeição do user ${user.id}: ${(err as Error).message}`);
-            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao registrar 😬 Pode tentar de novo daqui a pouquinho?');
-            return;
-        }
+            const totalsAfter  = await this.mealsRepository.sumDailyByUser(user.id, new Date());
+            const totalsBefore = subtractMeal(totalsAfter, extraction);
 
-        const totalsAfter  = await this.mealsRepository.sumDailyByUser(user.id, new Date());
-        const totalsBefore = subtractMeal(totalsAfter, extraction);
+            let praise: string;
+            if (user.calorie_goal == null && user.protein_goal == null) {
+                this.logger.warn(`User ${user.id} sem goals — fallback`);
+                praise = pickPraise(extraction);
+            } else {
+                praise = pickGoalAwarePraise({
+                    totalsBefore,
+                    totalsAfter,
+                    goals: { calorie: user.calorie_goal, protein: user.protein_goal },
+                    extraction,
+                });
+            }
 
-        let praise: string;
-        if (user.calorie_goal == null && user.protein_goal == null) {
-            this.logger.warn(`User ${user.id} sem goals — fallback`);
-            praise = pickPraise(extraction);
-        } else {
-            praise = pickGoalAwarePraise({
-                totalsBefore,
-                totalsAfter,
-                goals: { calorie: user.calorie_goal, protein: user.protein_goal },
-                extraction,
-            });
-        }
-
-        const message = formatMealConfirmation(mealType, extraction, praise);
-        await this.whatsappService.sendText(jid, message);
+            const message = formatMealConfirmation(mealType, extraction, praise);
+            await this.whatsappService.sendText(jid, message);
+        });
     }
 
     async dailyResume(phone: string, jid: string) {
-        const user = await this.usersRepository.findByPhone(phone);
-        if (!user) {
-            this.logger.warn(`User não encontrado: ${phone}`);
-            return;
-        }
+        await this.withUser(phone, async (user) => {
+            const today = new Date();
+            const [totals, meals] = await Promise.all([
+                this.mealsRepository.sumDailyByUser(user.id, today),
+                this.mealsRepository.findDailyByUser(user.id, today),
+            ]);
 
-        const today = new Date();
-        const [totals, meals] = await Promise.all([
-            this.mealsRepository.sumDailyByUser(user.id, today),
-            this.mealsRepository.findDailyByUser(user.id, today),
-        ]);
+            const praise = pickDailyResumePraise({
+                totalCalories: totals.calories,
+                calorieGoal: user.calorie_goal,
+            });
 
-        const praise = pickDailyResumePraise({
-            totalCalories: totals.calories,
-            calorieGoal: user.calorie_goal,
+            const message = formatDailyResume(
+                today,
+                meals,
+                totals,
+                {
+                    calorie: user.calorie_goal,
+                    protein: user.protein_goal,
+                    carbs:   user.carbs_goal,
+                    fat:     user.fat_goal,
+                },
+                praise,
+            );
+
+            await this.whatsappService.sendText(jid, message);
         });
+    }
 
-        const message = formatDailyResume(
-            today,
-            meals,
-            totals,
-            {
+    async weeklyResume(phone: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            const today = new Date();
+            const startInclusive = startOfDaysAgo(today, 6);
+            const endExclusive   = startOfNextDay(today);
+
+            const meals = await this.mealsRepository.findInRangeByUser(user.id, startInclusive, endExclusive);
+
+            const goals: DailyGoals = {
                 calorie: user.calorie_goal,
                 protein: user.protein_goal,
                 carbs:   user.carbs_goal,
                 fat:     user.fat_goal,
-            },
-            praise,
-        );
+            };
 
-        await this.whatsappService.sendText(jid, message);
-    }
+            const summary = buildWeeklySummary(meals, today, goals);
 
-    async weeklyResume(phone: string, jid: string) {
-        const user = await this.usersRepository.findByPhone(phone);
-        if (!user) {
-            this.logger.warn(`User não encontrado: ${phone}`);
-            return;
-        }
+            const praise = pickWeeklyResumePraise({
+                daysWithinGoal: summary.daysWithinGoal,
+                totalDays: summary.days.length,
+                hasAnyMeal: summary.days.some((d) => d.hasMeals),
+                calorieGoal: user.calorie_goal,
+            });
 
-        const today = new Date();
-        const startInclusive = startOfDaysAgo(today, 6);
-        const endExclusive   = startOfNextDay(today);
-
-        const meals = await this.mealsRepository.findInRangeByUser(user.id, startInclusive, endExclusive);
-
-        const goals: DailyGoals = {
-            calorie: user.calorie_goal,
-            protein: user.protein_goal,
-            carbs:   user.carbs_goal,
-            fat:     user.fat_goal,
-        };
-
-        const summary = buildWeeklySummary(meals, today, goals);
-
-        const praise = pickWeeklyResumePraise({
-            daysWithinGoal: summary.daysWithinGoal,
-            totalDays: summary.days.length,
-            hasAnyMeal: summary.days.some((d) => d.hasMeals),
-            calorieGoal: user.calorie_goal,
+            const message = formatWeeklyResume(summary, goals, praise);
+            await this.whatsappService.sendText(jid, message);
         });
-
-        const message = formatWeeklyResume(summary, goals, praise);
-        await this.whatsappService.sendText(jid, message);
     }
 
     async macroResume(phone: string, text: string, jid: string) {
-        const user = await this.usersRepository.findByPhone(phone);
-        if (!user) {
-            this.logger.warn(`User não encontrado: ${phone}`);
-            return;
-        }
+        await this.withUser(phone, async (user) => {
+            const macro = detectMacro(text);
+            if (!macro) {
+                await this.whatsappService.sendText(jid, 'Posso te mostrar calorias, proteína, carboidrato ou gordura. Qual deles? 🤔');
+                return;
+            }
 
-        const macro = detectMacro(text);
-        if (!macro) {
-            await this.whatsappService.sendText(jid, 'Posso te mostrar calorias, proteína, carboidrato ou gordura. Qual deles? 🤔');
-            return;
-        }
+            const today = new Date();
+            const totals = await this.mealsRepository.sumDailyByUser(user.id, today);
 
-        const today = new Date();
-        const totals = await this.mealsRepository.sumDailyByUser(user.id, today);
+            const goalsByMacro: Record<typeof macro, number | null> = {
+                calorie: user.calorie_goal,
+                protein: user.protein_goal,
+                carbs:   user.carbs_goal,
+                fat:     user.fat_goal,
+            };
+            const totalsByMacro: Record<typeof macro, number> = {
+                calorie: totals.calories,
+                protein: totals.protein,
+                carbs:   totals.carbs,
+                fat:     totals.fat,
+            };
 
-        const goalsByMacro: Record<typeof macro, number | null> = {
-            calorie: user.calorie_goal,
-            protein: user.protein_goal,
-            carbs:   user.carbs_goal,
-            fat:     user.fat_goal,
-        };
-        const totalsByMacro: Record<typeof macro, number> = {
-            calorie: totals.calories,
-            protein: totals.protein,
-            carbs:   totals.carbs,
-            fat:     totals.fat,
-        };
-
-        const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro], today);
-        await this.whatsappService.sendText(jid, message);
+            const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro], today);
+            await this.whatsappService.sendText(jid, message);
+        });
     }
 
     async deleteLast(phone: string, jid: string) {
-        const user = await this.usersRepository.findByPhone(phone);
-        if (!user) {
-            this.logger.warn(`User não encontrado: ${phone}`);
-            return;
-        }
+        await this.withUser(phone, async (user) => {
+            const lastMeal = await this.mealsRepository.findLastByUser(user.id);
+            if (!lastMeal) {
+                await this.whatsappService.sendText(jid, EMPTY_DELETE_MESSAGE);
+                return;
+            }
 
-        const lastMeal = await this.mealsRepository.findLastByUser(user.id);
-        if (!lastMeal) {
-            await this.whatsappService.sendText(jid, EMPTY_DELETE_MESSAGE);
-            return;
-        }
+            try {
+                await this.mealsRepository.deleteById(lastMeal.id);
+            } catch (err) {
+                this.logger.error(`Falha ao apagar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
+                return;
+            }
 
-        try {
-            await this.mealsRepository.deleteById(lastMeal.id);
-        } catch (err) {
-            this.logger.error(`Falha ao apagar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
-            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
-            return;
-        }
-
-        await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.description, lastMeal.calories));
+            await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.description, lastMeal.calories));
+        });
     }
 
     async editLast(phone: string, text: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            const lastMeal = await this.mealsRepository.findLastByUser(user.id);
+            if (!lastMeal) {
+                await this.whatsappService.sendText(jid, EMPTY_EDIT_MESSAGE);
+                return;
+            }
+
+            let extraction: MealExtraction;
+            try {
+                const reply = await this.aiService.chat(
+                    [{ role: 'user', content: buildEditUserMessage(lastMeal.description, text) }],
+                    { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
+                );
+                extraction = validateMealExtraction(JSON.parse(reply));
+            } catch (err) {
+                this.logger.warn(`Falha ao re-extrair refeição ${lastMeal.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                return;
+            }
+
+            if (this.isSameDescription(extraction.description, lastMeal.description)) {
+                await this.whatsappService.sendText(jid, VAGUE_EDIT_MESSAGE);
+                return;
+            }
+
+            const mealType = extraction.meal_type ?? lastMeal.meal_type;
+
+            try {
+                await this.mealsRepository.updateById(lastMeal.id, {
+                    meal_type: mealType,
+                    description: extraction.description,
+                    calories: extraction.calories,
+                    protein: extraction.protein,
+                    carbs: extraction.carbs,
+                    fat: extraction.fat,
+                });
+            } catch (err) {
+                this.logger.error(`Falha ao atualizar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                return;
+            }
+
+            await this.whatsappService.sendText(jid, formatEditConfirmation(mealType, extraction));
+        });
+    }
+
+    private async withUser(phone: string, fn: (user: User) => Promise<void>): Promise<void> {
         const user = await this.usersRepository.findByPhone(phone);
         if (!user) {
             this.logger.warn(`User não encontrado: ${phone}`);
             return;
         }
-
-        const lastMeal = await this.mealsRepository.findLastByUser(user.id);
-        if (!lastMeal) {
-            await this.whatsappService.sendText(jid, EMPTY_EDIT_MESSAGE);
-            return;
-        }
-
-        let extraction: MealExtraction;
-        try {
-            const reply = await this.aiService.chat(
-                [{ role: 'user', content: buildEditUserMessage(lastMeal.description, text) }],
-                { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
-            );
-            extraction = validateMealExtraction(JSON.parse(reply));
-        } catch (err) {
-            this.logger.warn(`Falha ao re-extrair refeição ${lastMeal.id}: ${(err as Error).message}`);
-            await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
-            return;
-        }
-
-        if (this.isSameDescription(extraction.description, lastMeal.description)) {
-            await this.whatsappService.sendText(jid, VAGUE_EDIT_MESSAGE);
-            return;
-        }
-
-        const mealType = extraction.meal_type ?? lastMeal.meal_type;
-
-        try {
-            await this.mealsRepository.updateById(lastMeal.id, {
-                meal_type: mealType,
-                description: extraction.description,
-                calories: extraction.calories,
-                protein: extraction.protein,
-                carbs: extraction.carbs,
-                fat: extraction.fat,
-            });
-        } catch (err) {
-            this.logger.error(`Falha ao atualizar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
-            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
-            return;
-        }
-
-        await this.whatsappService.sendText(jid, formatEditConfirmation(mealType, extraction));
+        await fn(user);
     }
 
     private isSameDescription(a: string, b: string): boolean {
