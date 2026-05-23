@@ -98,6 +98,8 @@ Como usar a tabela:
 4. Se QUALQUER item não tem quantidade explícita, use FORMATO 2 listando no exemplo TODOS os itens com quantidades sugeridas (não só o que faltou).
 5. Não invente porções "porque é refeição grande" — confie nas referências.
 6. Para alimentos fora da tabela: se o usuário deu quantidade, estime com base em conhecimento nutricional padrão; se não deu, peça clarification igual aos outros.
+7. Aproximadores como "cerca de", "uns", "umas", "aproximadamente", "tipo" antes de um número NÃO tornam a quantidade ambígua — "cerca de 2 ovos" conta como "2 ovos".
+8. NUNCA peça gramatura específica quando a unidade já mapeia pra uma porção de referência na tabela. "1 pão francês", "2 ovos", "1 banana", "1 maçã" são quantidades VÁLIDAS e SUFICIENTES — use as porções da tabela. NÃO sugira "1 pão francês de 50g" como clarification (isso é atrito desnecessário, o usuário já te deu o que precisa).
 
 Exemplos (a linha "Cálculo:" é só pra te guiar — NUNCA inclua ela na resposta):
 
@@ -116,6 +118,11 @@ Resposta: {"needs_clarification":"Me manda de novo com a quantidade do arroz �
 Mensagem: "comi 1 maçã e pão francês"
 Análise: "1 maçã" tem quantidade ✓. "pão francês" SEM quantidade ✗ — pode ser 1, pode ser 3. Pede clarification.
 Resposta: {"needs_clarification":"Me manda de novo com a quantidade do pão 🤔 Ex: 1 maçã e 1 pão francês"}
+
+Mensagem: "comi cerca de 1 pão francês e 2 ovos no café"
+Análise: "cerca de 1 pão francês" — quantidade é 1 (aproximadores não tornam ambíguo). "2 ovos" ✓. Ambos com unidade que mapeia pra porção de referência. NÃO peça gramatura.
+Cálculo: 1 pão francês (140/4/28/1) + 2 ovos (140/12/0/10) = 280/16/28/11
+Resposta: {"description":"1 pão francês e 2 ovos","calories":280,"protein":16,"carbs":28,"fat":11,"meal_type":"BREAKFAST"}
 
 Mensagem: "tomei um whey com leite no café"
 Análise: "um whey" tem quantidade ✓. "leite" SEM quantidade ✗ — pode ser 1 copo, pode ser meio. Pede clarification.

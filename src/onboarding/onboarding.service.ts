@@ -2,25 +2,47 @@ import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from 'src/users/users.repository';
 import { OnboardingStep } from './utils/onboarding.constants';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
-import { ACTIVITY_QUESTION, AGE_QUESTION, CONSENT_FAREWELL, CONSENT_INVALID, GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION, INVALID_OPTION, LGPD_MESSAGE, WEIGHT_QUESTION, welcomeMessage } from './utils/onboarding.messages';
+import { AiService } from 'src/ai/ai.service';
+import {
+  ACTIVITY_QUESTION, AGE_QUESTION, CONFIRM_INVALID, CONSENT_FAREWELL, CONSENT_INVALID,
+  formatNutritionistGoalsConfirmation, formatNutritionistProfileConfirmation,
+  GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION,
+  INVALID_OPTION, LGPD_MESSAGE, NUTRITIONIST_CHOICE_QUESTION, NUTRITIONIST_GOALS_PARSE_ERROR,
+  NUTRITIONIST_GOALS_QUESTION, NUTRITIONIST_GOALS_REDO, NUTRITIONIST_PROFILE_PARSE_ERROR,
+  NUTRITIONIST_PROFILE_QUESTION, NUTRITIONIST_PROFILE_REDO, nutritionistWelcomeMessage,
+  WEIGHT_QUESTION, welcomeMessage,
+} from './utils/onboarding.messages';
 import { calcGoals } from './utils/nutrition.calculator';
 import { parseDecimal, parseHeightCm, parseInteger } from './utils/numeric.parser';
 import { matchActivity, matchGender, matchGoal } from './utils/profile.match';
+import { isNutritionistGoalsClarification, NUTRITIONIST_GOALS_PROMPT, NutritionistGoalsResult } from './utils/nutritionist-goals.prompt';
+import { validateNutritionistGoals } from './utils/nutritionist-goals.validation';
+import { isNutritionistProfileClarification, NUTRITIONIST_PROFILE_PROMPT, NutritionistProfileResult } from './utils/nutritionist-profile.prompt';
+import { validateNutritionistProfile } from './utils/nutritionist-profile.validation';
 
 @Injectable()
 export class OnboardingService {
     private readonly logger = new Logger(OnboardingService.name);
     private readonly handlers: Record<OnboardingStep, (phone: string, text: string, jid: string) => Promise<void>>;
 
-    constructor(private readonly users: UsersRepository, private readonly whatsapp: WhatsappService) {
+    constructor(
+        private readonly users: UsersRepository,
+        private readonly whatsapp: WhatsappService,
+        private readonly ai: AiService,
+    ) {
         this.handlers = {
-            [OnboardingStep.WaitingConsent]:  this.handleWaitingConsent.bind(this),
-            [OnboardingStep.WaitingGoal]:     this.handleWaitingGoal.bind(this),
-            [OnboardingStep.WaitingWeight]:   this.handleWaitingWeight.bind(this),
-            [OnboardingStep.WaitingHeight]:   this.handleWaitingHeight.bind(this),
-            [OnboardingStep.WaitingAge]:      this.handleWaitingAge.bind(this),
-            [OnboardingStep.WaitingGender]:   this.handleWaitingGender.bind(this),
-            [OnboardingStep.WaitingActivity]: this.handleWaitingActivity.bind(this),
+            [OnboardingStep.WaitingConsent]:                    this.handleWaitingConsent.bind(this),
+            [OnboardingStep.WaitingNutritionistChoice]:         this.handleWaitingNutritionistChoice.bind(this),
+            [OnboardingStep.WaitingNutritionistGoals]:          this.handleWaitingNutritionistGoals.bind(this),
+            [OnboardingStep.WaitingNutritionistGoalsConfirm]:   this.handleWaitingNutritionistGoalsConfirm.bind(this),
+            [OnboardingStep.WaitingNutritionistProfile]:        this.handleWaitingNutritionistProfile.bind(this),
+            [OnboardingStep.WaitingNutritionistProfileConfirm]: this.handleWaitingNutritionistProfileConfirm.bind(this),
+            [OnboardingStep.WaitingGoal]:                       this.handleWaitingGoal.bind(this),
+            [OnboardingStep.WaitingWeight]:                     this.handleWaitingWeight.bind(this),
+            [OnboardingStep.WaitingHeight]:                     this.handleWaitingHeight.bind(this),
+            [OnboardingStep.WaitingAge]:                        this.handleWaitingAge.bind(this),
+            [OnboardingStep.WaitingGender]:                     this.handleWaitingGender.bind(this),
+            [OnboardingStep.WaitingActivity]:                   this.handleWaitingActivity.bind(this),
         };
     }
 
@@ -57,13 +79,155 @@ export class OnboardingService {
             await this.users.update(phone, {
                 consent_given: true,
                 consent_date: new Date(),
-                onboarding_step: OnboardingStep.WaitingGoal,
+                onboarding_step: OnboardingStep.WaitingNutritionistChoice,
             });
-            await this.whatsapp.sendText(jid, GOAL_QUESTION);
+            await this.whatsapp.sendText(jid, NUTRITIONIST_CHOICE_QUESTION);
         } else if (NO.has(normalized)) {
             await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
         } else {
             await this.whatsapp.sendText(jid, CONSENT_INVALID);
+        }
+    }
+
+    private async handleWaitingNutritionistChoice(phone: string, text: string, jid: string) {
+        const choice = this.parseYesNo(text);
+        if (choice === 'yes') {
+            await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingNutritionistGoals });
+            await this.whatsapp.sendText(jid, NUTRITIONIST_GOALS_QUESTION);
+            return;
+        }
+        if (choice === 'no') {
+            await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingGoal });
+            await this.whatsapp.sendText(jid, GOAL_QUESTION);
+            return;
+        }
+        await this.whatsapp.sendText(jid, CONFIRM_INVALID);
+    }
+
+    private async handleWaitingNutritionistGoals(phone: string, text: string, jid: string) {
+        const result = await this.extractNutritionistGoals(text);
+        if (result === null) {
+            await this.whatsapp.sendText(jid, NUTRITIONIST_GOALS_PARSE_ERROR);
+            return;
+        }
+        if (isNutritionistGoalsClarification(result)) {
+            await this.whatsapp.sendText(jid, result.needs_clarification);
+            return;
+        }
+
+        await this.users.update(phone, {
+            calorie_goal: result.calorie,
+            protein_goal: result.protein,
+            carbs_goal:   result.carbs,
+            fat_goal:     result.fat,
+            onboarding_step: OnboardingStep.WaitingNutritionistGoalsConfirm,
+        });
+        await this.whatsapp.sendText(jid, formatNutritionistGoalsConfirmation(result));
+    }
+
+    private async handleWaitingNutritionistGoalsConfirm(phone: string, text: string, jid: string) {
+        const choice = this.parseYesNo(text);
+        if (choice === 'yes') {
+            await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingNutritionistProfile });
+            await this.whatsapp.sendText(jid, NUTRITIONIST_PROFILE_QUESTION);
+            return;
+        }
+        if (choice === 'no') {
+            await this.users.update(phone, {
+                calorie_goal: null,
+                protein_goal: null,
+                carbs_goal:   null,
+                fat_goal:     null,
+                onboarding_step: OnboardingStep.WaitingNutritionistGoals,
+            });
+            await this.whatsapp.sendText(jid, NUTRITIONIST_GOALS_REDO);
+            return;
+        }
+        await this.whatsapp.sendText(jid, CONFIRM_INVALID);
+    }
+
+    private async handleWaitingNutritionistProfile(phone: string, text: string, jid: string) {
+        const result = await this.extractNutritionistProfile(text);
+        if (result === null) {
+            await this.whatsapp.sendText(jid, NUTRITIONIST_PROFILE_PARSE_ERROR);
+            return;
+        }
+        if (isNutritionistProfileClarification(result)) {
+            await this.whatsapp.sendText(jid, result.needs_clarification);
+            return;
+        }
+
+        await this.users.update(phone, {
+            weight: result.weight,
+            height: result.height,
+            age:    result.age,
+            gender: result.gender,
+            onboarding_step: OnboardingStep.WaitingNutritionistProfileConfirm,
+        });
+        await this.whatsapp.sendText(jid, formatNutritionistProfileConfirmation(result));
+    }
+
+    private async handleWaitingNutritionistProfileConfirm(phone: string, text: string, jid: string) {
+        const choice = this.parseYesNo(text);
+        if (choice === 'yes') {
+            const user = await this.users.findByPhone(phone);
+            if (!user || user.calorie_goal == null || user.protein_goal == null || user.carbs_goal == null || user.fat_goal == null) {
+                this.logger.error(`Onboarding por nutri incompleto pra ${phone}`);
+                return;
+            }
+            await this.users.update(phone, { onboarding_step: null });
+            await this.whatsapp.sendText(jid, nutritionistWelcomeMessage({
+                calorie: user.calorie_goal,
+                protein: user.protein_goal,
+                carbs:   user.carbs_goal,
+                fat:     user.fat_goal,
+            }));
+            return;
+        }
+        if (choice === 'no') {
+            await this.users.update(phone, {
+                weight: null,
+                height: null,
+                age:    null,
+                gender: null,
+                onboarding_step: OnboardingStep.WaitingNutritionistProfile,
+            });
+            await this.whatsapp.sendText(jid, NUTRITIONIST_PROFILE_REDO);
+            return;
+        }
+        await this.whatsapp.sendText(jid, CONFIRM_INVALID);
+    }
+
+    private parseYesNo(text: string): 'yes' | 'no' | null {
+        const normalized = text.trim().toLowerCase();
+        if (['sim', 's', 'yes'].includes(normalized)) return 'yes';
+        if (['não', 'nao', 'n', 'no'].includes(normalized)) return 'no';
+        return null;
+    }
+
+    private async extractNutritionistGoals(text: string): Promise<NutritionistGoalsResult | null> {
+        try {
+            const reply = await this.ai.chat(
+                [{ role: 'user', content: text }],
+                { responseFormat: 'json', systemPrompt: NUTRITIONIST_GOALS_PROMPT, temperature: 0.1 },
+            );
+            return validateNutritionistGoals(JSON.parse(reply));
+        } catch (err) {
+            this.logger.warn(`Falha ao extrair metas da nutri: ${(err as Error).message}`);
+            return null;
+        }
+    }
+
+    private async extractNutritionistProfile(text: string): Promise<NutritionistProfileResult | null> {
+        try {
+            const reply = await this.ai.chat(
+                [{ role: 'user', content: text }],
+                { responseFormat: 'json', systemPrompt: NUTRITIONIST_PROFILE_PROMPT, temperature: 0.1 },
+            );
+            return validateNutritionistProfile(JSON.parse(reply));
+        } catch (err) {
+            this.logger.warn(`Falha ao extrair perfil da nutri: ${(err as Error).message}`);
+            return null;
         }
     }
 

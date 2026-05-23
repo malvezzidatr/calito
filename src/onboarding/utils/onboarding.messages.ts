@@ -1,4 +1,6 @@
 import { Goals } from "./nutrition.calculator"
+import { NutritionistGoalsExtraction } from "./nutritionist-goals.prompt"
+import { NutritionistProfileExtraction } from "./nutritionist-profile.prompt"
 
 export const LGPD_MESSAGE = `Olá! 👋 Sou o Calito, seu parceiro de nutrição!
 
@@ -12,6 +14,72 @@ Antes de começar, preciso te informar:
 Ao continuar, você concorda com isso.
 Quer prosseguir? Responda com "sim" ou "não".
 `
+
+export const NUTRITIONIST_CHOICE_QUESTION = `Antes de seguir, me conta uma coisa 🙂
+
+Você já tem acompanhamento com nutricionista? (sim/não)`
+
+export const NUTRITIONIST_GOALS_QUESTION = `Show! Pra usar a prescrição da sua nutri, me manda os 4 valores das metas diárias numa mensagem só 🎯
+
+Ex: 2000 kcal, 150g de proteína, 200g de carbo, 60g de gordura`
+
+export const NUTRITIONIST_PROFILE_QUESTION = `Agora me conta seus dados corporais numa mensagem só 📋
+
+Ex: 70kg, 1.75m, 30 anos, masculino`
+
+export const CONFIRM_INVALID = `Não entendi. Pra continuar preciso de "sim" ou "não". 🙂`
+
+export const formatNutritionistGoalsConfirmation = (g: NutritionistGoalsExtraction) => `Anotei aqui:
+
+🔥 Calorias: ${g.calorie} kcal
+🥩 Proteína: ${g.protein}g
+🍚 Carboidrato: ${g.carbs}g
+🧈 Gordura: ${g.fat}g
+
+Tá certo? (sim/não)`
+
+export const formatNutritionistProfileConfirmation = (p: NutritionistProfileExtraction) => {
+  const genderLabel = p.gender === 'MALE' ? 'masculino' : 'feminino'
+  return `Anotei aqui:
+
+⚖️ Peso: ${p.weight}kg
+📏 Altura: ${p.height}cm
+🎂 Idade: ${p.age} anos
+👤 Sexo: ${genderLabel}
+
+Tá certo? (sim/não)`
+}
+
+export const NUTRITIONIST_GOALS_REDO = `Tudo bem! Me manda de novo as metas que a nutri te passou 🙂
+
+Ex: 2000 kcal, 150g de proteína, 200g de carbo, 60g de gordura`
+
+export const NUTRITIONIST_PROFILE_REDO = `Tudo bem! Me manda de novo seus dados 🙂
+
+Ex: 70kg, 1.75m, 30 anos, masculino`
+
+export const NUTRITIONIST_GOALS_PARSE_ERROR = `Não consegui entender essa mensagem 🤔 Me manda de novo com os 4 valores juntos.
+
+Ex: 2000 kcal, 150g de proteína, 200g de carbo, 60g de gordura`
+
+export const NUTRITIONIST_PROFILE_PARSE_ERROR = `Não consegui entender essa mensagem 🤔 Me manda de novo com os 4 dados juntos.
+
+Ex: 70kg, 1.75m, 30 anos, masculino`
+
+export const nutritionistWelcomeMessage = (g: NutritionistGoalsExtraction) => `✓ Perfil configurado com a prescrição da sua nutri!
+
+Suas metas diárias:
+🔥 Calorias: ${g.calorie} kcal
+🥩 Proteína: ${g.protein}g
+🍚 Carboidrato: ${g.carbs}g
+🧈 Gordura: ${g.fat}g
+
+Você vai receber um resumo todo dia às 20h
+com tudo que comeu e quanto falta pra meta.
+
+Pra começar, é só me mandar o que comeu!
+
+Bora! 💪`
 
 export const GOAL_QUESTION = `Show! Vamos configurar seu perfil pra calcular suas metas 🎯
 
