@@ -10,6 +10,13 @@ const MEAL_LABELS: Record<MealType, string> = {
   SNACK:     'Lanche',
 };
 
+const MEAL_EMOJIS: Record<MealType, string> = {
+  BREAKFAST: '🍳',
+  LUNCH:     '🍽️',
+  DINNER:    '🍝',
+  SNACK:     '🍪',
+};
+
 const MEAL_ORDER: MealType[] = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER'];
 
 export type DailyGoals = {
@@ -20,6 +27,8 @@ export type DailyGoals = {
 };
 
 export type DailyMeal = { meal_type: MealType; calories: number };
+
+export type DetailedMeal = { meal_type: MealType; calories: number; created_at: Date };
 
 export type WeeklyDayStats = {
   date: Date;
@@ -42,6 +51,13 @@ const shortDateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
   day: '2-digit',
   month: '2-digit',
+});
+
+const hourMinuteFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: 'America/Sao_Paulo',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
 });
 
 const WEEKDAY_LABELS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -75,6 +91,24 @@ export function formatEditConfirmation(mealType: MealType, extraction: MealExtra
 
 function formatShortDate(d: Date): string {
   return shortDateFormatter.format(d);
+}
+
+function formatHourMinute(d: Date): string {
+  return hourMinuteFormatter.format(d);
+}
+
+export function formatMealList(meals: DetailedMeal[], date: Date): string {
+  const header = `📋 Refeições de hoje (${formatShortDate(date)})`;
+
+  if (meals.length === 0) {
+    return `${header}\n\n${EMPTY_DAY_MESSAGE}`;
+  }
+
+  const lines: string[] = [header, ''];
+  for (const m of meals) {
+    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatHourMinute(m.created_at)} — ${m.calories}kcal`);
+  }
+  return lines.join('\n');
 }
 
 function formatWeekday(spDayStart: Date): string {

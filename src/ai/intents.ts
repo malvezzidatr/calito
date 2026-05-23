@@ -3,6 +3,7 @@ export const INTENTS = [
   'query_daily',
   'query_period',
   'query_macro',
+  'list_meals',
   'update_goal',
   'edit_meal',
   'delete_meal',

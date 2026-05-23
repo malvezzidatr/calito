@@ -6,7 +6,7 @@ import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction, MealExtractionResult, buildEditUserMessage, isMealClarification } from './utils/meal.prompt';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE } from './utils/meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList } from './utils/meal.format';
 import { validateMealExtraction } from './utils/meal.validation';
 import { startOfDaysAgo, startOfNextDay } from './utils/day-bounds';
 import { buildWeeklySummary } from './utils/weekly.summary';
@@ -168,6 +168,15 @@ export class MealsService {
             };
 
             const message = formatMacroResume(macro, totalsByMacro[macro], goalsByMacro[macro], today);
+            await this.whatsappService.sendText(jid, message);
+        });
+    }
+
+    async listMeals(phone: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            const today = new Date();
+            const meals = await this.mealsRepository.listDailyByUser(user.id, today);
+            const message = formatMealList(meals, today);
             await this.whatsappService.sendText(jid, message);
         });
     }

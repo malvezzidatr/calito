@@ -10,6 +10,7 @@ Os intents disponíveis são:
 - query_daily: usuário quer saber consumo do dia. Ex: "quanto comi hoje?"
 - query_period: usuário quer saber consumo de mais de um dia. Ex: "como foi minha semana?"
 - query_macro: usuário pergunta sobre um macro específico. Ex: "quanta proteína comi hoje?"
+- list_meals: usuário pede a LISTA detalhada das refeições do dia (cada uma separada com horário), não o resumo agregado. Ex: "lista minhas refeições", "me mostra cada refeição de hoje", "quais almoços eu comi", "detalha o que comi"
 - update_goal: usuário muda o objetivo. Ex: "agora quero ganhar massa"
 - edit_meal: corrige uma refeição específica do dia. Ex: "corrige meu almoço pra arroz e carne"
 - delete_meal: apaga uma refeição específica do dia. Ex: "apaga meu café da manhã"
