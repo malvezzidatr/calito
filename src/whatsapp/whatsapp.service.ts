@@ -58,7 +58,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (connection === 'open') {
-        this.readyAt = Math.floor(Date.now() / 1000);
+        this.readyAt = Math.floor(Date.now() / 1000) - 60;
         this.logger.log('WhatsApp conectado');
       }
 
