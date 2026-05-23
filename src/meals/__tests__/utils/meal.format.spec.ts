@@ -2,6 +2,10 @@ import {
   formatDailyResume,
   formatMealConfirmation,
   formatMealList,
+  formatMealTime,
+  formatDeleteAmbiguous,
+  formatDeleteNotFound,
+  formatDeleteTimeNotFound,
   formatWeeklyResume,
   formatMacroResume,
   formatDeleteConfirmation,
@@ -453,6 +457,89 @@ describe('VAGUE_EDIT_MESSAGE', () => {
     expect(VAGUE_EDIT_MESSAGE).toMatch(/mudar|trocar|corrigir/i);
     expect(VAGUE_EDIT_MESSAGE).toContain('ex:');
     expect(VAGUE_EDIT_MESSAGE).toMatch(/🤔|🙂/);
+  });
+});
+
+describe('formatMealTime', () => {
+  it('formats HH:MM in 24-hour clock, TZ Sao_Paulo', () => {
+    expect(formatMealTime(new Date('2026-05-12T08:15:00-03:00'))).toBe('08:15');
+    expect(formatMealTime(new Date('2026-05-12T19:45:00-03:00'))).toBe('19:45');
+  });
+
+  it('converts UTC to Sao_Paulo (UTC-3)', () => {
+    expect(formatMealTime(new Date('2026-05-12T12:00:00Z'))).toBe('09:00');
+  });
+
+  it('zero-pads single-digit hours', () => {
+    expect(formatMealTime(new Date('2026-05-12T07:05:00-03:00'))).toBe('07:05');
+  });
+});
+
+describe('formatDeleteNotFound', () => {
+  it.each([
+    ['BREAKFAST', 'Não vi nenhum Café registrado hoje 😔'],
+    ['LUNCH',     'Não vi nenhum Almoço registrado hoje 😔'],
+    ['SNACK',     'Não vi nenhum Lanche registrado hoje 😔'],
+    ['DINNER',    'Não vi nenhum Jantar registrado hoje 😔'],
+  ] as const)('formats message for %s', (mealType, expected) => {
+    expect(formatDeleteNotFound(mealType)).toBe(expected);
+  });
+});
+
+describe('formatDeleteAmbiguous', () => {
+  const twoSnacks = [
+    { meal_type: 'SNACK' as const, calories: 200, created_at: new Date('2026-05-12T10:30:00-03:00') },
+    { meal_type: 'SNACK' as const, calories: 350, created_at: new Date('2026-05-12T16:00:00-03:00') },
+  ];
+
+  it('shows the count using the plural label', () => {
+    const result = formatDeleteAmbiguous('SNACK', twoSnacks);
+    expect(result).toContain('Você tem 2 lanches hoje');
+  });
+
+  it('lists each meal with emoji + label + time + kcal', () => {
+    const result = formatDeleteAmbiguous('SNACK', twoSnacks);
+    expect(result).toContain('🍪 Lanche 10:30 — 200kcal');
+    expect(result).toContain('🍪 Lanche 16:00 — 350kcal');
+  });
+
+  it('ends with a how-to-disambiguate hint using the first time', () => {
+    const result = formatDeleteAmbiguous('SNACK', twoSnacks);
+    expect(result).toContain('"apaga o lanche das 10:30"');
+  });
+
+  it.each([
+    ['BREAKFAST', 'cafés', 'café'],
+    ['LUNCH',     'almoços', 'almoço'],
+    ['DINNER',    'jantares', 'jantar'],
+    ['SNACK',     'lanches', 'lanche'],
+  ] as const)('uses proper PT plural %s for %s', (mealType, plural, singular) => {
+    const meals = [
+      { meal_type: mealType, calories: 100, created_at: new Date('2026-05-12T08:00:00-03:00') },
+      { meal_type: mealType, calories: 200, created_at: new Date('2026-05-12T12:00:00-03:00') },
+    ];
+    const result = formatDeleteAmbiguous(mealType, meals);
+    expect(result).toContain(`2 ${plural}`);
+    expect(result).toContain(`apaga o ${singular} das 08:00`);
+  });
+});
+
+describe('formatDeleteTimeNotFound', () => {
+  const twoLunches = [
+    { meal_type: 'LUNCH' as const, calories: 500, created_at: new Date('2026-05-12T12:00:00-03:00') },
+    { meal_type: 'LUNCH' as const, calories: 600, created_at: new Date('2026-05-12T14:00:00-03:00') },
+  ];
+
+  it('says it could not find the meal at the requested time', () => {
+    const result = formatDeleteTimeNotFound('LUNCH', '13:00', twoLunches);
+    expect(result).toContain('Não achei almoço às 13:00 hoje');
+  });
+
+  it('lists available meals after the not-found message', () => {
+    const result = formatDeleteTimeNotFound('LUNCH', '13:00', twoLunches);
+    expect(result).toContain('Os almoços de hoje foram:');
+    expect(result).toContain('🍽️ Almoço 12:00 — 500kcal');
+    expect(result).toContain('🍽️ Almoço 14:00 — 600kcal');
   });
 });
 

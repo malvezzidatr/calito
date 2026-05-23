@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { MealType, User } from '@prisma/client';
 import { MealsRepository } from './meals.repository';
 import { AiService } from '../ai/ai.service';
 import { UsersRepository } from '../users/users.repository';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MEAL_EXTRACTION_PROMPT, MealExtraction, MealExtractionResult, buildEditUserMessage, isMealClarification } from './utils/meal.prompt';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList } from './utils/meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound } from './utils/meal.format';
+import { isMealReferenceClarification, MEAL_REFERENCE_PROMPT, MealReferenceResult } from './utils/meal-reference.prompt';
+import { validateMealReference } from './utils/meal-reference.validation';
 import { validateMealExtraction } from './utils/meal.validation';
 import { startOfDaysAgo, startOfNextDay } from './utils/day-bounds';
 import { buildWeeklySummary } from './utils/weekly.summary';
@@ -179,6 +181,69 @@ export class MealsService {
             const message = formatMealList(meals, today);
             await this.whatsappService.sendText(jid, message);
         });
+    }
+
+    async deleteMeal(phone: string, text: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            const reference = await this.extractMealReference(text);
+            if (reference === null) {
+                await this.whatsappService.sendText(jid, 'Não entendi qual refeição você quer apagar 🤔 Tenta assim: "apaga o almoço" ou "apaga o lanche das 16h"');
+                return;
+            }
+            if (isMealReferenceClarification(reference)) {
+                await this.whatsappService.sendText(jid, reference.needs_clarification);
+                return;
+            }
+
+            const today = new Date();
+            const matches = await this.mealsRepository.findDailyByUserAndType(user.id, today, reference.meal_type);
+
+            if (matches.length === 0) {
+                await this.whatsappService.sendText(jid, formatDeleteNotFound(reference.meal_type));
+                return;
+            }
+
+            if (reference.time !== null) {
+                const exact = matches.find((m) => formatMealTime(m.created_at) === reference.time);
+                if (!exact) {
+                    await this.whatsappService.sendText(jid, formatDeleteTimeNotFound(reference.meal_type, reference.time, matches));
+                    return;
+                }
+                await this.performDelete(exact, user.id, jid);
+                return;
+            }
+
+            if (matches.length === 1) {
+                await this.performDelete(matches[0], user.id, jid);
+                return;
+            }
+
+            await this.whatsappService.sendText(jid, formatDeleteAmbiguous(reference.meal_type, matches));
+        });
+    }
+
+    private async performDelete(meal: { id: string; meal_type: MealType; description: string; calories: number }, user_id: string, jid: string) {
+        try {
+            await this.mealsRepository.deleteById(meal.id);
+        } catch (err) {
+            this.logger.error(`Falha ao apagar refeição ${meal.id} do user ${user_id}: ${(err as Error).message}`);
+            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
+            return;
+        }
+        await this.whatsappService.sendText(jid, formatDeleteConfirmation(meal.meal_type, meal.description, meal.calories));
+    }
+
+    private async extractMealReference(text: string): Promise<MealReferenceResult | null> {
+        try {
+            const reply = await this.aiService.chat(
+                [{ role: 'user', content: text }],
+                { responseFormat: 'json', systemPrompt: MEAL_REFERENCE_PROMPT, temperature: 0.1 },
+            );
+            return validateMealReference(JSON.parse(reply));
+        } catch (err) {
+            this.logger.warn(`Falha ao extrair referência de refeição: ${(err as Error).message}`);
+            return null;
+        }
     }
 
     async deleteLast(phone: string, jid: string) {

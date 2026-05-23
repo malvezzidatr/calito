@@ -20,6 +20,7 @@ describe('IntentRouter', () => {
   let weeklyResume: jest.Mock;
   let macroResume: jest.Mock;
   let deleteLast: jest.Mock;
+  let deleteMeal: jest.Mock;
   let editLast: jest.Mock;
 
   beforeEach(async () => {
@@ -29,13 +30,14 @@ describe('IntentRouter', () => {
     weeklyResume = jest.fn().mockResolvedValue(undefined);
     macroResume = jest.fn().mockResolvedValue(undefined);
     deleteLast = jest.fn().mockResolvedValue(undefined);
+    deleteMeal = jest.fn().mockResolvedValue(undefined);
     editLast = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
-        { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, editLast } },
+        { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast } },
       ],
     }).compile();
     router = module.get(IntentRouter);
@@ -44,7 +46,6 @@ describe('IntentRouter', () => {
   it.each<[Intent, string]>([
     ['update_goal',    'atualizar seu objetivo'],
     ['edit_meal',      'editar essa refeição'],
-    ['delete_meal',    'apagar essa refeição'],
     ['delete_account', 'exclusão da sua conta'],
     ['subscribe',      'link de assinatura'],
     ['help',           'explicar tudo que sei fazer'],
@@ -92,6 +93,14 @@ describe('IntentRouter', () => {
 
     expect(macroResume).toHaveBeenCalledTimes(1);
     expect(macroResume).toHaveBeenCalledWith('5511999', 'quanta proteína comi hoje?', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
+  it('routes delete_meal to MealsService.deleteMeal forwarding the text', async () => {
+    await router.route('delete_meal', '5511999', 'apaga o lanche das 16h', '5511999@s.whatsapp.net');
+
+    expect(deleteMeal).toHaveBeenCalledTimes(1);
+    expect(deleteMeal).toHaveBeenCalledWith('5511999', 'apaga o lanche das 16h', '5511999@s.whatsapp.net');
     expect(sendText).not.toHaveBeenCalled();
   });
 
