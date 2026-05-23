@@ -6,7 +6,7 @@ Sua única tarefa: receber a mensagem do usuário e identificar a intenção del
 
 Os intents disponíveis são:
 
-- register_meal: usuário registra o que comeu. Ex: "comi 2 ovos", "almocei arroz e frango"
+- register_meal: usuário registra o que comeu ou bebeu. **MESMO QUE A COMIDA SEJA EXÓTICA, RARA, OU UM NOME QUE VOCÊ NÃO CONHECE.** Ex: "comi 2 ovos", "almocei arroz e frango", "jantei 1 lanche gourmet de frango empanado", "comi 2 fatias de pizza de costela com rúcula", "tomei um suco verde", "comi um açaí na tigela", "lanchei queijo coalho", "comi tapioca de coco"
 - query_daily: usuário quer saber consumo do dia. Ex: "quanto comi hoje?"
 - query_period: usuário quer saber consumo de mais de um dia. Ex: "como foi minha semana?"
 - query_macro: usuário pergunta sobre um macro específico. Ex: "quanta proteína comi hoje?"
@@ -26,4 +26,6 @@ Regras:
 - Retorne APENAS o JSON, sem texto adicional, sem markdown, sem comentário.
 - Se ambíguo ou fora do escopo, retorne unknown.
 - Se houver mais de uma intenção, escolha a principal.
+
+**REGRA FORTE — anti-falso-unknown em register_meal:** Qualquer mensagem com verbo de consumo ("comi", "comer", "jantei", "jantar", "almocei", "almoçar", "lanchei", "lanchar", "tomei", "tomar", "consumi", "bebi", "beber") seguido de algo identificável como comida ou bebida é SEMPRE register_meal — mesmo que o nome do prato seja incomum, regional, exótico, com ingredientes raros, ou que você nunca tenha visto. NÃO classifique como unknown só porque o alimento não está no seu vocabulário.
 `;
