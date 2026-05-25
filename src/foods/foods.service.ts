@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { FoodCategory, FoodEntry } from './utils/food.types';
 import { validateFoodCatalog } from './utils/food.validation';
+import { matchFood, MatchResult } from './utils/food.matcher';
 
 @Injectable()
 export class FoodsService implements OnModuleInit {
@@ -36,5 +37,9 @@ export class FoodsService implements OnModuleInit {
 
   size(): number {
     return this.catalog.size;
+  }
+
+  match(input: string): MatchResult | null {
+    return matchFood(input, this.getAll());
   }
 }
