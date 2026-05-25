@@ -4,6 +4,7 @@ import { join } from 'path';
 import { FoodCategory, FoodEntry } from './utils/food.types';
 import { validateFoodCatalog } from './utils/food.validation';
 import { matchFood, MatchResult } from './utils/food.matcher';
+import { calculateMacros, CalculationItem, CalculationResult } from './utils/food.calculator';
 
 @Injectable()
 export class FoodsService implements OnModuleInit {
@@ -41,5 +42,9 @@ export class FoodsService implements OnModuleInit {
 
   match(input: string): MatchResult | null {
     return matchFood(input, this.getAll());
+  }
+
+  calculate(items: CalculationItem[]): CalculationResult {
+    return calculateMacros(items, this.getAll());
   }
 }
