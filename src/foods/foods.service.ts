@@ -1,12 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { FoodCategory, FoodEntry } from './utils/food.types';
 import { validateFoodCatalog } from './utils/food.validation';
 import { matchFood, MatchResult } from './utils/food.matcher';
 import { calculateMacros, CalculationItem, CalculationResult } from './utils/food.calculator';
 import { FoodEstimator, EstimateRunResult } from './food.estimator';
 import { Nutrition } from './utils/food.types';
+import foodsData from './data/foods.json';
 
 export type CalculationWithFallbackResult = CalculationResult & {
   estimated: EstimateRunResult['estimated'];
@@ -21,10 +20,7 @@ export class FoodsService implements OnModuleInit {
   constructor(private readonly estimator: FoodEstimator) {}
 
   onModuleInit() {
-    const path = join(__dirname, 'data', 'foods.json');
-    const raw = readFileSync(path, 'utf-8');
-    const parsed = JSON.parse(raw);
-    const entries = validateFoodCatalog(parsed);
+    const entries = validateFoodCatalog(foodsData);
 
     for (const entry of entries) {
       this.catalog.set(entry.id, entry);
