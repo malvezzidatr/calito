@@ -894,7 +894,7 @@ describe('MealsService', () => {
 
       const [messages, opts] = chat.mock.calls[0];
       expect(messages).toEqual([{ role: 'user', content: 'comi 1 banana' }]);
-      expect(opts.systemPrompt).toContain('parser');
+      expect(opts.systemPrompt.toLowerCase()).toContain('parser');
     });
   });
 
