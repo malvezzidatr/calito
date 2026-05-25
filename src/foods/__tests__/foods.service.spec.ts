@@ -1,12 +1,18 @@
 import { Test } from '@nestjs/testing';
 import { FoodsService } from '../foods.service';
+import { FoodEstimator } from '../food.estimator';
 
 describe('FoodsService', () => {
   let service: FoodsService;
+  let estimator: { estimate: jest.Mock };
 
   beforeEach(async () => {
+    estimator = { estimate: jest.fn().mockResolvedValue({ estimated: [], failed: [] }) };
     const module = await Test.createTestingModule({
-      providers: [FoodsService],
+      providers: [
+        FoodsService,
+        { provide: FoodEstimator, useValue: estimator },
+      ],
     }).compile();
     service = module.get(FoodsService);
     service.onModuleInit();

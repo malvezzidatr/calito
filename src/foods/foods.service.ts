@@ -5,11 +5,20 @@ import { FoodCategory, FoodEntry } from './utils/food.types';
 import { validateFoodCatalog } from './utils/food.validation';
 import { matchFood, MatchResult } from './utils/food.matcher';
 import { calculateMacros, CalculationItem, CalculationResult } from './utils/food.calculator';
+import { FoodEstimator, EstimateRunResult } from './food.estimator';
+import { Nutrition } from './utils/food.types';
+
+export type CalculationWithFallbackResult = CalculationResult & {
+  estimated: EstimateRunResult['estimated'];
+  failed:    EstimateRunResult['failed'];
+};
 
 @Injectable()
 export class FoodsService implements OnModuleInit {
   private readonly logger = new Logger(FoodsService.name);
   private readonly catalog: Map<string, FoodEntry> = new Map();
+
+  constructor(private readonly estimator: FoodEstimator) {}
 
   onModuleInit() {
     const path = join(__dirname, 'data', 'foods.json');
@@ -47,4 +56,39 @@ export class FoodsService implements OnModuleInit {
   calculate(items: CalculationItem[]): CalculationResult {
     return calculateMacros(items, this.getAll());
   }
+
+  async calculateWithFallback(items: CalculationItem[]): Promise<CalculationWithFallbackResult> {
+    const local = this.calculate(items);
+    const fallback = await this.estimator.estimate(local.unmatched);
+
+    const totals: Nutrition = {
+      kcal: local.totals.kcal,
+      p:    local.totals.p,
+      c:    local.totals.c,
+      g:    local.totals.g,
+    };
+    for (const item of fallback.estimated) {
+      totals.kcal += item.macros_contribution.kcal;
+      totals.p    += item.macros_contribution.p;
+      totals.c    += item.macros_contribution.c;
+      totals.g    += item.macros_contribution.g;
+    }
+
+    return {
+      totals: roundFinal(totals),
+      matched:   local.matched,
+      unmatched: local.unmatched,
+      estimated: fallback.estimated,
+      failed:    fallback.failed,
+    };
+  }
+}
+
+function roundFinal(n: Nutrition): Nutrition {
+  return {
+    kcal: Math.round(n.kcal),
+    p:    Math.round(n.p),
+    c:    Math.round(n.c),
+    g:    n.g < 5 ? Math.round(n.g * 10) / 10 : Math.round(n.g),
+  };
 }

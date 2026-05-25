@@ -8,6 +8,7 @@ type ChatOptions = {
   temperature?: number;
   responseFormat?: 'json' | 'text';
   systemPrompt?: string;
+  model?: string;
 };
 
 @Injectable()
@@ -30,7 +31,7 @@ export class AiService implements OnModuleInit {
 
   async chat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
     const completion = await this.client.chat.completions.create({
-    model: this.model,
+    model: opts.model ?? this.model,
     temperature: opts.temperature ?? this.defaultTemperature,
     ...(opts.responseFormat === 'json' && {
       response_format: { type: 'json_object' as const },
