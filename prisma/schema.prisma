@@ -90,3 +90,18 @@ model WhatsappAuth {
 
   @@unique([type, name])
 }
+
+model EstimatedFood {
+  id String @id @default(uuid())
+  food_name String
+  unit String
+  kcal Float
+  protein Float
+  carbs Float
+  fat Float
+  source String @default("ai_estimate")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([food_name, unit])
+}

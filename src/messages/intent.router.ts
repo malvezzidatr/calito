@@ -19,6 +19,7 @@ export class IntentRouter {
       query_daily:    this.handleQueryDaily.bind(this),
       query_period:   this.handleQueryPeriod.bind(this),
       query_macro:    this.handleQueryMacro.bind(this),
+      list_meals:     this.handleListMeals.bind(this),
       update_goal:    this.handleUpdateGoal.bind(this),
       edit_meal:      this.handleEditMeal.bind(this),
       delete_meal:    this.handleDeleteMeal.bind(this),
@@ -54,6 +55,10 @@ export class IntentRouter {
     await this.meals.macroResume(phone, text, jid);
   }
 
+  private async handleListMeals(phone: string, _text: string, jid: string) {
+    await this.meals.listMeals(phone, jid);
+  }
+
   private async handleUpdateGoal(_phone: string, _text: string, jid: string) {
     await this.whatsapp.sendText(jid, 'Em breve vou atualizar seu objetivo! 🚧');
   }
@@ -62,8 +67,8 @@ export class IntentRouter {
     await this.whatsapp.sendText(jid, 'Em breve vou editar essa refeição! 🚧');
   }
 
-  private async handleDeleteMeal(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou apagar essa refeição! 🚧');
+  private async handleDeleteMeal(phone: string, text: string, jid: string) {
+    await this.meals.deleteMeal(phone, text, jid);
   }
 
   private async handleEditLast(phone: string, text: string, jid: string) {
@@ -98,6 +103,7 @@ export class IntentRouter {
         '',
         '🍽️ Registrar refeições: "almocei arroz e frango"',
         '📊 Consultar o dia/semana: "como foi meu dia?"',
+        '📋 Listar refeições do dia: "lista o que comi hoje"',
         '🎯 Atualizar objetivo: "quero ganhar massa"',
         '✏️ Editar/apagar refeições: "era 1 ovo não 2"',
       ].join('\n'),

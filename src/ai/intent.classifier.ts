@@ -18,6 +18,7 @@ export class IntentClassifier {
           temperature: 0,
           responseFormat: 'json',
           systemPrompt: INTENT_CLASSIFIER_PROMPT,
+          model: 'llama-3.1-8b-instant',
         },
       );
     } catch (err) {

@@ -3,11 +3,13 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 }));
 
 import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { MealsService } from '../meals.service';
 import { MealsRepository } from '../meals.repository';
 import { AiService } from '../../ai/ai.service';
 import { UsersRepository } from '../../users/users.repository';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
+import { FoodsService } from '../../foods/foods.service';
 
 describe('MealsService', () => {
   let service: MealsService;
@@ -21,6 +23,8 @@ describe('MealsService', () => {
   let deleteById: jest.Mock;
   let updateById: jest.Mock;
   let sendText: jest.Mock;
+  let calculateWithFallback: jest.Mock;
+  let configGet: jest.Mock;
 
   beforeEach(async () => {
     chat = jest.fn();
@@ -33,6 +37,8 @@ describe('MealsService', () => {
     deleteById = jest.fn().mockResolvedValue(undefined);
     updateById = jest.fn().mockResolvedValue(undefined);
     sendText = jest.fn().mockResolvedValue(undefined);
+    calculateWithFallback = jest.fn();
+    configGet = jest.fn().mockReturnValue('false'); // default: feature flag OFF
 
     const module = await Test.createTestingModule({
       providers: [
@@ -41,6 +47,8 @@ describe('MealsService', () => {
         { provide: UsersRepository,  useValue: { findByPhone } },
         { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, deleteById, updateById } },
         { provide: WhatsappService,  useValue: { sendText } },
+        { provide: FoodsService,     useValue: { calculateWithFallback } },
+        { provide: ConfigService,    useValue: { get: configGet } },
       ],
     }).compile();
 
@@ -694,6 +702,312 @@ describe('MealsService', () => {
       const [, message] = sendText.mock.calls[0];
       expect(message).toContain('problema técnico');
       expect(message).not.toContain('✏️');
+    });
+  });
+
+  describe('register (USE_LOCAL_CALCULATOR=true)', () => {
+    beforeEach(() => {
+      configGet.mockReturnValue('true');
+    });
+
+    it('parses foods, runs local calc and persists', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'ovo', quantity: 2, unit: 'unidade' }],
+        meal_type: 'BREAKFAST',
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 143, p: 13, c: 1, g: 10 },
+        matched: [{ food: { id: 'ovo' } }],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.register('5511999', 'comi 2 ovos no café', '5511999@s.whatsapp.net');
+
+      expect(chat).toHaveBeenCalledTimes(1);
+      expect(calculateWithFallback).toHaveBeenCalledWith([{ food: 'ovo', quantity: 2, unit: 'unidade' }]);
+      expect(create).toHaveBeenCalledWith({
+        user_id: 'user-1',
+        meal_type: 'BREAKFAST',
+        description: '2 ovos no café',
+        calories: 143,
+        protein: 13,
+        carbs: 1,
+        fat: 10,
+      });
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Café');
+      expect(message).toContain('143kcal');
+    });
+
+    it('strips meal verbs from description (option A)', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'lanche gourmet', quantity: 1, unit: 'unidade' }],
+        meal_type: 'DINNER',
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 700, p: 40, c: 30, g: 35 },
+        matched: [{ food: { id: 'lanche' } }],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.register('5511999', 'eu jantei um lanche gourmet', '5511999@s.whatsapp.net');
+
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({
+        description: 'um lanche gourmet',
+      }));
+    });
+
+    it('falls back to time-based meal_type when parser returns null', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-09T15:30:00Z'));
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'banana', quantity: 1, unit: 'unidade' }],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 89, p: 1, c: 23, g: 0.3 },
+        matched: [{ food: { id: 'banana' } }],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.register('5511999', 'comi 1 banana', '5511999@s.whatsapp.net');
+
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({ meal_type: 'LUNCH' }));
+      jest.useRealTimers();
+    });
+
+    it('forwards parser clarification to user without persisting', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({ needs_clarification: 'Me manda de novo com as quantidades' }));
+
+      await service.register('5511999', 'almocei arroz e frango', '5511999@s.whatsapp.net');
+
+      expect(calculateWithFallback).not.toHaveBeenCalled();
+      expect(create).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledWith('5511999@s.whatsapp.net', 'Me manda de novo com as quantidades');
+    });
+
+    it('replies with friendly error when parser fails', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockRejectedValue(new Error('rate limit'));
+
+      await service.register('5511999', 'comi algo', '5511999@s.whatsapp.net');
+
+      expect(calculateWithFallback).not.toHaveBeenCalled();
+      expect(create).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui entender');
+    });
+
+    it('replies with "não consegui calcular" when ALL items failed', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'biribiri', quantity: 1, unit: 'unidade' }],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 0, p: 0, c: 0, g: 0 },
+        matched: [],
+        unmatched: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
+        estimated: [],
+        failed: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'unknown_food' }],
+      });
+
+      await service.register('5511999', 'comi 1 biribiri', '5511999@s.whatsapp.net');
+
+      expect(create).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui calcular');
+    });
+
+    it('persists when some items are estimated (cache/ai fallback)', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [
+          { food: 'ovo', quantity: 2, unit: 'unidade' },
+          { food: 'acarajé', quantity: 1, unit: 'unidade' },
+        ],
+        meal_type: 'LUNCH',
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 423, p: 21, c: 26, g: 28 },
+        matched: [{ food: { id: 'ovo' } }],
+        unmatched: [{ input: { food: 'acarajé', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
+        estimated: [{ input: { food: 'acarajé', quantity: 1, unit: 'unidade' }, source: 'fresh', estimate_per_unit: {} as never, macros_contribution: { kcal: 280, p: 8, c: 25, g: 18 } }],
+        failed: [],
+      });
+
+      await service.register('5511999', 'comi 2 ovos e 1 acarajé', '5511999@s.whatsapp.net');
+
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({
+        calories: 423,
+        meal_type: 'LUNCH',
+      }));
+    });
+
+    it('replies with technical error when DB create throws', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'ovo', quantity: 1, unit: 'unidade' }],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 72, p: 6, c: 0, g: 5 },
+        matched: [{ food: { id: 'ovo' } }],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+      create.mockRejectedValue(new Error('DB down'));
+
+      await service.register('5511999', 'comi 1 ovo', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('problema técnico');
+    });
+
+    it('does NOT call the legacy MEAL_EXTRACTION_PROMPT path', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'banana', quantity: 1, unit: 'unidade' }],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 89, p: 1, c: 23, g: 0.3 },
+        matched: [{}],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.register('5511999', 'comi 1 banana', '5511999@s.whatsapp.net');
+
+      const [messages, opts] = chat.mock.calls[0];
+      expect(messages).toEqual([{ role: 'user', content: 'comi 1 banana' }]);
+      expect(opts.systemPrompt.toLowerCase()).toContain('parser');
+    });
+  });
+
+  describe('editLast (USE_LOCAL_CALCULATOR=true)', () => {
+    beforeEach(() => {
+      configGet.mockReturnValue('true');
+    });
+
+    it('replies with EMPTY_EDIT_MESSAGE when there is no last meal', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue(null);
+
+      await service.editLast('5511999', 'era 1 ovo', '5511999@s.whatsapp.net');
+
+      expect(chat).not.toHaveBeenCalled();
+      expect(calculateWithFallback).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+    });
+
+    it('parses corrected list, recalculates and updates with describeFromFoods', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: '2 ovos e arroz', calories: 0 });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [
+          { food: 'ovo', quantity: 1, unit: 'unidade' },
+          { food: 'arroz', quantity: 4, unit: 'colher' },
+        ],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 232, p: 9, c: 37, g: 5 },
+        matched: [{}, {}],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.editLast('5511999', 'era 1 ovo, não 2', '5511999@s.whatsapp.net');
+
+      expect(updateById).toHaveBeenCalledWith('meal-42', {
+        meal_type: 'LUNCH',
+        description: '1 ovo, 4 arroz',
+        calories: 232,
+        protein: 9,
+        carbs: 37,
+        fat: 5,
+      });
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Atualizei');
+    });
+
+    it('forwards parser clarification on edit without updating', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz', calories: 0 });
+      chat.mockResolvedValue(JSON.stringify({ needs_clarification: 'qual quantidade?' }));
+
+      await service.editLast('5511999', 'era arroz', '5511999@s.whatsapp.net');
+
+      expect(updateById).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledWith('5511999@s.whatsapp.net', 'qual quantidade?');
+    });
+
+    it('replies with error when parser fails on edit', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz', calories: 0 });
+      chat.mockRejectedValue(new Error('boom'));
+
+      await service.editLast('5511999', 'era diferente', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('correção');
+    });
+
+    it('replies with calc error when all items failed on edit', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'LUNCH', description: 'arroz', calories: 0 });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'biribiri', quantity: 1, unit: 'unidade' }],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 0, p: 0, c: 0, g: 0 },
+        matched: [],
+        unmatched: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
+        estimated: [],
+        failed: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'unknown_food' }],
+      });
+
+      await service.editLast('5511999', 'era biribiri', '5511999@s.whatsapp.net');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui calcular');
+    });
+
+    it('preserves last meal mealType when parser returns null', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      findLastByUser.mockResolvedValue({ id: 'meal-42', meal_type: 'DINNER', description: 'frango', calories: 0 });
+      chat.mockResolvedValue(JSON.stringify({
+        foods: [{ food: 'frango', quantity: 1, unit: 'unidade' }],
+        meal_type: null,
+      }));
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 198, p: 37, c: 0, g: 4 },
+        matched: [{}],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.editLast('5511999', 'so frango', '5511999@s.whatsapp.net');
+
+      expect(updateById).toHaveBeenCalledWith('meal-42', expect.objectContaining({ meal_type: 'DINNER' }));
     });
   });
 });

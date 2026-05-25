@@ -1,6 +1,11 @@
 import {
   formatDailyResume,
   formatMealConfirmation,
+  formatMealList,
+  formatMealTime,
+  formatDeleteAmbiguous,
+  formatDeleteNotFound,
+  formatDeleteTimeNotFound,
   formatWeeklyResume,
   formatMacroResume,
   formatDeleteConfirmation,
@@ -10,6 +15,7 @@ import {
   VAGUE_EDIT_MESSAGE,
   DailyMeal,
   DailyGoals,
+  DetailedMeal,
   WeeklyDayStats,
   WeeklySummary,
 } from '../../utils/meal.format';
@@ -451,5 +457,180 @@ describe('VAGUE_EDIT_MESSAGE', () => {
     expect(VAGUE_EDIT_MESSAGE).toMatch(/mudar|trocar|corrigir/i);
     expect(VAGUE_EDIT_MESSAGE).toContain('ex:');
     expect(VAGUE_EDIT_MESSAGE).toMatch(/🤔|🙂/);
+  });
+});
+
+describe('formatMealTime', () => {
+  it('formats HH:MM in 24-hour clock, TZ Sao_Paulo', () => {
+    expect(formatMealTime(new Date('2026-05-12T08:15:00-03:00'))).toBe('08:15');
+    expect(formatMealTime(new Date('2026-05-12T19:45:00-03:00'))).toBe('19:45');
+  });
+
+  it('converts UTC to Sao_Paulo (UTC-3)', () => {
+    expect(formatMealTime(new Date('2026-05-12T12:00:00Z'))).toBe('09:00');
+  });
+
+  it('zero-pads single-digit hours', () => {
+    expect(formatMealTime(new Date('2026-05-12T07:05:00-03:00'))).toBe('07:05');
+  });
+});
+
+describe('formatDeleteNotFound', () => {
+  it.each([
+    ['BREAKFAST', 'Não vi nenhum Café registrado hoje 😔'],
+    ['LUNCH',     'Não vi nenhum Almoço registrado hoje 😔'],
+    ['SNACK',     'Não vi nenhum Lanche registrado hoje 😔'],
+    ['DINNER',    'Não vi nenhum Jantar registrado hoje 😔'],
+  ] as const)('formats message for %s', (mealType, expected) => {
+    expect(formatDeleteNotFound(mealType)).toBe(expected);
+  });
+});
+
+describe('formatDeleteAmbiguous', () => {
+  const twoSnacks = [
+    { meal_type: 'SNACK' as const, calories: 200, created_at: new Date('2026-05-12T10:30:00-03:00') },
+    { meal_type: 'SNACK' as const, calories: 350, created_at: new Date('2026-05-12T16:00:00-03:00') },
+  ];
+
+  it('shows the count using the plural label', () => {
+    const result = formatDeleteAmbiguous('SNACK', twoSnacks);
+    expect(result).toContain('Você tem 2 lanches hoje');
+  });
+
+  it('lists each meal with emoji + label + time + kcal', () => {
+    const result = formatDeleteAmbiguous('SNACK', twoSnacks);
+    expect(result).toContain('🍪 Lanche 10:30 — 200kcal');
+    expect(result).toContain('🍪 Lanche 16:00 — 350kcal');
+  });
+
+  it('ends with a how-to-disambiguate hint using the first time', () => {
+    const result = formatDeleteAmbiguous('SNACK', twoSnacks);
+    expect(result).toContain('"apaga o lanche das 10:30"');
+  });
+
+  it.each([
+    ['BREAKFAST', 'cafés', 'café'],
+    ['LUNCH',     'almoços', 'almoço'],
+    ['DINNER',    'jantares', 'jantar'],
+    ['SNACK',     'lanches', 'lanche'],
+  ] as const)('uses proper PT plural %s for %s', (mealType, plural, singular) => {
+    const meals = [
+      { meal_type: mealType, calories: 100, created_at: new Date('2026-05-12T08:00:00-03:00') },
+      { meal_type: mealType, calories: 200, created_at: new Date('2026-05-12T12:00:00-03:00') },
+    ];
+    const result = formatDeleteAmbiguous(mealType, meals);
+    expect(result).toContain(`2 ${plural}`);
+    expect(result).toContain(`apaga o ${singular} das 08:00`);
+  });
+});
+
+describe('formatDeleteTimeNotFound', () => {
+  const twoLunches = [
+    { meal_type: 'LUNCH' as const, calories: 500, created_at: new Date('2026-05-12T12:00:00-03:00') },
+    { meal_type: 'LUNCH' as const, calories: 600, created_at: new Date('2026-05-12T14:00:00-03:00') },
+  ];
+
+  it('says it could not find the meal at the requested time', () => {
+    const result = formatDeleteTimeNotFound('LUNCH', '13:00', twoLunches);
+    expect(result).toContain('Não achei almoço às 13:00 hoje');
+  });
+
+  it('lists available meals after the not-found message', () => {
+    const result = formatDeleteTimeNotFound('LUNCH', '13:00', twoLunches);
+    expect(result).toContain('Os almoços de hoje foram:');
+    expect(result).toContain('🍽️ Almoço 12:00 — 500kcal');
+    expect(result).toContain('🍽️ Almoço 14:00 — 600kcal');
+  });
+});
+
+describe('formatMealList', () => {
+  const listDate = new Date('2026-05-12T15:00:00');
+
+  describe('header', () => {
+    it('includes a header with date DD/MM and list emoji', () => {
+      const result = formatMealList([], listDate);
+      expect(result).toContain('📋 Refeições de hoje (12/05)');
+    });
+
+    it('zero-pads day and month', () => {
+      const result = formatMealList([], new Date('2026-01-05T12:00:00'));
+      expect(result).toContain('(05/01)');
+    });
+  });
+
+  describe('empty list', () => {
+    it('returns header + empty-day message when no meals', () => {
+      const result = formatMealList([], listDate);
+      expect(result).toContain('📋 Refeições de hoje (12/05)');
+      expect(result).toContain('Você ainda não registrou nada hoje');
+      expect(result).toContain('Me manda o que comeu');
+    });
+  });
+
+  describe('populated list', () => {
+    it('renders one line per meal with emoji, label, HH:MM and kcal', () => {
+      const meals: DetailedMeal[] = [
+        { meal_type: 'BREAKFAST', calories: 280, created_at: new Date('2026-05-12T08:15:00-03:00') },
+        { meal_type: 'LUNCH',     calories: 750, created_at: new Date('2026-05-12T12:30:00-03:00') },
+        { meal_type: 'SNACK',     calories: 200, created_at: new Date('2026-05-12T16:00:00-03:00') },
+        { meal_type: 'DINNER',    calories: 600, created_at: new Date('2026-05-12T19:45:00-03:00') },
+      ];
+      const result = formatMealList(meals, listDate);
+      expect(result).toContain('🍳 Café 08:15 — 280kcal');
+      expect(result).toContain('🍽️ Almoço 12:30 — 750kcal');
+      expect(result).toContain('🍪 Lanche 16:00 — 200kcal');
+      expect(result).toContain('🍝 Jantar 19:45 — 600kcal');
+    });
+
+    it('preserves the input order (caller already sorted chronologically)', () => {
+      const meals: DetailedMeal[] = [
+        { meal_type: 'BREAKFAST', calories: 280, created_at: new Date('2026-05-12T08:15:00-03:00') },
+        { meal_type: 'LUNCH',     calories: 750, created_at: new Date('2026-05-12T12:30:00-03:00') },
+        { meal_type: 'DINNER',    calories: 600, created_at: new Date('2026-05-12T19:45:00-03:00') },
+      ];
+      const result = formatMealList(meals, listDate);
+      const breakfastIdx = result.indexOf('Café');
+      const lunchIdx     = result.indexOf('Almoço');
+      const dinnerIdx    = result.indexOf('Jantar');
+      expect(breakfastIdx).toBeLessThan(lunchIdx);
+      expect(lunchIdx).toBeLessThan(dinnerIdx);
+    });
+
+    it('shows multiple meals of the same type as separate lines (not aggregated)', () => {
+      const meals: DetailedMeal[] = [
+        { meal_type: 'LUNCH', calories: 500, created_at: new Date('2026-05-12T12:00:00-03:00') },
+        { meal_type: 'LUNCH', calories: 300, created_at: new Date('2026-05-12T14:00:00-03:00') },
+      ];
+      const result = formatMealList(meals, listDate);
+      expect(result).toContain('🍽️ Almoço 12:00 — 500kcal');
+      expect(result).toContain('🍽️ Almoço 14:00 — 300kcal');
+      const lunchMatches = result.match(/Almoço/g) ?? [];
+      expect(lunchMatches.length).toBe(2);
+    });
+
+    it('formats times in 24-hour clock (no AM/PM)', () => {
+      const meals: DetailedMeal[] = [
+        { meal_type: 'DINNER', calories: 600, created_at: new Date('2026-05-12T20:30:00-03:00') },
+      ];
+      const result = formatMealList(meals, listDate);
+      expect(result).toContain('20:30');
+      expect(result).not.toMatch(/AM|PM/i);
+    });
+
+    it('uses America/Sao_Paulo timezone — UTC noon becomes 09:00 SP time', () => {
+      const meals: DetailedMeal[] = [
+        { meal_type: 'BREAKFAST', calories: 280, created_at: new Date('2026-05-12T12:00:00Z') },
+      ];
+      const result = formatMealList(meals, listDate);
+      expect(result).toContain('09:00');
+    });
+
+    it('does NOT render the empty-day message when there is at least one meal', () => {
+      const meals: DetailedMeal[] = [
+        { meal_type: 'BREAKFAST', calories: 100, created_at: new Date('2026-05-12T08:00:00-03:00') },
+      ];
+      const result = formatMealList(meals, listDate);
+      expect(result).not.toContain('Você ainda não registrou nada hoje');
+    });
   });
 });

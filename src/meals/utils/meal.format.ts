@@ -10,6 +10,20 @@ const MEAL_LABELS: Record<MealType, string> = {
   SNACK:     'Lanche',
 };
 
+const MEAL_LABELS_PLURAL: Record<MealType, string> = {
+  BREAKFAST: 'cafés',
+  LUNCH:     'almoços',
+  DINNER:    'jantares',
+  SNACK:     'lanches',
+};
+
+const MEAL_EMOJIS: Record<MealType, string> = {
+  BREAKFAST: '🍳',
+  LUNCH:     '🍽️',
+  DINNER:    '🍝',
+  SNACK:     '🍪',
+};
+
 const MEAL_ORDER: MealType[] = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER'];
 
 export type DailyGoals = {
@@ -20,6 +34,8 @@ export type DailyGoals = {
 };
 
 export type DailyMeal = { meal_type: MealType; calories: number };
+
+export type DetailedMeal = { meal_type: MealType; calories: number; created_at: Date };
 
 export type WeeklyDayStats = {
   date: Date;
@@ -42,6 +58,13 @@ const shortDateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
   day: '2-digit',
   month: '2-digit',
+});
+
+const hourMinuteFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: 'America/Sao_Paulo',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
 });
 
 const WEEKDAY_LABELS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -75,6 +98,59 @@ export function formatEditConfirmation(mealType: MealType, extraction: MealExtra
 
 function formatShortDate(d: Date): string {
   return shortDateFormatter.format(d);
+}
+
+export function formatMealTime(d: Date): string {
+  return hourMinuteFormatter.format(d);
+}
+
+export function formatMealList(meals: DetailedMeal[], date: Date): string {
+  const header = `📋 Refeições de hoje (${formatShortDate(date)})`;
+
+  if (meals.length === 0) {
+    return `${header}\n\n${EMPTY_DAY_MESSAGE}`;
+  }
+
+  const lines: string[] = [header, ''];
+  for (const m of meals) {
+    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  }
+  return lines.join('\n');
+}
+
+type AmbiguousMeal = { meal_type: MealType; calories: number; created_at: Date };
+
+export function formatDeleteNotFound(mealType: MealType): string {
+  return `Não vi nenhum ${MEAL_LABELS[mealType]} registrado hoje 😔`;
+}
+
+export function formatDeleteAmbiguous(mealType: MealType, meals: AmbiguousMeal[]): string {
+  const singular = MEAL_LABELS[mealType].toLowerCase();
+  const plural = MEAL_LABELS_PLURAL[mealType];
+  const lines: string[] = [
+    `Você tem ${meals.length} ${plural} hoje 🤔`,
+    '',
+  ];
+  for (const m of meals) {
+    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  }
+  const firstTime = formatMealTime(meals[0].created_at);
+  lines.push('', `Me diz qual: "apaga o ${singular} das ${firstTime}"`);
+  return lines.join('\n');
+}
+
+export function formatDeleteTimeNotFound(mealType: MealType, time: string, meals: AmbiguousMeal[]): string {
+  const singular = MEAL_LABELS[mealType].toLowerCase();
+  const plural = MEAL_LABELS_PLURAL[mealType];
+  const lines: string[] = [
+    `Não achei ${singular} às ${time} hoje 🤔`,
+    '',
+    `Os ${plural} de hoje foram:`,
+  ];
+  for (const m of meals) {
+    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  }
+  return lines.join('\n');
 }
 
 function formatWeekday(spDayStart: Date): string {
