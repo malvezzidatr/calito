@@ -10,6 +10,7 @@ import { AiService } from '../../ai/ai.service';
 import { UsersRepository } from '../../users/users.repository';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { FoodsService } from '../../foods/foods.service';
+import { ParsedMessagesRepository } from '../parsed-messages.repository';
 
 describe('MealsService', () => {
   let service: MealsService;
@@ -25,6 +26,8 @@ describe('MealsService', () => {
   let sendText: jest.Mock;
   let calculateWithFallback: jest.Mock;
   let configGet: jest.Mock;
+  let parsedFindByText: jest.Mock;
+  let parsedUpsert: jest.Mock;
 
   beforeEach(async () => {
     chat = jest.fn();
@@ -39,6 +42,8 @@ describe('MealsService', () => {
     sendText = jest.fn().mockResolvedValue(undefined);
     calculateWithFallback = jest.fn();
     configGet = jest.fn().mockReturnValue('false'); // default: feature flag OFF
+    parsedFindByText = jest.fn().mockResolvedValue(null); // default: cache miss
+    parsedUpsert = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
@@ -47,8 +52,9 @@ describe('MealsService', () => {
         { provide: UsersRepository,  useValue: { findByPhone } },
         { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, deleteById, updateById } },
         { provide: WhatsappService,  useValue: { sendText } },
-        { provide: FoodsService,     useValue: { calculateWithFallback } },
-        { provide: ConfigService,    useValue: { get: configGet } },
+        { provide: FoodsService,             useValue: { calculateWithFallback } },
+        { provide: ConfigService,            useValue: { get: configGet } },
+        { provide: ParsedMessagesRepository, useValue: { findByText: parsedFindByText, upsert: parsedUpsert } },
       ],
     }).compile();
 

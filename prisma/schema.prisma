@@ -105,3 +105,12 @@ model EstimatedFood {
 
   @@unique([food_name, unit])
 }
+
+model ParsedMessageCache {
+  id String @id @default(uuid())
+  normalized_text String @unique
+  foods Json
+  meal_type String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

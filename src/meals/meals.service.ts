@@ -10,6 +10,8 @@ import { MEAL_EXTRACTION_PROMPT, MealExtraction, MealExtractionResult, buildEdit
 import { MEAL_PARSER_PROMPT, MealParserResult, isMealParserClarification, buildParserEditMessage } from './utils/meal.parser.prompt';
 import { validateMealParserResult } from './utils/meal.parser.validation';
 import { describeFromFoods, stripMealVerbs } from './utils/meal.text';
+import { ParsedMessagesRepository } from './parsed-messages.repository';
+import { normalize } from '../foods/utils/food.matcher';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
 import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound } from './utils/meal.format';
 import { isMealReferenceClarification, MEAL_REFERENCE_PROMPT, MealReferenceResult } from './utils/meal-reference.prompt';
@@ -31,6 +33,7 @@ export class MealsService {
         private readonly whatsappService: WhatsappService,
         private readonly foodsService: FoodsService,
         private readonly config: ConfigService,
+        private readonly parsedMessagesRepository: ParsedMessagesRepository,
     ) {}
 
     private useLocalCalculator(): boolean {
@@ -339,7 +342,10 @@ export class MealsService {
 
     private async registerLocal(phone: string, text: string, jid: string) {
         await this.withUser(phone, async (user) => {
-            const parsed = await this.runParser(text);
+            const cacheKey = normalize(text);
+            const cached = cacheKey ? await this.lookupParsedCache(cacheKey) : null;
+            const parsed: MealParserResult | null = cached ?? await this.runParser(text);
+
             if (parsed === null) {
                 await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
                 return;
@@ -347,6 +353,12 @@ export class MealsService {
             if (isMealParserClarification(parsed)) {
                 await this.whatsappService.sendText(jid, parsed.needs_clarification);
                 return;
+            }
+
+            if (!cached && cacheKey) {
+                void this.saveParsedCache(cacheKey, parsed);
+            } else if (cached) {
+                this.logger.log(`[parser] cache-hit key="${cacheKey}"`);
             }
 
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
@@ -474,6 +486,33 @@ export class MealsService {
         } catch (err) {
             this.logger.warn(`[local] parser falhou: ${(err as Error).message}`);
             return null;
+        }
+    }
+
+    private async lookupParsedCache(cacheKey: string): Promise<MealParserResult | null> {
+        try {
+            const cached = await this.parsedMessagesRepository.findByText(cacheKey);
+            if (!cached) return null;
+            return validateMealParserResult({
+                foods:     cached.foods,
+                meal_type: cached.meal_type,
+            });
+        } catch (err) {
+            this.logger.warn(`[parser] cache-lookup-fail: ${(err as Error).message}`);
+            return null;
+        }
+    }
+
+    private async saveParsedCache(cacheKey: string, parsed: MealParserResult): Promise<void> {
+        if (isMealParserClarification(parsed)) return;
+        try {
+            await this.parsedMessagesRepository.upsert({
+                normalized_text: cacheKey,
+                foods:           parsed.foods,
+                meal_type:       parsed.meal_type,
+            });
+        } catch (err) {
+            this.logger.warn(`[parser] cache-upsert-fail: ${(err as Error).message}`);
         }
     }
 
