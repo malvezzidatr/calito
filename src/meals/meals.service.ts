@@ -13,7 +13,7 @@ import { describeFromFoods, stripMealVerbs } from './utils/meal.text';
 import { ParsedMessagesRepository } from './parsed-messages.repository';
 import { normalize } from '../foods/utils/food.matcher';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound } from './utils/meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatDateLabel } from './utils/meal.format';
 import { isMealReferenceClarification, MEAL_REFERENCE_PROMPT, MealReferenceResult } from './utils/meal-reference.prompt';
 import { validateMealReference } from './utils/meal-reference.validation';
 import { validateMealExtraction } from './utils/meal.validation';
@@ -212,34 +212,35 @@ export class MealsService {
                 return;
             }
 
-            const today = new Date();
-            const matches = await this.mealsRepository.findDailyByUserAndType(user.id, today, reference.meal_type);
+            const targetDate = startOfDaysAgo(new Date(), reference.days_offset);
+            const dateLabel = formatDateLabel(reference.days_offset, targetDate);
+            const matches = await this.mealsRepository.findDailyByUserAndType(user.id, targetDate, reference.meal_type);
 
             if (matches.length === 0) {
-                await this.whatsappService.sendText(jid, formatDeleteNotFound(reference.meal_type));
+                await this.whatsappService.sendText(jid, formatDeleteNotFound(reference.meal_type, dateLabel));
                 return;
             }
 
             if (reference.time !== null) {
                 const exact = matches.find((m) => formatMealTime(m.created_at) === reference.time);
                 if (!exact) {
-                    await this.whatsappService.sendText(jid, formatDeleteTimeNotFound(reference.meal_type, reference.time, matches));
+                    await this.whatsappService.sendText(jid, formatDeleteTimeNotFound(reference.meal_type, reference.time, matches, dateLabel));
                     return;
                 }
-                await this.performDelete(exact, user.id, jid);
+                await this.performDelete(exact, user.id, jid, dateLabel);
                 return;
             }
 
             if (matches.length === 1) {
-                await this.performDelete(matches[0], user.id, jid);
+                await this.performDelete(matches[0], user.id, jid, dateLabel);
                 return;
             }
 
-            await this.whatsappService.sendText(jid, formatDeleteAmbiguous(reference.meal_type, matches));
+            await this.whatsappService.sendText(jid, formatDeleteAmbiguous(reference.meal_type, matches, dateLabel));
         });
     }
 
-    private async performDelete(meal: { id: string; meal_type: MealType; description: string; calories: number }, user_id: string, jid: string) {
+    private async performDelete(meal: { id: string; meal_type: MealType; description: string; calories: number }, user_id: string, jid: string, dateLabel: string = 'hoje') {
         try {
             await this.mealsRepository.deleteById(meal.id);
         } catch (err) {
@@ -247,7 +248,7 @@ export class MealsService {
             await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
             return;
         }
-        await this.whatsappService.sendText(jid, formatDeleteConfirmation(meal.meal_type, meal.description, meal.calories));
+        await this.whatsappService.sendText(jid, formatDeleteConfirmation(meal.meal_type, meal.description, meal.calories, dateLabel));
     }
 
     private async extractMealReference(text: string): Promise<MealReferenceResult | null> {

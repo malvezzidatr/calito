@@ -38,8 +38,16 @@ export function validateMealReference(raw: unknown): MealReferenceResult {
     time = r.time;
   }
 
+  const offsetRaw = r.days_offset ?? 0;
+  if (typeof offsetRaw !== 'number' || !Number.isInteger(offsetRaw) || offsetRaw < 0 || offsetRaw > 90) {
+    throw new InvalidMealReferenceError(
+      `days_offset must be an integer in [0, 90] (got ${JSON.stringify(r.days_offset)})`,
+    );
+  }
+
   return {
-    meal_type: r.meal_type as MealTypeEnum,
+    meal_type:   r.meal_type as MealTypeEnum,
     time,
+    days_offset: offsetRaw,
   };
 }
