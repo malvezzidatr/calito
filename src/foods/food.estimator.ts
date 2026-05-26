@@ -4,7 +4,7 @@ import { EstimatedFoodsRepository } from './estimated-foods.repository';
 import { Nutrition } from './utils/food.types';
 import { UnmatchedItem } from './utils/food.calculator';
 import { normalize } from './utils/food.matcher';
-import { FOOD_ESTIMATE_MODEL, FOOD_ESTIMATE_PROMPT, FoodEstimate } from './utils/food.estimate.prompt';
+import { FOOD_ESTIMATE_PROMPT, FoodEstimate } from './utils/food.estimate.prompt';
 import { isZeroEstimate, validateFoodEstimate } from './utils/food.estimate.validation';
 
 export type EstimatedItemResult = {
@@ -82,7 +82,7 @@ export class FoodEstimator {
       try {
         const reply = await this.ai.chat(
           [{ role: 'user', content: `${item.input.food} | 1 | ${item.input.unit}` }],
-          { systemPrompt: FOOD_ESTIMATE_PROMPT, responseFormat: 'json', temperature: 0.1, model: FOOD_ESTIMATE_MODEL },
+          { systemPrompt: FOOD_ESTIMATE_PROMPT, responseFormat: 'json', temperature: 0.1 },
         );
         estimate = validateFoodEstimate(JSON.parse(reply));
       } catch (err) {

@@ -100,15 +100,15 @@ describe('FoodEstimator', () => {
       expect(result.estimated[0].source).toBe('fresh');
     });
 
-    it('passes 8b model + structured user message to AI', async () => {
+    it('passes the estimate prompt + structured user message to AI', async () => {
       ai.chat.mockResolvedValueOnce(JSON.stringify({ kcal: 280, protein: 8, carbs: 25, fat: 18 }));
 
       await estimator.estimate([makeUnmatched('acarajé', 1, 'unidade')]);
 
       const [messages, opts] = ai.chat.mock.calls[0];
       expect(messages).toEqual([{ role: 'user', content: 'acarajé | 1 | unidade' }]);
-      expect(opts.model).toBe('llama-3.1-8b-instant');
       expect(opts.responseFormat).toBe('json');
+      expect(opts.systemPrompt).toMatch(/estimate/i);
     });
 
     it('marks as unknown_food when AI returns all-zero', async () => {

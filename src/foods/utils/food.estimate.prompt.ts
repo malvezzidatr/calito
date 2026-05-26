@@ -5,8 +5,6 @@ export type FoodEstimate = {
   fat:     number;
 };
 
-export const FOOD_ESTIMATE_MODEL = 'llama-3.1-8b-instant';
-
 export const FOOD_ESTIMATE_PROMPT = `You estimate nutrition for a single Brazilian food at a given measure.
 
 Input (user message): one line in the form "<food> | <quantity> | <unit>". Example: "acarajé | 1 | unidade".
