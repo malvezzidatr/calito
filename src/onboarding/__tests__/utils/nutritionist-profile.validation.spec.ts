@@ -1,4 +1,5 @@
-import { validateNutritionistProfile, InvalidNutritionistProfileError } from '../../utils/nutritionist-profile.validation';
+import { validateNutritionistProfile } from '../../utils/nutritionist-profile.validation';
+import { InvalidNutritionistProfileError } from '../../exceptions/onboarding.errors';
 import {
   NutritionistProfileExtraction,
   NutritionistProfileResult,

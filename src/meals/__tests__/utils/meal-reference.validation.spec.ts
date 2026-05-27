@@ -1,4 +1,5 @@
-import { validateMealReference, InvalidMealReferenceError } from '../../utils/meal-reference.validation';
+import { validateMealReference } from '../../utils/meal-reference.validation';
+import { InvalidMealReferenceError } from '../../exceptions/meals.errors';
 import {
   MealReferenceExtraction,
   MealReferenceResult,
@@ -14,14 +15,35 @@ function asExtraction(result: MealReferenceResult): MealReferenceExtraction {
 
 describe('validateMealReference', () => {
   describe('happy path', () => {
-    it('accepts meal_type with null time', () => {
+    it('accepts meal_type with null time (days_offset defaults to 0)', () => {
       const result = asExtraction(validateMealReference({ meal_type: 'LUNCH', time: null }));
-      expect(result).toEqual({ meal_type: 'LUNCH', time: null });
+      expect(result).toEqual({ meal_type: 'LUNCH', time: null, days_offset: 0 });
     });
 
     it('accepts meal_type with valid HH:MM time', () => {
       const result = asExtraction(validateMealReference({ meal_type: 'SNACK', time: '16:00' }));
-      expect(result).toEqual({ meal_type: 'SNACK', time: '16:00' });
+      expect(result).toEqual({ meal_type: 'SNACK', time: '16:00', days_offset: 0 });
+    });
+
+    it.each([0, 1, 2, 7, 30, 90])('accepts days_offset %i', (offset) => {
+      const result = asExtraction(validateMealReference({ meal_type: 'LUNCH', time: null, days_offset: offset }));
+      expect(result.days_offset).toBe(offset);
+    });
+
+    it.each([
+      ['negative', -1],
+      ['too big', 91],
+      ['float', 1.5],
+      ['string', '1'],
+    ])('rejects invalid days_offset %s', (_label, offset) => {
+      expect(() => validateMealReference({ meal_type: 'LUNCH', time: null, days_offset: offset })).toThrow(/days_offset/);
+    });
+
+    it('treats missing/null days_offset as 0', () => {
+      const r1 = asExtraction(validateMealReference({ meal_type: 'LUNCH', time: null }));
+      const r2 = asExtraction(validateMealReference({ meal_type: 'LUNCH', time: null, days_offset: null }));
+      expect(r1.days_offset).toBe(0);
+      expect(r2.days_offset).toBe(0);
     });
 
     it.each(['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'])('accepts each meal_type %s', (mt) => {

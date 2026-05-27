@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { FoodCategory, FoodEntry } from './utils/food.types';
 import { validateFoodCatalog } from './utils/food.validation';
 import { matchFood, MatchResult } from './utils/food.matcher';
-import { calculateMacros, CalculationItem, CalculationResult } from './utils/food.calculator';
+import { calculateMacros, CalculationItem, CalculationResult, roundNutrition } from './utils/food.calculator';
 import { FoodEstimator, EstimateRunResult } from './food.estimator';
 import { Nutrition } from './utils/food.types';
 import foodsData from './data/foods.json';
@@ -58,33 +58,24 @@ export class FoodsService implements OnModuleInit {
     const fallback = await this.estimator.estimate(local.unmatched);
 
     const totals: Nutrition = {
-      kcal: local.totals.kcal,
-      p:    local.totals.p,
-      c:    local.totals.c,
-      g:    local.totals.g,
+      calories: local.totals.calories,
+      protein:  local.totals.protein,
+      carbs:    local.totals.carbs,
+      fat:      local.totals.fat,
     };
     for (const item of fallback.estimated) {
-      totals.kcal += item.macros_contribution.kcal;
-      totals.p    += item.macros_contribution.p;
-      totals.c    += item.macros_contribution.c;
-      totals.g    += item.macros_contribution.g;
+      totals.calories += item.macros_contribution.calories;
+      totals.protein  += item.macros_contribution.protein;
+      totals.carbs    += item.macros_contribution.carbs;
+      totals.fat      += item.macros_contribution.fat;
     }
 
     return {
-      totals: roundFinal(totals),
+      totals: roundNutrition(totals),
       matched:   local.matched,
       unmatched: local.unmatched,
       estimated: fallback.estimated,
       failed:    fallback.failed,
     };
   }
-}
-
-function roundFinal(n: Nutrition): Nutrition {
-  return {
-    kcal: Math.round(n.kcal),
-    p:    Math.round(n.p),
-    c:    Math.round(n.c),
-    g:    n.g < 5 ? Math.round(n.g * 10) / 10 : Math.round(n.g),
-  };
 }

@@ -1,4 +1,5 @@
-import { validateNutritionistGoals, InvalidNutritionistGoalsError } from '../../utils/nutritionist-goals.validation';
+import { validateNutritionistGoals } from '../../utils/nutritionist-goals.validation';
+import { InvalidNutritionistGoalsError } from '../../exceptions/onboarding.errors';
 import {
   NutritionistGoalsExtraction,
   NutritionistGoalsResult,

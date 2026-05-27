@@ -95,7 +95,7 @@ model EstimatedFood {
   id String @id @default(uuid())
   food_name String
   unit String
-  kcal Float
+  calories Float
   protein Float
   carbs Float
   fat Float
@@ -104,4 +104,13 @@ model EstimatedFood {
   updated_at DateTime @updatedAt
 
   @@unique([food_name, unit])
+}
+
+model ParsedMessageCache {
+  id String @id @default(uuid())
+  normalized_text String @unique
+  foods Json
+  meal_type String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }

@@ -1,4 +1,5 @@
-import { validateMealExtraction, InvalidMealExtractionError } from '../../utils/meal.validation';
+import { validateMealExtraction } from '../../utils/meal.validation';
+import { InvalidMealExtractionError } from '../../exceptions/meals.errors';
 import { MealExtraction, MealExtractionResult, isMealClarification } from '../../utils/meal.prompt';
 
 const validRaw = {

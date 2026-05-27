@@ -17,6 +17,7 @@ import * as qrcodeTerminal from 'qrcode-terminal';
 import pino from 'pino';
 import { createPrismaAuthState } from './prisma-auth-state';
 import { PrismaService } from '../prisma/prisma.service';
+import { WhatsappNotConnectedError } from './exceptions/whatsapp.errors';
 
 @Injectable()
 export class WhatsappService implements OnModuleInit, OnModuleDestroy {
@@ -102,7 +103,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   async sendText(to: string, text: string) {
     if (!this.sock) {
-      throw new Error('WhatsApp ainda não conectado');
+      throw new WhatsappNotConnectedError();
     }
 
     try {

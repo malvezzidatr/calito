@@ -1,53 +1,47 @@
 import { MealExtractionResult } from './meal.prompt';
+import { InvalidMealExtractionError } from '../exceptions/meals.errors';
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] as const;
 type MealTypeEnum = typeof MEAL_TYPES[number];
-
-export class InvalidMealExtractionError extends Error {
-  constructor(reason: string) {
-    super(`Invalid meal extraction: ${reason}`);
-    this.name = 'InvalidMealExtractionError';
-  }
-}
 
 function isFiniteNonNegative(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n >= 0;
 }
 
-export function validateMealExtraction(raw: unknown): MealExtractionResult {
-  if (raw === null || typeof raw !== 'object') {
+export function validateMealExtraction(rawInput: unknown): MealExtractionResult {
+  if (rawInput === null || typeof rawInput !== 'object') {
     throw new InvalidMealExtractionError('payload is not an object');
   }
-  const r = raw as Record<string, unknown>;
+  const raw = rawInput as Record<string, unknown>;
 
-  if (typeof r.needs_clarification === 'string' && r.needs_clarification.trim() !== '') {
-    return { needs_clarification: r.needs_clarification.trim() };
+  if (typeof raw.needs_clarification === 'string' && raw.needs_clarification.trim() !== '') {
+    return { needs_clarification: raw.needs_clarification.trim() };
   }
 
-  if (typeof r.description !== 'string' || r.description.trim() === '') {
+  if (typeof raw.description !== 'string' || raw.description.trim() === '') {
     throw new InvalidMealExtractionError('description must be a non-empty string');
   }
 
   for (const field of ['calories', 'protein', 'carbs', 'fat'] as const) {
-    if (!isFiniteNonNegative(r[field])) {
+    if (!isFiniteNonNegative(raw[field])) {
       throw new InvalidMealExtractionError(
-        `${field} must be a non-negative finite number (got ${JSON.stringify(r[field])})`,
+        `${field} must be a non-negative finite number (got ${JSON.stringify(raw[field])})`,
       );
     }
   }
 
-  if (r.meal_type !== null && !MEAL_TYPES.includes(r.meal_type as MealTypeEnum)) {
+  if (raw.meal_type !== null && !MEAL_TYPES.includes(raw.meal_type as MealTypeEnum)) {
     throw new InvalidMealExtractionError(
-      `meal_type must be one of ${MEAL_TYPES.join('|')} or null (got ${JSON.stringify(r.meal_type)})`,
+      `meal_type must be one of ${MEAL_TYPES.join('|')} or null (got ${JSON.stringify(raw.meal_type)})`,
     );
   }
 
   return {
-    description: r.description.trim(),
-    calories: r.calories as number,
-    protein: r.protein as number,
-    carbs: r.carbs as number,
-    fat: r.fat as number,
-    meal_type: r.meal_type as 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | null,
+    description: raw.description.trim(),
+    calories:    raw.calories as number,
+    protein:     raw.protein  as number,
+    carbs:       raw.carbs    as number,
+    fat:         raw.fat      as number,
+    meal_type:   raw.meal_type as 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | null,
   };
 }

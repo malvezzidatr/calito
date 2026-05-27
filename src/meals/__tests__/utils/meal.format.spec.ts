@@ -10,15 +10,17 @@ import {
   formatMacroResume,
   formatDeleteConfirmation,
   formatEditConfirmation,
-  EMPTY_DELETE_MESSAGE,
-  EMPTY_EDIT_MESSAGE,
-  VAGUE_EDIT_MESSAGE,
   DailyMeal,
   DailyGoals,
   DetailedMeal,
   WeeklyDayStats,
   WeeklySummary,
 } from '../../utils/meal.format';
+import {
+  EMPTY_DELETE_MESSAGE,
+  EMPTY_EDIT_MESSAGE,
+  VAGUE_EDIT_MESSAGE,
+} from '../../messages/meals.messages';
 import { DailyTotals } from '../../utils/meal.praise';
 
 const baseTotals: DailyTotals = { calories: 1650, protein: 120, carbs: 200, fat: 50 };

@@ -1,4 +1,5 @@
-import { validateFoodEntry, validateFoodCatalog, InvalidFoodEntryError } from '../../utils/food.validation';
+import { validateFoodEntry, validateFoodCatalog } from '../../utils/food.validation';
+import { InvalidFoodEntryError } from '../../exceptions/foods.errors';
 import foodsCatalog from '../../data/foods.json';
 
 const validEntry = {
@@ -7,7 +8,7 @@ const validEntry = {
   aliases: ['ovo', 'ovo cozido'],
   category: 'ovos_laticinios',
   default_unit: 'unidade',
-  per_100g: { kcal: 143, p: 13, c: 1.1, g: 9.5 },
+  per_100g: { calories: 143, protein: 13, carbs: 1.1, fat: 9.5 },
   units: {
     unidade: { grams: 50 },
     g: { grams: 1 },
@@ -136,26 +137,26 @@ describe('validateFoodEntry', () => {
   });
 
   describe('per_100g validation', () => {
-    it.each(['kcal', 'p', 'c', 'g'] as const)('rejects negative %s', (field) => {
+    it.each(['calories', 'protein', 'carbs', 'fat'] as const)('rejects negative %s', (field) => {
       expect(() => validateFoodEntry({ ...validEntry, per_100g: { ...validEntry.per_100g, [field]: -1 } })).toThrow(
         new RegExp(field),
       );
     });
 
-    it.each(['kcal', 'p', 'c', 'g'] as const)('rejects NaN %s', (field) => {
+    it.each(['calories', 'protein', 'carbs', 'fat'] as const)('rejects NaN %s', (field) => {
       expect(() => validateFoodEntry({ ...validEntry, per_100g: { ...validEntry.per_100g, [field]: NaN } })).toThrow(
         new RegExp(field),
       );
     });
 
-    it.each(['kcal', 'p', 'c', 'g'] as const)('rejects missing %s', (field) => {
+    it.each(['calories', 'protein', 'carbs', 'fat'] as const)('rejects missing %s', (field) => {
       const { [field]: _, ...partial } = validEntry.per_100g;
       expect(() => validateFoodEntry({ ...validEntry, per_100g: partial })).toThrow(new RegExp(field));
     });
 
     it('accepts zero values', () => {
       expect(() =>
-        validateFoodEntry({ ...validEntry, per_100g: { kcal: 0, p: 0, c: 0, g: 0 } }),
+        validateFoodEntry({ ...validEntry, per_100g: { calories: 0, protein: 0, carbs: 0, fat: 0 } }),
       ).not.toThrow();
     });
   });

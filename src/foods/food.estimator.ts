@@ -4,7 +4,7 @@ import { EstimatedFoodsRepository } from './estimated-foods.repository';
 import { Nutrition } from './utils/food.types';
 import { UnmatchedItem } from './utils/food.calculator';
 import { normalize } from './utils/food.matcher';
-import { FOOD_ESTIMATE_MODEL, FOOD_ESTIMATE_PROMPT, FoodEstimate } from './utils/food.estimate.prompt';
+import { FOOD_ESTIMATE_PROMPT, FoodEstimate } from './utils/food.estimate.prompt';
 import { isZeroEstimate, validateFoodEstimate } from './utils/food.estimate.validation';
 
 export type EstimatedItemResult = {
@@ -61,7 +61,7 @@ export class FoodEstimator {
       const cached = await this.repo.findByNameAndUnit(normalizedName, item.input.unit);
       if (cached) {
         const perUnit: FoodEstimate = {
-          kcal: cached.kcal, protein: cached.protein, carbs: cached.carbs, fat: cached.fat,
+          calories: cached.calories, protein: cached.protein, carbs: cached.carbs, fat: cached.fat,
         };
         if (isZeroEstimate(perUnit)) {
           this.logger.warn(`[estimator] cached-zero food=${normalizedName} unit=${item.input.unit}`);
@@ -82,7 +82,7 @@ export class FoodEstimator {
       try {
         const reply = await this.ai.chat(
           [{ role: 'user', content: `${item.input.food} | 1 | ${item.input.unit}` }],
-          { systemPrompt: FOOD_ESTIMATE_PROMPT, responseFormat: 'json', temperature: 0.1, model: FOOD_ESTIMATE_MODEL },
+          { systemPrompt: FOOD_ESTIMATE_PROMPT, responseFormat: 'json', temperature: 0.1 },
         );
         estimate = validateFoodEstimate(JSON.parse(reply));
       } catch (err) {
@@ -101,7 +101,7 @@ export class FoodEstimator {
         await this.repo.upsert({
           food_name: normalizedName,
           unit:      item.input.unit,
-          kcal:      estimate.kcal,
+          calories:  estimate.calories,
           protein:   estimate.protein,
           carbs:     estimate.carbs,
           fat:       estimate.fat,
@@ -110,7 +110,7 @@ export class FoodEstimator {
         this.logger.warn(`[estimator] cache-upsert-fail food=${normalizedName} msg=${(err as Error).message}`);
       }
 
-      this.logger.log(`[estimator] fresh food=${normalizedName} unit=${item.input.unit} kcal=${estimate.kcal}`);
+      this.logger.log(`[estimator] fresh food=${normalizedName} unit=${item.input.unit} cal=${estimate.calories}`);
       estimated.push({
         input: item.input,
         source: 'fresh',
@@ -125,9 +125,9 @@ export class FoodEstimator {
 
 function scale(estimate: FoodEstimate, quantity: number): Nutrition {
   return {
-    kcal: estimate.kcal    * quantity,
-    p:    estimate.protein * quantity,
-    c:    estimate.carbs   * quantity,
-    g:    estimate.fat     * quantity,
+    calories: estimate.calories * quantity,
+    protein:  estimate.protein  * quantity,
+    carbs:    estimate.carbs    * quantity,
+    fat:      estimate.fat      * quantity,
   };
 }

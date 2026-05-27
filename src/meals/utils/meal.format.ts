@@ -78,12 +78,16 @@ const MACRO_LABELS: Record<Macro, { emoji: string; label: string; unit: 'g' | ''
 
 const EMPTY_DAY_MESSAGE = 'Você ainda não registrou nada hoje 🍽️\n\nMe manda o que comeu que eu calculo tudo pra você 💪';
 
-export const EMPTY_DELETE_MESSAGE = 'Não tenho nada pra apagar 🤔';
-export const EMPTY_EDIT_MESSAGE = 'Não tenho nada pra editar 🤔';
-export const VAGUE_EDIT_MESSAGE = 'Não entendi o que você quer mudar 🤔 Me diz junto, ex: "era 1 ovo, não 2"';
+export function formatDeleteConfirmation(mealType: MealType, description: string, calories: number, dateLabel: string = 'hoje'): string {
+  const dayPart = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
+  return `Apaguei seu ${MEAL_LABELS[mealType]}${dayPart} de ${description} (${calories}kcal) 🗑️`;
+}
 
-export function formatDeleteConfirmation(mealType: MealType, description: string, calories: number): string {
-  return `Apaguei seu ${MEAL_LABELS[mealType]} de ${description} (${calories}kcal) 🗑️`;
+export function formatDateLabel(daysOffset: number, date: Date): string {
+  if (daysOffset === 0) return 'hoje';
+  if (daysOffset === 1) return 'ontem';
+  if (daysOffset === 2) return 'anteontem';
+  return formatShortDate(date);
 }
 
 export function formatEditConfirmation(mealType: MealType, extraction: MealExtraction): string {
@@ -112,43 +116,78 @@ export function formatMealList(meals: DetailedMeal[], date: Date): string {
   }
 
   const lines: string[] = [header, ''];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   return lines.join('\n');
 }
 
 type AmbiguousMeal = { meal_type: MealType; calories: number; created_at: Date };
 
-export function formatDeleteNotFound(mealType: MealType): string {
-  return `Não vi nenhum ${MEAL_LABELS[mealType]} registrado hoje 😔`;
+export function formatDeleteNotFound(mealType: MealType, dateLabel: string = 'hoje'): string {
+  return `Não vi nenhum ${MEAL_LABELS[mealType]} registrado ${dateLabel} 😔`;
 }
 
-export function formatDeleteAmbiguous(mealType: MealType, meals: AmbiguousMeal[]): string {
+export function formatDeleteAmbiguous(mealType: MealType, meals: AmbiguousMeal[], dateLabel: string = 'hoje'): string {
   const singular = MEAL_LABELS[mealType].toLowerCase();
   const plural = MEAL_LABELS_PLURAL[mealType];
   const lines: string[] = [
-    `Você tem ${meals.length} ${plural} hoje 🤔`,
+    `Você tem ${meals.length} ${plural} ${dateLabel} 🤔`,
     '',
   ];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   const firstTime = formatMealTime(meals[0].created_at);
-  lines.push('', `Me diz qual: "apaga o ${singular} das ${firstTime}"`);
+  const dayHint = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
+  lines.push('', `Me diz qual: "apaga o ${singular}${dayHint} das ${firstTime}"`);
   return lines.join('\n');
 }
 
-export function formatDeleteTimeNotFound(mealType: MealType, time: string, meals: AmbiguousMeal[]): string {
+export function formatDeleteTimeNotFound(mealType: MealType, time: string, meals: AmbiguousMeal[], dateLabel: string = 'hoje'): string {
   const singular = MEAL_LABELS[mealType].toLowerCase();
   const plural = MEAL_LABELS_PLURAL[mealType];
   const lines: string[] = [
-    `Não achei ${singular} às ${time} hoje 🤔`,
+    `Não achei ${singular} às ${time} ${dateLabel} 🤔`,
     '',
-    `Os ${plural} de hoje foram:`,
+    `Os ${plural} de ${dateLabel} foram:`,
   ];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
+  }
+  return lines.join('\n');
+}
+
+export function formatEditNotFound(mealType: MealType, dateLabel: string = 'hoje'): string {
+  return `Não vi nenhum ${MEAL_LABELS[mealType]} registrado ${dateLabel} pra corrigir 😔`;
+}
+
+export function formatEditAmbiguous(mealType: MealType, meals: AmbiguousMeal[], dateLabel: string = 'hoje'): string {
+  const singular = MEAL_LABELS[mealType].toLowerCase();
+  const plural = MEAL_LABELS_PLURAL[mealType];
+  const lines: string[] = [
+    `Você tem ${meals.length} ${plural} ${dateLabel} 🤔`,
+    '',
+  ];
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
+  }
+  const firstTime = formatMealTime(meals[0].created_at);
+  const dayHint = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
+  lines.push('', `Me diz qual: "corrige o ${singular}${dayHint} das ${firstTime} pra ..."`);
+  return lines.join('\n');
+}
+
+export function formatEditTimeNotFound(mealType: MealType, time: string, meals: AmbiguousMeal[], dateLabel: string = 'hoje'): string {
+  const singular = MEAL_LABELS[mealType].toLowerCase();
+  const plural = MEAL_LABELS_PLURAL[mealType];
+  const lines: string[] = [
+    `Não achei ${singular} às ${time} ${dateLabel} pra corrigir 🤔`,
+    '',
+    `Os ${plural} de ${dateLabel} foram:`,
+  ];
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   return lines.join('\n');
 }
@@ -183,8 +222,8 @@ function macroLine(emoji: string, label: string, total: number, goal: number | n
 
 function summarizeMealsByType(meals: DailyMeal[]): Array<{ type: MealType; calories: number }> {
   const sums = new Map<MealType, number>();
-  for (const m of meals) {
-    sums.set(m.meal_type, (sums.get(m.meal_type) ?? 0) + m.calories);
+  for (const meal of meals) {
+    sums.set(meal.meal_type, (sums.get(meal.meal_type) ?? 0) + meal.calories);
   }
   return MEAL_ORDER
     .filter((t) => sums.has(t))
@@ -216,8 +255,8 @@ export function formatDailyResume(
   const summarized = summarizeMealsByType(meals);
   if (summarized.length > 0) {
     lines.push('', 'Refeições:');
-    for (const m of summarized) {
-      lines.push(`• ${MEAL_LABELS[m.type]}: ${m.calories}kcal`);
+    for (const summary of summarized) {
+      lines.push(`• ${MEAL_LABELS[summary.type]}: ${summary.calories}kcal`);
     }
   } else {
     lines.push('', 'Nenhuma refeição registrada hoje 🍽️');

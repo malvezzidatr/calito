@@ -7,7 +7,7 @@ const ovo: FoodEntry = {
   aliases: ['ovo', 'ovos'],
   category: 'ovos_laticinios',
   default_unit: 'unidade',
-  per_100g: { kcal: 143, p: 13, c: 1.1, g: 9.5 },
+  per_100g: { calories: 143, protein: 13, carbs: 1.1, fat: 9.5 },
   units: { unidade: { grams: 50 }, g: { grams: 1 } },
 };
 
@@ -17,7 +17,7 @@ const banana: FoodEntry = {
   aliases: ['banana', 'bananas'],
   category: 'frutas',
   default_unit: 'unidade',
-  per_100g: { kcal: 89, p: 1.1, c: 23, g: 0.3 },
+  per_100g: { calories: 89, protein: 1.1, carbs: 23, fat: 0.3 },
   units: { unidade: { grams: 100 }, g: { grams: 1 } },
 };
 
@@ -27,7 +27,7 @@ const frangoPeito: FoodEntry = {
   aliases: ['frango', 'peito de frango', 'frango grelhado'],
   category: 'carnes',
   default_unit: 'unidade',
-  per_100g: { kcal: 165, p: 31, c: 0, g: 3.6 },
+  per_100g: { calories: 165, protein: 31, carbs: 0, fat: 3.6 },
   units: { unidade: { grams: 120 }, g: { grams: 1 } },
 };
 
@@ -37,7 +37,7 @@ const arroz: FoodEntry = {
   aliases: ['arroz', 'arroz branco'],
   category: 'cereais',
   default_unit: 'colher',
-  per_100g: { kcal: 130, p: 2.7, c: 28, g: 0.3 },
+  per_100g: { calories: 130, protein: 2.7, carbs: 28, fat: 0.3 },
   units: { colher: { grams: 30 }, g: { grams: 1 } },
 };
 
@@ -46,23 +46,23 @@ const catalog: FoodEntry[] = [ovo, banana, frangoPeito, arroz];
 describe('calculateMacros — happy path', () => {
   it('returns zero totals and empty arrays for empty input', () => {
     const result = calculateMacros([], catalog);
-    expect(result.totals).toEqual({ kcal: 0, p: 0, c: 0, g: 0 });
+    expect(result.totals).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0 });
     expect(result.matched).toEqual([]);
     expect(result.unmatched).toEqual([]);
   });
 
   it('calculates macros for a single item using unit', () => {
     const result = calculateMacros([{ food: 'ovo', quantity: 2, unit: 'unidade' }], catalog);
-    expect(result.totals.kcal).toBe(143);
-    expect(result.totals.p).toBe(13);
+    expect(result.totals.calories).toBe(143);
+    expect(result.totals.protein).toBe(13);
     expect(result.matched).toHaveLength(1);
     expect(result.unmatched).toEqual([]);
   });
 
   it('calculates macros for a single item using g', () => {
     const result = calculateMacros([{ food: 'frango', quantity: 100, unit: 'g' }], catalog);
-    expect(result.totals.kcal).toBe(165);
-    expect(result.totals.p).toBe(31);
+    expect(result.totals.calories).toBe(165);
+    expect(result.totals.protein).toBe(31);
   });
 
   it('sums multiple items', () => {
@@ -73,13 +73,13 @@ describe('calculateMacros — happy path', () => {
       ],
       catalog,
     );
-    expect(result.totals.kcal).toBe(232);
+    expect(result.totals.calories).toBe(232);
     expect(result.matched).toHaveLength(2);
   });
 
   it('handles fractional quantities', () => {
     const result = calculateMacros([{ food: 'banana', quantity: 0.5, unit: 'unidade' }], catalog);
-    expect(result.totals.kcal).toBe(45);
+    expect(result.totals.calories).toBe(45);
     expect(result.matched[0].grams).toBe(50);
   });
 
@@ -91,8 +91,8 @@ describe('calculateMacros — happy path', () => {
       ],
       catalog,
     );
-    expect(result.totals.kcal).toBe(354);
-    expect(result.totals.p).toBe(40);
+    expect(result.totals.calories).toBe(354);
+    expect(result.totals.protein).toBe(40);
   });
 
   it('aggregates same food appearing twice', () => {
@@ -103,7 +103,7 @@ describe('calculateMacros — happy path', () => {
       ],
       catalog,
     );
-    expect(result.totals.kcal).toBe(143);
+    expect(result.totals.calories).toBe(143);
     expect(result.matched).toHaveLength(2);
   });
 });
@@ -122,8 +122,8 @@ describe('calculateMacros — matched details', () => {
 
   it('exposes per-item macros (not rounded) in matched.macros', () => {
     const result = calculateMacros([{ food: 'frango', quantity: 1, unit: 'unidade' }], catalog);
-    expect(result.matched[0].macros.kcal).toBeCloseTo(198, 0);
-    expect(result.matched[0].macros.p).toBeCloseTo(37.2, 1);
+    expect(result.matched[0].macros.calories).toBeCloseTo(198, 0);
+    expect(result.matched[0].macros.protein).toBeCloseTo(37.2, 1);
   });
 
   it('preserves the original input in matched.input', () => {
@@ -149,7 +149,7 @@ describe('calculateMacros — unmatched: food_not_found', () => {
       ],
       catalog,
     );
-    expect(result.totals.kcal).toBe(72);
+    expect(result.totals.calories).toBe(72);
     expect(result.matched).toHaveLength(1);
     expect(result.unmatched).toHaveLength(1);
   });
@@ -182,7 +182,7 @@ describe('calculateMacros — unmatched: unit_not_supported', () => {
       ],
       catalog,
     );
-    expect(result.totals.kcal).toBe(89);
+    expect(result.totals.calories).toBe(89);
     expect(result.matched).toHaveLength(1);
     expect(result.unmatched).toHaveLength(1);
     expect(result.unmatched[0].reason).toBe('unit_not_supported');
@@ -192,20 +192,20 @@ describe('calculateMacros — unmatched: unit_not_supported', () => {
 describe('calculateMacros — rounding', () => {
   it('rounds kcal/p/c to integers', () => {
     const result = calculateMacros([{ food: 'banana', quantity: 1, unit: 'unidade' }], catalog);
-    expect(Number.isInteger(result.totals.kcal)).toBe(true);
-    expect(Number.isInteger(result.totals.p)).toBe(true);
-    expect(Number.isInteger(result.totals.c)).toBe(true);
+    expect(Number.isInteger(result.totals.calories)).toBe(true);
+    expect(Number.isInteger(result.totals.protein)).toBe(true);
+    expect(Number.isInteger(result.totals.carbs)).toBe(true);
   });
 
   it('keeps fat with 1 decimal when below 5g', () => {
     const result = calculateMacros([{ food: 'banana', quantity: 1, unit: 'unidade' }], catalog);
-    expect(result.totals.g).toBe(0.3);
+    expect(result.totals.fat).toBe(0.3);
   });
 
   it('rounds fat to integer when >= 5g', () => {
     const result = calculateMacros([{ food: 'ovo', quantity: 2, unit: 'unidade' }], catalog);
-    expect(Number.isInteger(result.totals.g)).toBe(true);
-    expect(result.totals.g).toBe(10);
+    expect(Number.isInteger(result.totals.fat)).toBe(true);
+    expect(result.totals.fat).toBe(10);
   });
 
   it('rounds totals after summing, not per item', () => {
@@ -216,7 +216,7 @@ describe('calculateMacros — rounding', () => {
       ],
       catalog,
     );
-    expect(result.totals.g).toBe(0.6);
+    expect(result.totals.fat).toBe(0.6);
   });
 });
 
@@ -224,7 +224,7 @@ describe('calculateMacros — case/accent tolerance via matcher', () => {
   it('case insensitive food name', () => {
     const result = calculateMacros([{ food: 'OVO', quantity: 1, unit: 'unidade' }], catalog);
     expect(result.matched).toHaveLength(1);
-    expect(result.totals.kcal).toBe(72);
+    expect(result.totals.calories).toBe(72);
   });
 
   it('strips accents in food name', () => {
@@ -234,7 +234,7 @@ describe('calculateMacros — case/accent tolerance via matcher', () => {
       aliases: ['maca'],
       category: 'frutas',
       default_unit: 'unidade',
-      per_100g: { kcal: 52, p: 0.3, c: 14, g: 0.2 },
+      per_100g: { calories: 52, protein: 0.3, carbs: 14, fat: 0.2 },
       units: { unidade: { grams: 150 }, g: { grams: 1 } },
     };
     // valida que matcher também é resiliente, mas precisa ter >=2 aliases real;
@@ -255,8 +255,8 @@ describe('calculateMacros — real catalog integration', () => {
       ],
       fullCatalog,
     );
-    expect(result.totals.kcal).toBeGreaterThan(200);
-    expect(result.totals.kcal).toBeLessThan(260);
+    expect(result.totals.calories).toBeGreaterThan(200);
+    expect(result.totals.calories).toBeLessThan(260);
     expect(result.unmatched).toEqual([]);
   });
 
@@ -269,8 +269,8 @@ describe('calculateMacros — real catalog integration', () => {
       ],
       fullCatalog,
     );
-    expect(result.totals.kcal).toBeGreaterThan(350);
-    expect(result.totals.p).toBeGreaterThan(40);
+    expect(result.totals.calories).toBeGreaterThan(350);
+    expect(result.totals.protein).toBeGreaterThan(40);
     expect(result.unmatched).toEqual([]);
   });
 
@@ -279,8 +279,8 @@ describe('calculateMacros — real catalog integration', () => {
       [{ food: 'pizza muçarela', quantity: 1, unit: 'fatia' }],
       fullCatalog,
     );
-    expect(result.totals.kcal).toBeGreaterThan(250);
-    expect(result.totals.kcal).toBeLessThan(320);
+    expect(result.totals.calories).toBeGreaterThan(250);
+    expect(result.totals.calories).toBeLessThan(320);
   });
 
   it('reports unmatched for exotic food not in seed', () => {

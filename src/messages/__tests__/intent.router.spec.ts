@@ -22,6 +22,7 @@ describe('IntentRouter', () => {
   let deleteLast: jest.Mock;
   let deleteMeal: jest.Mock;
   let editLast: jest.Mock;
+  let editMeal: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -32,12 +33,13 @@ describe('IntentRouter', () => {
     deleteLast = jest.fn().mockResolvedValue(undefined);
     deleteMeal = jest.fn().mockResolvedValue(undefined);
     editLast = jest.fn().mockResolvedValue(undefined);
+    editMeal = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
-        { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast } },
+        { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast, editMeal } },
       ],
     }).compile();
     router = module.get(IntentRouter);
@@ -45,7 +47,6 @@ describe('IntentRouter', () => {
 
   it.each<[Intent, string]>([
     ['update_goal',    'atualizar seu objetivo'],
-    ['edit_meal',      'editar essa refeição'],
     ['delete_account', 'exclusão da sua conta'],
     ['subscribe',      'link de assinatura'],
     ['help',           'explicar tudo que sei fazer'],
@@ -117,6 +118,14 @@ describe('IntentRouter', () => {
 
     expect(editLast).toHaveBeenCalledTimes(1);
     expect(editLast).toHaveBeenCalledWith('5511999', 'era 1 ovo, não 2', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
+  it('routes edit_meal to MealsService.editMeal forwarding the text', async () => {
+    await router.route('edit_meal', '5511999', 'corrige meu almoço pra carne com salada', '5511999@s.whatsapp.net');
+
+    expect(editMeal).toHaveBeenCalledTimes(1);
+    expect(editMeal).toHaveBeenCalledWith('5511999', 'corrige meu almoço pra carne com salada', '5511999@s.whatsapp.net');
     expect(sendText).not.toHaveBeenCalled();
   });
 
