@@ -49,7 +49,7 @@ function scaleNutrition(per100g: Nutrition, grams: number): Nutrition {
   };
 }
 
-function roundMacros(nutrition: Nutrition): Nutrition {
+export function roundNutrition(nutrition: Nutrition): Nutrition {
   return {
     calories: Math.round(nutrition.calories),
     protein:  Math.round(nutrition.protein),
@@ -91,7 +91,7 @@ export function calculateMacros(items: CalculationItem[], catalog: FoodEntry[]):
   }
 
   return {
-    totals: roundMacros(runningTotals),
+    totals: roundNutrition(runningTotals),
     matched,
     unmatched,
   };

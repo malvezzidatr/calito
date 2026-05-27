@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { FoodCategory, FoodEntry } from './utils/food.types';
 import { validateFoodCatalog } from './utils/food.validation';
 import { matchFood, MatchResult } from './utils/food.matcher';
-import { calculateMacros, CalculationItem, CalculationResult } from './utils/food.calculator';
+import { calculateMacros, CalculationItem, CalculationResult, roundNutrition } from './utils/food.calculator';
 import { FoodEstimator, EstimateRunResult } from './food.estimator';
 import { Nutrition } from './utils/food.types';
 import foodsData from './data/foods.json';
@@ -71,20 +71,11 @@ export class FoodsService implements OnModuleInit {
     }
 
     return {
-      totals: roundFinal(totals),
+      totals: roundNutrition(totals),
       matched:   local.matched,
       unmatched: local.unmatched,
       estimated: fallback.estimated,
       failed:    fallback.failed,
     };
   }
-}
-
-function roundFinal(nutrition: Nutrition): Nutrition {
-  return {
-    calories: Math.round(nutrition.calories),
-    protein:  Math.round(nutrition.protein),
-    carbs:    Math.round(nutrition.carbs),
-    fat:      nutrition.fat < 5 ? Math.round(nutrition.fat * 10) / 10 : Math.round(nutrition.fat),
-  };
 }

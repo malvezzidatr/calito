@@ -19,6 +19,7 @@ import { isNutritionistGoalsClarification, NUTRITIONIST_GOALS_PROMPT, Nutritioni
 import { validateNutritionistGoals } from './utils/nutritionist-goals.validation';
 import { isNutritionistProfileClarification, NUTRITIONIST_PROFILE_PROMPT, NutritionistProfileResult } from './utils/nutritionist-profile.prompt';
 import { validateNutritionistProfile } from './utils/nutritionist-profile.validation';
+import { parseYesNo } from '../common/utils/yes-no.parser';
 
 @Injectable()
 export class OnboardingService {
@@ -71,26 +72,25 @@ export class OnboardingService {
     }
 
     private async handleWaitingConsent(phone: string, text: string, jid: string) {
-        const normalized = text.trim().toLowerCase();
-        const YES = new Set(['sim', 's', 'yes']);
-        const NO = new Set(['não', 'nao', 'n', 'no']);
-
-        if (YES.has(normalized)) {
+        const choice = parseYesNo(text);
+        if (choice === 'yes') {
             await this.users.update(phone, {
                 consent_given: true,
                 consent_date: new Date(),
                 onboarding_step: OnboardingStep.WaitingNutritionistChoice,
             });
             await this.whatsapp.sendText(jid, NUTRITIONIST_CHOICE_QUESTION);
-        } else if (NO.has(normalized)) {
-            await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
-        } else {
-            await this.whatsapp.sendText(jid, CONSENT_INVALID);
+            return;
         }
+        if (choice === 'no') {
+            await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
+            return;
+        }
+        await this.whatsapp.sendText(jid, CONSENT_INVALID);
     }
 
     private async handleWaitingNutritionistChoice(phone: string, text: string, jid: string) {
-        const choice = this.parseYesNo(text);
+        const choice = parseYesNo(text);
         if (choice === 'yes') {
             await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingNutritionistGoals });
             await this.whatsapp.sendText(jid, NUTRITIONIST_GOALS_QUESTION);
@@ -126,7 +126,7 @@ export class OnboardingService {
     }
 
     private async handleWaitingNutritionistGoalsConfirm(phone: string, text: string, jid: string) {
-        const choice = this.parseYesNo(text);
+        const choice = parseYesNo(text);
         if (choice === 'yes') {
             await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingNutritionistProfile });
             await this.whatsapp.sendText(jid, NUTRITIONIST_PROFILE_QUESTION);
@@ -168,7 +168,7 @@ export class OnboardingService {
     }
 
     private async handleWaitingNutritionistProfileConfirm(phone: string, text: string, jid: string) {
-        const choice = this.parseYesNo(text);
+        const choice = parseYesNo(text);
         if (choice === 'yes') {
             const user = await this.users.findByPhone(phone);
             if (!user || user.calorie_goal == null || user.protein_goal == null || user.carbs_goal == null || user.fat_goal == null) {
@@ -196,13 +196,6 @@ export class OnboardingService {
             return;
         }
         await this.whatsapp.sendText(jid, CONFIRM_INVALID);
-    }
-
-    private parseYesNo(text: string): 'yes' | 'no' | null {
-        const normalized = text.trim().toLowerCase();
-        if (['sim', 's', 'yes'].includes(normalized)) return 'yes';
-        if (['não', 'nao', 'n', 'no'].includes(normalized)) return 'no';
-        return null;
     }
 
     private async extractNutritionistGoals(text: string): Promise<NutritionistGoalsResult | null> {
