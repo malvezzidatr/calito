@@ -13,7 +13,7 @@ import { describeFromFoods, stripMealVerbs } from './utils/meal.text';
 import { ParsedMessagesRepository } from './parsed-messages.repository';
 import { normalize } from '../foods/utils/food.matcher';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatDateLabel } from './utils/meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatEditNotFound, formatEditAmbiguous, formatEditTimeNotFound, formatDateLabel } from './utils/meal.format';
 import { isMealReferenceClarification, MEAL_REFERENCE_PROMPT, MealReferenceResult } from './utils/meal-reference.prompt';
 import { validateMealReference } from './utils/meal-reference.validation';
 import { validateMealExtraction } from './utils/meal.validation';
@@ -282,6 +282,150 @@ export class MealsService {
 
             await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.description, lastMeal.calories));
         });
+    }
+
+    async editMeal(phone: string, text: string, jid: string) {
+        if (this.useLocalCalculator()) {
+            return this.editMealLocal(phone, text, jid);
+        }
+        await this.withUser(phone, async (user) => {
+            const target = await this.resolveEditTarget(user.id, text, jid);
+            if (!target) return;
+
+            let result: MealExtractionResult;
+            try {
+                const reply = await this.aiService.chat(
+                    [{ role: 'user', content: buildEditUserMessage(target.description, text) }],
+                    { responseFormat: 'json', systemPrompt: MEAL_EXTRACTION_PROMPT, temperature: 0.2 },
+                );
+                result = validateMealExtraction(JSON.parse(reply));
+            } catch (err) {
+                this.logger.warn(`Falha ao re-extrair refeição ${target.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                return;
+            }
+
+            if (isMealClarification(result)) {
+                await this.whatsappService.sendText(jid, result.needs_clarification);
+                return;
+            }
+
+            const extraction: MealExtraction = result;
+
+            if (this.isSameDescription(extraction.description, target.description)) {
+                await this.whatsappService.sendText(jid, VAGUE_EDIT_MESSAGE);
+                return;
+            }
+
+            const mealType = extraction.meal_type ?? target.meal_type;
+
+            try {
+                await this.mealsRepository.updateById(target.id, {
+                    meal_type: mealType,
+                    description: extraction.description,
+                    calories: extraction.calories,
+                    protein: extraction.protein,
+                    carbs: extraction.carbs,
+                    fat: extraction.fat,
+                });
+            } catch (err) {
+                this.logger.error(`Falha ao atualizar refeição ${target.id} do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                return;
+            }
+
+            await this.whatsappService.sendText(jid, formatEditConfirmation(mealType, extraction));
+        });
+    }
+
+    private async editMealLocal(phone: string, text: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            const target = await this.resolveEditTarget(user.id, text, jid);
+            if (!target) return;
+
+            const parsed = await this.runParser(buildParserEditMessage(target.description, text));
+            if (parsed === null) {
+                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                return;
+            }
+            if (isMealParserClarification(parsed)) {
+                await this.whatsappService.sendText(jid, parsed.needs_clarification);
+                return;
+            }
+
+            const calc = await this.foodsService.calculateWithFallback(parsed.foods);
+
+            if (calc.matched.length === 0 && calc.estimated.length === 0) {
+                this.logger.warn(`[local] all items failed on edit for meal=${target.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                await this.whatsappService.sendText(jid, 'Não consegui calcular essa refeição corrigida 🤔 Tenta ser mais específico?');
+                return;
+            }
+
+            const mealType = parsed.meal_type ?? target.meal_type;
+            const description = describeFromFoods(parsed.foods);
+            const extraction: MealExtraction = {
+                description,
+                calories: calc.totals.kcal,
+                protein: calc.totals.p,
+                carbs:   calc.totals.c,
+                fat:     calc.totals.g,
+                meal_type: mealType,
+            };
+
+            try {
+                await this.mealsRepository.updateById(target.id, {
+                    meal_type: mealType,
+                    description,
+                    calories: extraction.calories,
+                    protein:  extraction.protein,
+                    carbs:    extraction.carbs,
+                    fat:      extraction.fat,
+                });
+            } catch (err) {
+                this.logger.error(`[local] Falha ao atualizar refeição ${target.id} do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                return;
+            }
+
+            await this.whatsappService.sendText(jid, formatEditConfirmation(mealType, extraction));
+        });
+    }
+
+    private async resolveEditTarget(user_id: string, text: string, jid: string): Promise<{ id: string; meal_type: MealType; description: string; calories: number; created_at: Date } | null> {
+        const reference = await this.extractMealReference(text);
+        if (reference === null) {
+            await this.whatsappService.sendText(jid, 'Não entendi qual refeição você quer corrigir 🤔 Tenta assim: "corrige meu almoço" ou "corrige o lanche das 16h"');
+            return null;
+        }
+        if (isMealReferenceClarification(reference)) {
+            await this.whatsappService.sendText(jid, reference.needs_clarification);
+            return null;
+        }
+
+        const targetDate = startOfDaysAgo(new Date(), reference.days_offset);
+        const dateLabel = formatDateLabel(reference.days_offset, targetDate);
+        const matches = await this.mealsRepository.findDailyByUserAndType(user_id, targetDate, reference.meal_type);
+
+        if (matches.length === 0) {
+            await this.whatsappService.sendText(jid, formatEditNotFound(reference.meal_type, dateLabel));
+            return null;
+        }
+
+        if (reference.time !== null) {
+            const exact = matches.find((m) => formatMealTime(m.created_at) === reference.time);
+            if (!exact) {
+                await this.whatsappService.sendText(jid, formatEditTimeNotFound(reference.meal_type, reference.time, matches, dateLabel));
+                return null;
+            }
+            return exact;
+        }
+
+        if (matches.length === 1) {
+            return matches[0];
+        }
+
+        await this.whatsappService.sendText(jid, formatEditAmbiguous(reference.meal_type, matches, dateLabel));
+        return null;
     }
 
     async editLast(phone: string, text: string, jid: string) {

@@ -21,6 +21,7 @@ describe('MealsService', () => {
   let findDailyByUser: jest.Mock;
   let findInRangeByUser: jest.Mock;
   let findLastByUser: jest.Mock;
+  let findDailyByUserAndType: jest.Mock;
   let deleteById: jest.Mock;
   let updateById: jest.Mock;
   let sendText: jest.Mock;
@@ -37,6 +38,7 @@ describe('MealsService', () => {
     findDailyByUser = jest.fn().mockResolvedValue([]);
     findInRangeByUser = jest.fn().mockResolvedValue([]);
     findLastByUser = jest.fn().mockResolvedValue(null);
+    findDailyByUserAndType = jest.fn().mockResolvedValue([]);
     deleteById = jest.fn().mockResolvedValue(undefined);
     updateById = jest.fn().mockResolvedValue(undefined);
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -50,7 +52,7 @@ describe('MealsService', () => {
         MealsService,
         { provide: AiService,        useValue: { chat } },
         { provide: UsersRepository,  useValue: { findByPhone } },
-        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, deleteById, updateById } },
+        { provide: MealsRepository,  useValue: { create, sumDailyByUser, findDailyByUser, findInRangeByUser, findLastByUser, findDailyByUserAndType, deleteById, updateById } },
         { provide: WhatsappService,  useValue: { sendText } },
         { provide: FoodsService,             useValue: { calculateWithFallback } },
         { provide: ConfigService,            useValue: { get: configGet } },
@@ -708,6 +710,338 @@ describe('MealsService', () => {
       const [, message] = sendText.mock.calls[0];
       expect(message).toContain('problema técnico');
       expect(message).not.toContain('✏️');
+    });
+  });
+
+  describe('editMeal', () => {
+    const refReply = (overrides: Partial<{ meal_type: string; time: string | null; days_offset: number }> = {}) =>
+      JSON.stringify({ meal_type: 'LUNCH', time: null, days_offset: 0, ...overrides });
+    const lunchMeal = (overrides: Partial<{ id: string; description: string; calories: number; created_at: Date }> = {}) => ({
+      id: 'meal-1',
+      meal_type: 'LUNCH',
+      description: 'arroz e frango',
+      calories: 750,
+      created_at: new Date('2026-05-12T15:00:00Z'),
+      ...overrides,
+    });
+
+    it('returns silently when user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
+
+      await service.editMeal('5511999', 'corrige o almoço', '5511999@s.whatsapp.net');
+
+      expect(chat).not.toHaveBeenCalled();
+      expect(findDailyByUserAndType).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+      expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('forwards reference clarification and does NOT search/update', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(JSON.stringify({ needs_clarification: 'Qual refeição? 🤔' }));
+
+      await service.editMeal('phone-1', 'corrige isso', 'jid-1');
+
+      expect(findDailyByUserAndType).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledWith('jid-1', 'Qual refeição? 🤔');
+    });
+
+    it('sends a friendly fallback when the reference extractor returns invalid JSON', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue('isso não é json');
+
+      await service.editMeal('phone-1', 'corrige', 'jid-1');
+
+      expect(findDailyByUserAndType).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não entendi qual refeição');
+    });
+
+    it('replies with not-found when there is no meal of that type on the target day', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(refReply({ meal_type: 'LUNCH' }));
+      findDailyByUserAndType.mockResolvedValue([]);
+
+      await service.editMeal('phone-1', 'corrige meu almoço', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      expect(chat).toHaveBeenCalledTimes(1);
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não vi nenhum Almoço');
+      expect(message).toContain('hoje');
+      expect(message).toContain('corrigir');
+    });
+
+    it('re-extracts and updates when there is exactly one match for the type', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          description: 'carne com salada',
+          calories: 420,
+          protein: 35,
+          carbs: 10,
+          fat: 22,
+          meal_type: 'LUNCH',
+        }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+
+      await service.editMeal('phone-1', 'corrige meu almoço pra carne com salada', 'jid-1');
+
+      expect(chat).toHaveBeenCalledTimes(2);
+      const [secondMessages] = chat.mock.calls[1];
+      expect(secondMessages[0].content).toContain('arroz e frango');
+      expect(secondMessages[0].content).toContain('corrige meu almoço pra carne com salada');
+
+      expect(updateById).toHaveBeenCalledTimes(1);
+      expect(updateById).toHaveBeenCalledWith('meal-1', {
+        meal_type: 'LUNCH',
+        description: 'carne com salada',
+        calories: 420,
+        protein: 35,
+        carbs: 10,
+        fat: 22,
+      });
+
+      const [, confirmation] = sendText.mock.calls[0];
+      expect(confirmation).toContain('✏️');
+      expect(confirmation).toContain('Almoço');
+      expect(confirmation).toContain('carne com salada');
+      expect(confirmation).toContain('420kcal');
+    });
+
+    it('asks for disambiguation when there are 2+ matches and no time', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(refReply({ meal_type: 'SNACK' }));
+      findDailyByUserAndType.mockResolvedValue([
+        { id: 'meal-a', meal_type: 'SNACK', description: 'maçã', calories: 80, created_at: new Date('2026-05-12T13:00:00Z') },
+        { id: 'meal-b', meal_type: 'SNACK', description: 'whey', calories: 120, created_at: new Date('2026-05-12T19:00:00Z') },
+      ]);
+
+      await service.editMeal('phone-1', 'corrige meu lanche', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Você tem 2 lanches');
+      expect(message).toContain('corrige o lanche das');
+    });
+
+    it('picks the match by time when reference includes time', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'SNACK', time: '16:00' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          description: '1 maçã',
+          calories: 80,
+          protein: 0,
+          carbs: 21,
+          fat: 0,
+          meal_type: 'SNACK',
+        }));
+      findDailyByUserAndType.mockResolvedValue([
+        { id: 'meal-morning', meal_type: 'SNACK', description: 'banana', calories: 90, created_at: new Date('2026-05-12T13:00:00Z') },
+        { id: 'meal-afternoon', meal_type: 'SNACK', description: 'whey', calories: 120, created_at: new Date('2026-05-12T19:00:00Z') },
+      ]);
+
+      await service.editMeal('phone-1', 'corrige o lanche das 16h pra 1 maçã', 'jid-1');
+
+      expect(updateById).toHaveBeenCalledTimes(1);
+      expect(updateById).toHaveBeenCalledWith('meal-afternoon', expect.objectContaining({ description: '1 maçã' }));
+    });
+
+    it('replies with time-not-found when reference includes time but no match has that time', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValue(refReply({ meal_type: 'SNACK', time: '09:00' }));
+      findDailyByUserAndType.mockResolvedValue([
+        { id: 'meal-x', meal_type: 'SNACK', description: 'whey', calories: 120, created_at: new Date('2026-05-12T19:00:00Z') },
+      ]);
+
+      await service.editMeal('phone-1', 'corrige o lanche das 9h', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não achei lanche às 09:00');
+      expect(message).toContain('corrigir');
+    });
+
+    it('keeps the original meal_type when AI re-extraction returns null', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          description: 'frango grelhado',
+          calories: 200, protein: 37, carbs: 0, fat: 4,
+          meal_type: null,
+        }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+
+      await service.editMeal('phone-1', 'corrige o almoço pra frango grelhado', 'jid-1');
+
+      expect(updateById).toHaveBeenCalledWith('meal-1', expect.objectContaining({ meal_type: 'LUNCH' }));
+    });
+
+    it('forwards re-extraction clarification without updating', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({ needs_clarification: 'Me passa a quantidade 🤔' }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+
+      await service.editMeal('phone-1', 'corrige o almoço pra arroz', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledWith('jid-1', 'Me passa a quantidade 🤔');
+    });
+
+    it('sends VAGUE_EDIT_MESSAGE when the new description is identical to the original', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          description: 'arroz e frango',
+          calories: 760, protein: 46, carbs: 50, fat: 5, meal_type: 'LUNCH',
+        }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+
+      await service.editMeal('phone-1', 'corrige meu almoço', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não entendi o que você quer mudar');
+    });
+
+    it('sends a friendly fallback when AI re-extraction returns invalid JSON', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce('not json');
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+
+      await service.editMeal('phone-1', 'corrige', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui entender');
+    });
+
+    it('sends a technical-error message when the update throws and does NOT confirm', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          description: 'carne', calories: 200, protein: 30, carbs: 0, fat: 8, meal_type: 'LUNCH',
+        }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+      updateById.mockRejectedValueOnce(new Error('DB down'));
+
+      await service.editMeal('phone-1', 'corrige o almoço pra carne', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('problema técnico');
+      expect(message).not.toContain('✏️');
+    });
+  });
+
+  describe('editMeal (USE_LOCAL_CALCULATOR=true)', () => {
+    beforeEach(() => {
+      configGet.mockReturnValue('true');
+    });
+
+    const refReply = (overrides: Partial<{ meal_type: string; time: string | null; days_offset: number }> = {}) =>
+      JSON.stringify({ meal_type: 'LUNCH', time: null, days_offset: 0, ...overrides });
+    const lunchMeal = (overrides: Partial<{ id: string; description: string; calories: number; created_at: Date }> = {}) => ({
+      id: 'meal-1',
+      meal_type: 'LUNCH',
+      description: 'arroz e frango',
+      calories: 750,
+      created_at: new Date('2026-05-12T15:00:00Z'),
+      ...overrides,
+    });
+
+    it('parses corrected list, recalculates and updates the target meal', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          foods: [{ food: 'carne moída', quantity: 100, unit: 'g' }, { food: 'salada', quantity: 1, unit: 'porcao' }],
+          meal_type: null,
+        }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 255, p: 23, c: 5, g: 15 },
+        matched: [{}, {}],
+        unmatched: [],
+        estimated: [],
+        failed: [],
+      });
+
+      await service.editMeal('phone-1', 'corrige meu almoço pra carne moída e salada', 'jid-1');
+
+      expect(updateById).toHaveBeenCalledTimes(1);
+      expect(updateById).toHaveBeenCalledWith('meal-1', {
+        meal_type: 'LUNCH',
+        description: '100 carne moída, 1 salada',
+        calories: 255,
+        protein: 23,
+        carbs: 5,
+        fat: 15,
+      });
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Atualizei');
+    });
+
+    it('replies with calc error when all items failed', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({
+          foods: [{ food: 'biribiri', quantity: 1, unit: 'unidade' }],
+          meal_type: null,
+        }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+      calculateWithFallback.mockResolvedValue({
+        totals: { kcal: 0, p: 0, c: 0, g: 0 },
+        matched: [],
+        unmatched: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
+        estimated: [],
+        failed: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'unknown_food' }],
+      });
+
+      await service.editMeal('phone-1', 'corrige o almoço pra biribiri', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não consegui calcular');
+    });
+
+    it('forwards parser clarification on edit without updating', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat
+        .mockResolvedValueOnce(refReply({ meal_type: 'LUNCH' }))
+        .mockResolvedValueOnce(JSON.stringify({ needs_clarification: 'qual quantidade?' }));
+      findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
+
+      await service.editMeal('phone-1', 'corrige o almoço pra arroz', 'jid-1');
+
+      expect(updateById).not.toHaveBeenCalled();
+      expect(calculateWithFallback).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledWith('jid-1', 'qual quantidade?');
+    });
+
+    it('does NOT consult the parser when no match is found', async () => {
+      findByPhone.mockResolvedValue({ id: 'user-1' });
+      chat.mockResolvedValueOnce(refReply({ meal_type: 'DINNER' }));
+      findDailyByUserAndType.mockResolvedValue([]);
+
+      await service.editMeal('phone-1', 'corrige o jantar', 'jid-1');
+
+      expect(chat).toHaveBeenCalledTimes(1);
+      expect(calculateWithFallback).not.toHaveBeenCalled();
+      expect(updateById).not.toHaveBeenCalled();
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Não vi nenhum Jantar');
     });
   });
 

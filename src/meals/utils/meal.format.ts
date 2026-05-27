@@ -162,6 +162,40 @@ export function formatDeleteTimeNotFound(mealType: MealType, time: string, meals
   return lines.join('\n');
 }
 
+export function formatEditNotFound(mealType: MealType, dateLabel: string = 'hoje'): string {
+  return `Não vi nenhum ${MEAL_LABELS[mealType]} registrado ${dateLabel} pra corrigir 😔`;
+}
+
+export function formatEditAmbiguous(mealType: MealType, meals: AmbiguousMeal[], dateLabel: string = 'hoje'): string {
+  const singular = MEAL_LABELS[mealType].toLowerCase();
+  const plural = MEAL_LABELS_PLURAL[mealType];
+  const lines: string[] = [
+    `Você tem ${meals.length} ${plural} ${dateLabel} 🤔`,
+    '',
+  ];
+  for (const m of meals) {
+    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  }
+  const firstTime = formatMealTime(meals[0].created_at);
+  const dayHint = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
+  lines.push('', `Me diz qual: "corrige o ${singular}${dayHint} das ${firstTime} pra ..."`);
+  return lines.join('\n');
+}
+
+export function formatEditTimeNotFound(mealType: MealType, time: string, meals: AmbiguousMeal[], dateLabel: string = 'hoje'): string {
+  const singular = MEAL_LABELS[mealType].toLowerCase();
+  const plural = MEAL_LABELS_PLURAL[mealType];
+  const lines: string[] = [
+    `Não achei ${singular} às ${time} ${dateLabel} pra corrigir 🤔`,
+    '',
+    `Os ${plural} de ${dateLabel} foram:`,
+  ];
+  for (const m of meals) {
+    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  }
+  return lines.join('\n');
+}
+
 function formatWeekday(spDayStart: Date): string {
   return WEEKDAY_LABELS_PT[spDayStart.getUTCDay()];
 }

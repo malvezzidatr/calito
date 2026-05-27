@@ -63,8 +63,8 @@ export class IntentRouter {
     await this.whatsapp.sendText(jid, 'Em breve vou atualizar seu objetivo! 🚧');
   }
 
-  private async handleEditMeal(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou editar essa refeição! 🚧');
+  private async handleEditMeal(phone: string, text: string, jid: string) {
+    await this.meals.editMeal(phone, text, jid);
   }
 
   private async handleDeleteMeal(phone: string, text: string, jid: string) {
