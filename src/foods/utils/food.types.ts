@@ -29,10 +29,10 @@ export const Unit = {
 export type Unit = typeof Unit[keyof typeof Unit];
 
 export type Nutrition = {
-  kcal: number;
-  p:    number;
-  c:    number;
-  g:    number;
+  calories: number;
+  protein:  number;
+  carbs:    number;
+  fat:      number;
 };
 
 export type UnitConversion = {

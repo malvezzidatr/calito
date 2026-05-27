@@ -58,16 +58,16 @@ export class FoodsService implements OnModuleInit {
     const fallback = await this.estimator.estimate(local.unmatched);
 
     const totals: Nutrition = {
-      kcal: local.totals.kcal,
-      p:    local.totals.p,
-      c:    local.totals.c,
-      g:    local.totals.g,
+      calories: local.totals.calories,
+      protein:  local.totals.protein,
+      carbs:    local.totals.carbs,
+      fat:      local.totals.fat,
     };
     for (const item of fallback.estimated) {
-      totals.kcal += item.macros_contribution.kcal;
-      totals.p    += item.macros_contribution.p;
-      totals.c    += item.macros_contribution.c;
-      totals.g    += item.macros_contribution.g;
+      totals.calories += item.macros_contribution.calories;
+      totals.protein  += item.macros_contribution.protein;
+      totals.carbs    += item.macros_contribution.carbs;
+      totals.fat      += item.macros_contribution.fat;
     }
 
     return {
@@ -80,11 +80,11 @@ export class FoodsService implements OnModuleInit {
   }
 }
 
-function roundFinal(n: Nutrition): Nutrition {
+function roundFinal(nutrition: Nutrition): Nutrition {
   return {
-    kcal: Math.round(n.kcal),
-    p:    Math.round(n.p),
-    c:    Math.round(n.c),
-    g:    n.g < 5 ? Math.round(n.g * 10) / 10 : Math.round(n.g),
+    calories: Math.round(nutrition.calories),
+    protein:  Math.round(nutrition.protein),
+    carbs:    Math.round(nutrition.carbs),
+    fat:      nutrition.fat < 5 ? Math.round(nutrition.fat * 10) / 10 : Math.round(nutrition.fat),
   };
 }

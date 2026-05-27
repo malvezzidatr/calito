@@ -95,7 +95,7 @@ model EstimatedFood {
   id String @id @default(uuid())
   food_name String
   unit String
-  kcal Float
+  calories Float
   protein Float
   carbs Float
   fat Float

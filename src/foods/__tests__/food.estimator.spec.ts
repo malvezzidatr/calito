@@ -38,7 +38,7 @@ describe('FoodEstimator', () => {
   describe('cache hit', () => {
     it('uses cached estimate without calling AI', async () => {
       repo.findByNameAndUnit.mockResolvedValueOnce({
-        food_name: 'acaraje', unit: 'unidade', kcal: 280, protein: 8, carbs: 25, fat: 18,
+        food_name: 'acaraje', unit: 'unidade', calories: 280, protein: 8, carbs: 25, fat: 18,
       });
 
       const result = await estimator.estimate([makeUnmatched('acarajé', 1, 'unidade')]);
@@ -46,22 +46,22 @@ describe('FoodEstimator', () => {
       expect(ai.chat).not.toHaveBeenCalled();
       expect(result.estimated).toHaveLength(1);
       expect(result.estimated[0].source).toBe('cache');
-      expect(result.estimated[0].macros_contribution).toEqual({ kcal: 280, p: 8, c: 25, g: 18 });
+      expect(result.estimated[0].macros_contribution).toEqual({ calories: 280, protein: 8, carbs: 25, fat: 18 });
     });
 
     it('scales macros by quantity on cache hit', async () => {
       repo.findByNameAndUnit.mockResolvedValueOnce({
-        food_name: 'acaraje', unit: 'unidade', kcal: 280, protein: 8, carbs: 25, fat: 18,
+        food_name: 'acaraje', unit: 'unidade', calories: 280, protein: 8, carbs: 25, fat: 18,
       });
 
       const result = await estimator.estimate([makeUnmatched('acarajé', 3, 'unidade')]);
 
-      expect(result.estimated[0].macros_contribution).toEqual({ kcal: 840, p: 24, c: 75, g: 54 });
+      expect(result.estimated[0].macros_contribution).toEqual({ calories: 840, protein: 24, carbs: 75, fat: 54 });
     });
 
     it('uses normalized food name for cache lookup (accent strip)', async () => {
       repo.findByNameAndUnit.mockResolvedValueOnce({
-        food_name: 'acaraje', unit: 'unidade', kcal: 280, protein: 8, carbs: 25, fat: 18,
+        food_name: 'acaraje', unit: 'unidade', calories: 280, protein: 8, carbs: 25, fat: 18,
       });
 
       await estimator.estimate([makeUnmatched('ACARAJÉ', 1, 'unidade')]);
@@ -71,7 +71,7 @@ describe('FoodEstimator', () => {
 
     it('treats cached-zero as unknown_food failure', async () => {
       repo.findByNameAndUnit.mockResolvedValueOnce({
-        food_name: 'foobar', unit: 'unidade', kcal: 0, protein: 0, carbs: 0, fat: 0,
+        food_name: 'foobar', unit: 'unidade', calories: 0, protein: 0, carbs: 0, fat: 0,
       });
 
       const result = await estimator.estimate([makeUnmatched('foobar', 1, 'unidade')]);
@@ -89,19 +89,19 @@ describe('FoodEstimator', () => {
     });
 
     it('calls AI when cache misses and stores result', async () => {
-      ai.chat.mockResolvedValueOnce(JSON.stringify({ kcal: 280, protein: 8, carbs: 25, fat: 18 }));
+      ai.chat.mockResolvedValueOnce(JSON.stringify({ calories: 280, protein: 8, carbs: 25, fat: 18 }));
 
       const result = await estimator.estimate([makeUnmatched('acarajé', 1, 'unidade')]);
 
       expect(ai.chat).toHaveBeenCalledTimes(1);
       expect(repo.upsert).toHaveBeenCalledWith({
-        food_name: 'acaraje', unit: 'unidade', kcal: 280, protein: 8, carbs: 25, fat: 18,
+        food_name: 'acaraje', unit: 'unidade', calories: 280, protein: 8, carbs: 25, fat: 18,
       });
       expect(result.estimated[0].source).toBe('fresh');
     });
 
     it('passes the estimate prompt + structured user message to AI', async () => {
-      ai.chat.mockResolvedValueOnce(JSON.stringify({ kcal: 280, protein: 8, carbs: 25, fat: 18 }));
+      ai.chat.mockResolvedValueOnce(JSON.stringify({ calories: 280, protein: 8, carbs: 25, fat: 18 }));
 
       await estimator.estimate([makeUnmatched('acarajé', 1, 'unidade')]);
 
@@ -112,7 +112,7 @@ describe('FoodEstimator', () => {
     });
 
     it('marks as unknown_food when AI returns all-zero', async () => {
-      ai.chat.mockResolvedValueOnce(JSON.stringify({ kcal: 0, protein: 0, carbs: 0, fat: 0 }));
+      ai.chat.mockResolvedValueOnce(JSON.stringify({ calories: 0, protein: 0, carbs: 0, fat: 0 }));
 
       const result = await estimator.estimate([makeUnmatched('biribiri', 1, 'unidade')]);
 
@@ -140,7 +140,7 @@ describe('FoodEstimator', () => {
     });
 
     it('marks as ai_error when AI returns out-of-range values', async () => {
-      ai.chat.mockResolvedValueOnce(JSON.stringify({ kcal: 99999, protein: 0, carbs: 0, fat: 0 }));
+      ai.chat.mockResolvedValueOnce(JSON.stringify({ calories: 99999, protein: 0, carbs: 0, fat: 0 }));
 
       const result = await estimator.estimate([makeUnmatched('acarajé', 1, 'unidade')]);
 
@@ -148,7 +148,7 @@ describe('FoodEstimator', () => {
     });
 
     it('keeps going when cache upsert fails (warning only)', async () => {
-      ai.chat.mockResolvedValueOnce(JSON.stringify({ kcal: 280, protein: 8, carbs: 25, fat: 18 }));
+      ai.chat.mockResolvedValueOnce(JSON.stringify({ calories: 280, protein: 8, carbs: 25, fat: 18 }));
       repo.upsert.mockRejectedValueOnce(new Error('db down'));
 
       const result = await estimator.estimate([makeUnmatched('acarajé', 1, 'unidade')]);
@@ -161,7 +161,7 @@ describe('FoodEstimator', () => {
   describe('limit enforcement', () => {
     beforeEach(() => {
       repo.findByNameAndUnit.mockResolvedValue(null);
-      ai.chat.mockResolvedValue(JSON.stringify({ kcal: 100, protein: 5, carbs: 10, fat: 3 }));
+      ai.chat.mockResolvedValue(JSON.stringify({ calories: 100, protein: 5, carbs: 10, fat: 3 }));
     });
 
     it('processes up to 5 items, marks the rest as limit_exceeded', async () => {
@@ -179,11 +179,11 @@ describe('FoodEstimator', () => {
   describe('mixed batch', () => {
     it('combines cache hit + fresh + error in a single call', async () => {
       repo.findByNameAndUnit
-        .mockResolvedValueOnce({ food_name: 'item1', unit: 'unidade', kcal: 100, protein: 5, carbs: 10, fat: 3 })
+        .mockResolvedValueOnce({ food_name: 'item1', unit: 'unidade', calories: 100, protein: 5, carbs: 10, fat: 3 })
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
       ai.chat
-        .mockResolvedValueOnce(JSON.stringify({ kcal: 200, protein: 10, carbs: 20, fat: 5 }))
+        .mockResolvedValueOnce(JSON.stringify({ calories: 200, protein: 10, carbs: 20, fat: 5 }))
         .mockRejectedValueOnce(new Error('boom'));
 
       const result = await estimator.estimate([

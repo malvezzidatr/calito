@@ -29,22 +29,22 @@ Ex: 70kg, 1.75m, 30 anos, masculino`
 
 export const CONFIRM_INVALID = `Não entendi. Pra continuar preciso de "sim" ou "não". 🙂`
 
-export const formatNutritionistGoalsConfirmation = (g: NutritionistGoalsExtraction) => `Anotei aqui:
+export const formatNutritionistGoalsConfirmation = (goals: NutritionistGoalsExtraction) => `Anotei aqui:
 
-🔥 Calorias: ${g.calorie} kcal
-🥩 Proteína: ${g.protein}g
-🍚 Carboidrato: ${g.carbs}g
-🧈 Gordura: ${g.fat}g
+🔥 Calorias: ${goals.calorie} kcal
+🥩 Proteína: ${goals.protein}g
+🍚 Carboidrato: ${goals.carbs}g
+🧈 Gordura: ${goals.fat}g
 
 Tá certo? (sim/não)`
 
-export const formatNutritionistProfileConfirmation = (p: NutritionistProfileExtraction) => {
-  const genderLabel = p.gender === 'MALE' ? 'masculino' : 'feminino'
+export const formatNutritionistProfileConfirmation = (profile: NutritionistProfileExtraction) => {
+  const genderLabel = profile.gender === 'MALE' ? 'masculino' : 'feminino'
   return `Anotei aqui:
 
-⚖️ Peso: ${p.weight}kg
-📏 Altura: ${p.height}cm
-🎂 Idade: ${p.age} anos
+⚖️ Peso: ${profile.weight}kg
+📏 Altura: ${profile.height}cm
+🎂 Idade: ${profile.age} anos
 👤 Sexo: ${genderLabel}
 
 Tá certo? (sim/não)`
@@ -66,13 +66,13 @@ export const NUTRITIONIST_PROFILE_PARSE_ERROR = `Não consegui entender essa men
 
 Ex: 70kg, 1.75m, 30 anos, masculino`
 
-export const nutritionistWelcomeMessage = (g: NutritionistGoalsExtraction) => `✓ Perfil configurado com a prescrição da sua nutri!
+export const nutritionistWelcomeMessage = (goals: NutritionistGoalsExtraction) => `✓ Perfil configurado com a prescrição da sua nutri!
 
 Suas metas diárias:
-🔥 Calorias: ${g.calorie} kcal
-🥩 Proteína: ${g.protein}g
-🍚 Carboidrato: ${g.carbs}g
-🧈 Gordura: ${g.fat}g
+🔥 Calorias: ${goals.calorie} kcal
+🥩 Proteína: ${goals.protein}g
+🍚 Carboidrato: ${goals.carbs}g
+🧈 Gordura: ${goals.fat}g
 
 Você vai receber um resumo todo dia às 20h
 com tudo que comeu e quanto falta pra meta.

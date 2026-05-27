@@ -55,12 +55,12 @@ function justCrossed(before: number, after: number, goal: number | null): boolea
   return goal !== null && before < goal && after >= goal;
 }
 
-export function subtractMeal(totals: DailyTotals, m: MealExtraction): DailyTotals {
+export function subtractMeal(totals: DailyTotals, meal: MealExtraction): DailyTotals {
   return {
-    calories: totals.calories - m.calories,
-    protein:  totals.protein  - m.protein,
-    carbs:    totals.carbs    - m.carbs,
-    fat:      totals.fat      - m.fat,
+    calories: totals.calories - meal.calories,
+    protein:  totals.protein  - meal.protein,
+    carbs:    totals.carbs    - meal.carbs,
+    fat:      totals.fat      - meal.fat,
   };
 }
 

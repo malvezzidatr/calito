@@ -177,13 +177,13 @@ describe('MealsService', () => {
         return { id: `meal-${store.length}` };
       });
       sumDailyByUser.mockImplementation(async (user_id: string) => {
-        const matching = store.filter((m) => m.user_id === user_id);
+        const matching = store.filter((meal) => meal.user_id === user_id);
         return matching.reduce(
-          (acc, m) => ({
-            calories: acc.calories + m.calories,
-            protein:  acc.protein  + m.protein,
-            carbs:    acc.carbs    + m.carbs,
-            fat:      acc.fat      + m.fat,
+          (acc, meal) => ({
+            calories: acc.calories + meal.calories,
+            protein:  acc.protein  + meal.protein,
+            carbs:    acc.carbs    + meal.carbs,
+            fat:      acc.fat      + meal.fat,
           }),
           { calories: 0, protein: 0, carbs: 0, fat: 0 },
         );
@@ -970,7 +970,7 @@ describe('MealsService', () => {
         }));
       findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 255, p: 23, c: 5, g: 15 },
+        totals: { calories: 255, protein: 23, carbs: 5, fat: 15 },
         matched: [{}, {}],
         unmatched: [],
         estimated: [],
@@ -1002,7 +1002,7 @@ describe('MealsService', () => {
         }));
       findDailyByUserAndType.mockResolvedValue([lunchMeal()]);
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 0, p: 0, c: 0, g: 0 },
+        totals: { calories: 0, protein: 0, carbs: 0, fat: 0 },
         matched: [],
         unmatched: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
         estimated: [],
@@ -1057,7 +1057,7 @@ describe('MealsService', () => {
         meal_type: 'BREAKFAST',
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 143, p: 13, c: 1, g: 10 },
+        totals: { calories: 143, protein: 13, carbs: 1, fat: 10 },
         matched: [{ food: { id: 'ovo' } }],
         unmatched: [],
         estimated: [],
@@ -1090,7 +1090,7 @@ describe('MealsService', () => {
         meal_type: 'DINNER',
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 700, p: 40, c: 30, g: 35 },
+        totals: { calories: 700, protein: 40, carbs: 30, fat: 35 },
         matched: [{ food: { id: 'lanche' } }],
         unmatched: [],
         estimated: [],
@@ -1113,7 +1113,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 89, p: 1, c: 23, g: 0.3 },
+        totals: { calories: 89, protein: 1, carbs: 23, fat: 0.3 },
         matched: [{ food: { id: 'banana' } }],
         unmatched: [],
         estimated: [],
@@ -1156,7 +1156,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 0, p: 0, c: 0, g: 0 },
+        totals: { calories: 0, protein: 0, carbs: 0, fat: 0 },
         matched: [],
         unmatched: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
         estimated: [],
@@ -1180,10 +1180,10 @@ describe('MealsService', () => {
         meal_type: 'LUNCH',
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 423, p: 21, c: 26, g: 28 },
+        totals: { calories: 423, protein: 21, carbs: 26, fat: 28 },
         matched: [{ food: { id: 'ovo' } }],
         unmatched: [{ input: { food: 'acarajé', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
-        estimated: [{ input: { food: 'acarajé', quantity: 1, unit: 'unidade' }, source: 'fresh', estimate_per_unit: {} as never, macros_contribution: { kcal: 280, p: 8, c: 25, g: 18 } }],
+        estimated: [{ input: { food: 'acarajé', quantity: 1, unit: 'unidade' }, source: 'fresh', estimate_per_unit: {} as never, macros_contribution: { calories: 280, protein: 8, carbs: 25, fat: 18 } }],
         failed: [],
       });
 
@@ -1202,7 +1202,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 72, p: 6, c: 0, g: 5 },
+        totals: { calories: 72, protein: 6, carbs: 0, fat: 5 },
         matched: [{ food: { id: 'ovo' } }],
         unmatched: [],
         estimated: [],
@@ -1223,7 +1223,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 89, p: 1, c: 23, g: 0.3 },
+        totals: { calories: 89, protein: 1, carbs: 23, fat: 0.3 },
         matched: [{}],
         unmatched: [],
         estimated: [],
@@ -1265,7 +1265,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 232, p: 9, c: 37, g: 5 },
+        totals: { calories: 232, protein: 9, carbs: 37, fat: 5 },
         matched: [{}, {}],
         unmatched: [],
         estimated: [],
@@ -1316,7 +1316,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 0, p: 0, c: 0, g: 0 },
+        totals: { calories: 0, protein: 0, carbs: 0, fat: 0 },
         matched: [],
         unmatched: [{ input: { food: 'biribiri', quantity: 1, unit: 'unidade' }, reason: 'food_not_found' }],
         estimated: [],
@@ -1338,7 +1338,7 @@ describe('MealsService', () => {
         meal_type: null,
       }));
       calculateWithFallback.mockResolvedValue({
-        totals: { kcal: 198, p: 37, c: 0, g: 4 },
+        totals: { calories: 198, protein: 37, carbs: 0, fat: 4 },
         matched: [{}],
         unmatched: [],
         estimated: [],

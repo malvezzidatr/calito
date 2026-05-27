@@ -380,10 +380,10 @@ export class MealsService {
             const description = describeFromFoods(parsed.foods);
             const extraction: MealExtraction = {
                 description,
-                calories: calc.totals.kcal,
-                protein: calc.totals.p,
-                carbs:   calc.totals.c,
-                fat:     calc.totals.g,
+                calories: calc.totals.calories,
+                protein:  calc.totals.protein,
+                carbs:    calc.totals.carbs,
+                fat:      calc.totals.fat,
                 meal_type: mealType,
             };
 
@@ -533,10 +533,10 @@ export class MealsService {
             const description = stripMealVerbs(text);
             const extraction: MealExtraction = {
                 description,
-                calories: calc.totals.kcal,
-                protein: calc.totals.p,
-                carbs:   calc.totals.c,
-                fat:     calc.totals.g,
+                calories: calc.totals.calories,
+                protein:  calc.totals.protein,
+                carbs:    calc.totals.carbs,
+                fat:      calc.totals.fat,
                 meal_type: mealType,
             };
 
@@ -610,10 +610,10 @@ export class MealsService {
             const description = describeFromFoods(parsed.foods);
             const extraction: MealExtraction = {
                 description,
-                calories: calc.totals.kcal,
-                protein: calc.totals.p,
-                carbs:   calc.totals.c,
-                fat:     calc.totals.g,
+                calories: calc.totals.calories,
+                protein:  calc.totals.protein,
+                carbs:    calc.totals.carbs,
+                fat:      calc.totals.fat,
                 meal_type: mealType,
             };
 

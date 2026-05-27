@@ -28,33 +28,33 @@ export type CalculationResult = {
   unmatched: UnmatchedItem[];
 };
 
-const EMPTY_NUTRITION: Nutrition = { kcal: 0, p: 0, c: 0, g: 0 };
+const EMPTY_NUTRITION: Nutrition = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
-function addNutrition(acc: Nutrition, n: Nutrition): Nutrition {
+function addNutrition(accumulated: Nutrition, nutrition: Nutrition): Nutrition {
   return {
-    kcal: acc.kcal + n.kcal,
-    p:    acc.p    + n.p,
-    c:    acc.c    + n.c,
-    g:    acc.g    + n.g,
+    calories: accumulated.calories + nutrition.calories,
+    protein:  accumulated.protein  + nutrition.protein,
+    carbs:    accumulated.carbs    + nutrition.carbs,
+    fat:      accumulated.fat      + nutrition.fat,
   };
 }
 
 function scaleNutrition(per100g: Nutrition, grams: number): Nutrition {
   const factor = grams / 100;
   return {
-    kcal: per100g.kcal * factor,
-    p:    per100g.p    * factor,
-    c:    per100g.c    * factor,
-    g:    per100g.g    * factor,
+    calories: per100g.calories * factor,
+    protein:  per100g.protein  * factor,
+    carbs:    per100g.carbs    * factor,
+    fat:      per100g.fat      * factor,
   };
 }
 
-function roundMacros(n: Nutrition): Nutrition {
+function roundMacros(nutrition: Nutrition): Nutrition {
   return {
-    kcal: Math.round(n.kcal),
-    p:    Math.round(n.p),
-    c:    Math.round(n.c),
-    g:    n.g < 5 ? Math.round(n.g * 10) / 10 : Math.round(n.g),
+    calories: Math.round(nutrition.calories),
+    protein:  Math.round(nutrition.protein),
+    carbs:    Math.round(nutrition.carbs),
+    fat:      nutrition.fat < 5 ? Math.round(nutrition.fat * 10) / 10 : Math.round(nutrition.fat),
   };
 }
 

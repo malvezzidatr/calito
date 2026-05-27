@@ -7,7 +7,7 @@ const ovo: FoodEntry = {
   aliases: ['ovo', 'ovos', 'ovo de galinha', 'ovo cozido', 'ovo frito'],
   category: 'ovos_laticinios',
   default_unit: 'unidade',
-  per_100g: { kcal: 143, p: 13, c: 1.1, g: 9.5 },
+  per_100g: { calories: 143, protein: 13, carbs: 1.1, fat: 9.5 },
   units: { unidade: { grams: 50 }, g: { grams: 1 } },
 };
 
@@ -17,7 +17,7 @@ const maca: FoodEntry = {
   aliases: ['maca', 'maca vermelha', 'macas'],
   category: 'frutas',
   default_unit: 'unidade',
-  per_100g: { kcal: 52, p: 0.3, c: 14, g: 0.2 },
+  per_100g: { calories: 52, protein: 0.3, carbs: 14, fat: 0.2 },
   units: { unidade: { grams: 150 }, g: { grams: 1 } },
 };
 
@@ -27,7 +27,7 @@ const frangoPeito: FoodEntry = {
   aliases: ['frango', 'peito de frango', 'frango grelhado', 'file de frango'],
   category: 'carnes',
   default_unit: 'unidade',
-  per_100g: { kcal: 165, p: 31, c: 0, g: 3.6 },
+  per_100g: { calories: 165, protein: 31, carbs: 0, fat: 3.6 },
   units: { unidade: { grams: 120 }, g: { grams: 1 } },
 };
 
@@ -37,7 +37,7 @@ const frangoCoxa: FoodEntry = {
   aliases: ['coxa de frango', 'coxa', 'coxa assada'],
   category: 'carnes',
   default_unit: 'unidade',
-  per_100g: { kcal: 195, p: 19, c: 0, g: 13 },
+  per_100g: { calories: 195, protein: 19, carbs: 0, fat: 13 },
   units: { unidade: { grams: 100 }, g: { grams: 1 } },
 };
 
@@ -47,7 +47,7 @@ const arroz: FoodEntry = {
   aliases: ['arroz', 'arroz branco', 'arroz cozido'],
   category: 'cereais',
   default_unit: 'colher',
-  per_100g: { kcal: 130, p: 2.7, c: 28, g: 0.3 },
+  per_100g: { calories: 130, protein: 2.7, carbs: 28, fat: 0.3 },
   units: { colher: { grams: 30 }, g: { grams: 1 } },
 };
 

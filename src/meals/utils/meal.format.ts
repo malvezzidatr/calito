@@ -116,8 +116,8 @@ export function formatMealList(meals: DetailedMeal[], date: Date): string {
   }
 
   const lines: string[] = [header, ''];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   return lines.join('\n');
 }
@@ -135,8 +135,8 @@ export function formatDeleteAmbiguous(mealType: MealType, meals: AmbiguousMeal[]
     `Você tem ${meals.length} ${plural} ${dateLabel} 🤔`,
     '',
   ];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   const firstTime = formatMealTime(meals[0].created_at);
   const dayHint = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
@@ -152,8 +152,8 @@ export function formatDeleteTimeNotFound(mealType: MealType, time: string, meals
     '',
     `Os ${plural} de ${dateLabel} foram:`,
   ];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   return lines.join('\n');
 }
@@ -169,8 +169,8 @@ export function formatEditAmbiguous(mealType: MealType, meals: AmbiguousMeal[], 
     `Você tem ${meals.length} ${plural} ${dateLabel} 🤔`,
     '',
   ];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   const firstTime = formatMealTime(meals[0].created_at);
   const dayHint = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
@@ -186,8 +186,8 @@ export function formatEditTimeNotFound(mealType: MealType, time: string, meals: 
     '',
     `Os ${plural} de ${dateLabel} foram:`,
   ];
-  for (const m of meals) {
-    lines.push(`${MEAL_EMOJIS[m.meal_type]} ${MEAL_LABELS[m.meal_type]} ${formatMealTime(m.created_at)} — ${m.calories}kcal`);
+  for (const meal of meals) {
+    lines.push(`${MEAL_EMOJIS[meal.meal_type]} ${MEAL_LABELS[meal.meal_type]} ${formatMealTime(meal.created_at)} — ${meal.calories}kcal`);
   }
   return lines.join('\n');
 }
@@ -222,8 +222,8 @@ function macroLine(emoji: string, label: string, total: number, goal: number | n
 
 function summarizeMealsByType(meals: DailyMeal[]): Array<{ type: MealType; calories: number }> {
   const sums = new Map<MealType, number>();
-  for (const m of meals) {
-    sums.set(m.meal_type, (sums.get(m.meal_type) ?? 0) + m.calories);
+  for (const meal of meals) {
+    sums.set(meal.meal_type, (sums.get(meal.meal_type) ?? 0) + meal.calories);
   }
   return MEAL_ORDER
     .filter((t) => sums.has(t))
@@ -255,8 +255,8 @@ export function formatDailyResume(
   const summarized = summarizeMealsByType(meals);
   if (summarized.length > 0) {
     lines.push('', 'Refeições:');
-    for (const m of summarized) {
-      lines.push(`• ${MEAL_LABELS[m.type]}: ${m.calories}kcal`);
+    for (const summary of summarized) {
+      lines.push(`• ${MEAL_LABELS[summary.type]}: ${summary.calories}kcal`);
     }
   } else {
     lines.push('', 'Nenhuma refeição registrada hoje 🍽️');

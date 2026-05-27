@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 type UpsertInput = {
   food_name: string;
   unit:      string;
-  kcal:      number;
+  calories:  number;
   protein:   number;
   carbs:     number;
   fat:       number;
@@ -26,16 +26,16 @@ export class EstimatedFoodsRepository {
       create: {
         food_name: data.food_name,
         unit:      data.unit,
-        kcal:      data.kcal,
+        calories:  data.calories,
         protein:   data.protein,
         carbs:     data.carbs,
         fat:       data.fat,
       },
       update: {
-        kcal:    data.kcal,
-        protein: data.protein,
-        carbs:   data.carbs,
-        fat:     data.fat,
+        calories: data.calories,
+        protein:  data.protein,
+        carbs:    data.carbs,
+        fat:      data.fat,
       },
     });
   }

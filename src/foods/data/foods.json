@@ -5,7 +5,7 @@
     "aliases": ["arroz", "arroz branco", "arroz cozido"],
     "category": "cereais",
     "default_unit": "colher",
-    "per_100g": { "kcal": 130, "p": 2.7, "c": 28, "g": 0.3 },
+    "per_100g": { "calories": 130, "protein": 2.7, "carbs": 28, "fat": 0.3 },
     "units": { "colher": { "grams": 30 }, "g": { "grams": 1 }, "prato": { "grams": 120 } }
   },
   {
@@ -14,7 +14,7 @@
     "aliases": ["arroz integral", "integral"],
     "category": "cereais",
     "default_unit": "colher",
-    "per_100g": { "kcal": 124, "p": 2.6, "c": 25.8, "g": 1 },
+    "per_100g": { "calories": 124, "protein": 2.6, "carbs": 25.8, "fat": 1 },
     "units": { "colher": { "grams": 30 }, "g": { "grams": 1 }, "prato": { "grams": 120 } }
   },
   {
@@ -23,7 +23,7 @@
     "aliases": ["macarrão", "macarrao", "massa", "espaguete"],
     "category": "cereais",
     "default_unit": "prato",
-    "per_100g": { "kcal": 131, "p": 5, "c": 27, "g": 1.1 },
+    "per_100g": { "calories": 131, "protein": 5, "carbs": 27, "fat": 1.1 },
     "units": { "prato": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -32,7 +32,7 @@
     "aliases": ["batata", "batata cozida", "batata inglesa"],
     "category": "cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 87, "p": 1.9, "c": 20, "g": 0.1 },
+    "per_100g": { "calories": 87, "protein": 1.9, "carbs": 20, "fat": 0.1 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -41,7 +41,7 @@
     "aliases": ["batata doce", "batata-doce"],
     "category": "cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 86, "p": 1.6, "c": 20, "g": 0.1 },
+    "per_100g": { "calories": 86, "protein": 1.6, "carbs": 20, "fat": 0.1 },
     "units": { "unidade": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -50,7 +50,7 @@
     "aliases": ["mandioca", "aipim", "macaxeira"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 152, "p": 1, "c": 36, "g": 0.3 },
+    "per_100g": { "calories": 152, "protein": 1, "carbs": 36, "fat": 0.3 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -59,7 +59,7 @@
     "aliases": ["inhame", "inhame cozido"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 118, "p": 1.5, "c": 27, "g": 0.2 },
+    "per_100g": { "calories": 118, "protein": 1.5, "carbs": 27, "fat": 0.2 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -68,7 +68,7 @@
     "aliases": ["milho", "milho cozido", "milho verde"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 96, "p": 3.4, "c": 19, "g": 1.5 },
+    "per_100g": { "calories": 96, "protein": 3.4, "carbs": 19, "fat": 1.5 },
     "units": { "g": { "grams": 1 }, "colher": { "grams": 30 }, "unidade": { "grams": 90 } }
   },
   {
@@ -77,7 +77,7 @@
     "aliases": ["cuscuz paulista", "cuscuz de arroz"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 113, "p": 1.4, "c": 25, "g": 0.6 },
+    "per_100g": { "calories": 113, "protein": 1.4, "carbs": 25, "fat": 0.6 },
     "units": { "g": { "grams": 1 }, "fatia": { "grams": 100 } }
   },
   {
@@ -86,7 +86,7 @@
     "aliases": ["cuscuz", "cuscuz nordestino", "cuscuz de milho"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 112, "p": 2.4, "c": 23, "g": 0.7 },
+    "per_100g": { "calories": 112, "protein": 2.4, "carbs": 23, "fat": 0.7 },
     "units": { "g": { "grams": 1 }, "fatia": { "grams": 100 } }
   },
   {
@@ -95,7 +95,7 @@
     "aliases": ["polenta", "polenta cozida"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 86, "p": 2, "c": 18, "g": 0.4 },
+    "per_100g": { "calories": 86, "protein": 2, "carbs": 18, "fat": 0.4 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 150 } }
   },
   {
@@ -104,7 +104,7 @@
     "aliases": ["pipoca doce", "pipoca com açúcar"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 430, "p": 8, "c": 80, "g": 9 },
+    "per_100g": { "calories": 430, "protein": 8, "carbs": 80, "fat": 9 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 40 } }
   },
   {
@@ -113,7 +113,7 @@
     "aliases": ["pipoca", "pipoca salgada", "pipoca com sal"],
     "category": "cereais",
     "default_unit": "g",
-    "per_100g": { "kcal": 387, "p": 13, "c": 78, "g": 4.5 },
+    "per_100g": { "calories": 387, "protein": 13, "carbs": 78, "fat": 4.5 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 40 } }
   },
   {
@@ -122,7 +122,7 @@
     "aliases": ["feijão", "feijao", "feijão carioca", "feijao carioca"],
     "category": "leguminosas",
     "default_unit": "concha",
-    "per_100g": { "kcal": 76, "p": 4.8, "c": 13.6, "g": 0.5 },
+    "per_100g": { "calories": 76, "protein": 4.8, "carbs": 13.6, "fat": 0.5 },
     "units": { "concha": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -131,7 +131,7 @@
     "aliases": ["feijão preto", "feijao preto"],
     "category": "leguminosas",
     "default_unit": "concha",
-    "per_100g": { "kcal": 77, "p": 4.5, "c": 14, "g": 0.5 },
+    "per_100g": { "calories": 77, "protein": 4.5, "carbs": 14, "fat": 0.5 },
     "units": { "concha": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -140,7 +140,7 @@
     "aliases": ["feijão branco", "feijao branco"],
     "category": "leguminosas",
     "default_unit": "concha",
-    "per_100g": { "kcal": 139, "p": 9.7, "c": 25, "g": 0.5 },
+    "per_100g": { "calories": 139, "protein": 9.7, "carbs": 25, "fat": 0.5 },
     "units": { "concha": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -149,7 +149,7 @@
     "aliases": ["lentilha", "lentilha cozida"],
     "category": "leguminosas",
     "default_unit": "concha",
-    "per_100g": { "kcal": 116, "p": 9, "c": 20, "g": 0.4 },
+    "per_100g": { "calories": 116, "protein": 9, "carbs": 20, "fat": 0.4 },
     "units": { "concha": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -158,7 +158,7 @@
     "aliases": ["grão de bico", "grao de bico", "grão-de-bico", "chickpea"],
     "category": "leguminosas",
     "default_unit": "concha",
-    "per_100g": { "kcal": 164, "p": 8.9, "c": 27, "g": 2.6 },
+    "per_100g": { "calories": 164, "protein": 8.9, "carbs": 27, "fat": 2.6 },
     "units": { "concha": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -167,7 +167,7 @@
     "aliases": ["ervilha", "ervilhas", "ervilha cozida"],
     "category": "leguminosas",
     "default_unit": "colher",
-    "per_100g": { "kcal": 81, "p": 5.4, "c": 14, "g": 0.4 },
+    "per_100g": { "calories": 81, "protein": 5.4, "carbs": 14, "fat": 0.4 },
     "units": { "colher": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -176,7 +176,7 @@
     "aliases": ["soja", "soja cozida", "grão de soja"],
     "category": "leguminosas",
     "default_unit": "concha",
-    "per_100g": { "kcal": 173, "p": 16.6, "c": 10, "g": 9 },
+    "per_100g": { "calories": 173, "protein": 16.6, "carbs": 10, "fat": 9 },
     "units": { "concha": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -185,7 +185,7 @@
     "aliases": ["frango", "peito de frango", "frango grelhado", "filé de frango", "file de frango"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 165, "p": 31, "c": 0, "g": 3.6 },
+    "per_100g": { "calories": 165, "protein": 31, "carbs": 0, "fat": 3.6 },
     "units": { "unidade": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -194,7 +194,7 @@
     "aliases": ["coxa de frango", "coxa", "coxa assada"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 195, "p": 19, "c": 0, "g": 13 },
+    "per_100g": { "calories": 195, "protein": 19, "carbs": 0, "fat": 13 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -203,7 +203,7 @@
     "aliases": ["sobrecoxa", "sobrecoxa de frango", "sobrecoxa assada"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 220, "p": 23, "c": 0, "g": 14 },
+    "per_100g": { "calories": 220, "protein": 23, "carbs": 0, "fat": 14 },
     "units": { "unidade": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -212,7 +212,7 @@
     "aliases": ["asa de frango", "asinha", "asinha de frango"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 290, "p": 27, "c": 0, "g": 20 },
+    "per_100g": { "calories": 290, "protein": 27, "carbs": 0, "fat": 20 },
     "units": { "unidade": { "grams": 35 }, "g": { "grams": 1 } }
   },
   {
@@ -221,7 +221,7 @@
     "aliases": ["bife", "carne", "carne bovina", "contrafilé", "contrafile"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 200, "p": 26, "c": 0, "g": 10 },
+    "per_100g": { "calories": 200, "protein": 26, "carbs": 0, "fat": 10 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -230,7 +230,7 @@
     "aliases": ["carne moída", "carne moida", "moída", "moida"],
     "category": "carnes",
     "default_unit": "g",
-    "per_100g": { "kcal": 230, "p": 22, "c": 0, "g": 15 },
+    "per_100g": { "calories": 230, "protein": 22, "carbs": 0, "fat": 15 },
     "units": { "g": { "grams": 1 }, "colher": { "grams": 30 } }
   },
   {
@@ -239,7 +239,7 @@
     "aliases": ["picanha", "picanha grelhada", "picanha assada"],
     "category": "carnes",
     "default_unit": "g",
-    "per_100g": { "kcal": 290, "p": 25, "c": 0, "g": 21 },
+    "per_100g": { "calories": 290, "protein": 25, "carbs": 0, "fat": 21 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 200 } }
   },
   {
@@ -248,7 +248,7 @@
     "aliases": ["alcatra", "alcatra grelhada"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 184, "p": 30, "c": 0, "g": 7 },
+    "per_100g": { "calories": 184, "protein": 30, "carbs": 0, "fat": 7 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -257,7 +257,7 @@
     "aliases": ["filé mignon", "file mignon", "mignon"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 224, "p": 26, "c": 0, "g": 12 },
+    "per_100g": { "calories": 224, "protein": 26, "carbs": 0, "fat": 12 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -266,7 +266,7 @@
     "aliases": ["costela", "costela bovina", "costela assada"],
     "category": "carnes",
     "default_unit": "g",
-    "per_100g": { "kcal": 350, "p": 17, "c": 0, "g": 31 },
+    "per_100g": { "calories": 350, "protein": 17, "carbs": 0, "fat": 31 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 200 } }
   },
   {
@@ -275,7 +275,7 @@
     "aliases": ["linguiça", "linguica", "linguiça toscana", "linguica toscana"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 296, "p": 13, "c": 1, "g": 27 },
+    "per_100g": { "calories": 296, "protein": 13, "carbs": 1, "fat": 27 },
     "units": { "unidade": { "grams": 70 }, "g": { "grams": 1 } }
   },
   {
@@ -284,7 +284,7 @@
     "aliases": ["salsicha", "salsichas", "hot dog"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 268, "p": 12, "c": 3.6, "g": 23 },
+    "per_100g": { "calories": 268, "protein": 12, "carbs": 3.6, "fat": 23 },
     "units": { "unidade": { "grams": 50 }, "g": { "grams": 1 } }
   },
   {
@@ -293,7 +293,7 @@
     "aliases": ["presunto", "presunto cozido", "fatia de presunto"],
     "category": "carnes",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 121, "p": 18, "c": 0, "g": 5 },
+    "per_100g": { "calories": 121, "protein": 18, "carbs": 0, "fat": 5 },
     "units": { "fatia": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -302,7 +302,7 @@
     "aliases": ["peito de peru", "peru defumado", "fatia de peru"],
     "category": "carnes",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 104, "p": 22, "c": 0, "g": 1.5 },
+    "per_100g": { "calories": 104, "protein": 22, "carbs": 0, "fat": 1.5 },
     "units": { "fatia": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -311,7 +311,7 @@
     "aliases": ["mortadela", "fatia de mortadela"],
     "category": "carnes",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 311, "p": 13, "c": 3, "g": 28 },
+    "per_100g": { "calories": 311, "protein": 13, "carbs": 3, "fat": 28 },
     "units": { "fatia": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -320,7 +320,7 @@
     "aliases": ["peixe", "tilápia", "tilapia", "filé de peixe", "file de peixe"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 128, "p": 26, "c": 0, "g": 2.7 },
+    "per_100g": { "calories": 128, "protein": 26, "carbs": 0, "fat": 2.7 },
     "units": { "unidade": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -329,7 +329,7 @@
     "aliases": ["salmão", "salmao", "salmão grelhado", "salmao grelhado"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 208, "p": 20, "c": 0, "g": 13 },
+    "per_100g": { "calories": 208, "protein": 20, "carbs": 0, "fat": 13 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -338,7 +338,7 @@
     "aliases": ["atum", "atum em lata", "atum enlatado"],
     "category": "carnes",
     "default_unit": "g",
-    "per_100g": { "kcal": 198, "p": 29, "c": 0, "g": 8 },
+    "per_100g": { "calories": 198, "protein": 29, "carbs": 0, "fat": 8 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 170 } }
   },
   {
@@ -347,7 +347,7 @@
     "aliases": ["sardinha", "sardinha em lata", "sardinha enlatada"],
     "category": "carnes",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 208, "p": 25, "c": 0, "g": 11 },
+    "per_100g": { "calories": 208, "protein": 25, "carbs": 0, "fat": 11 },
     "units": { "unidade": { "grams": 125 }, "g": { "grams": 1 } }
   },
   {
@@ -356,7 +356,7 @@
     "aliases": ["bacalhau", "bacalhau cozido"],
     "category": "carnes",
     "default_unit": "g",
-    "per_100g": { "kcal": 88, "p": 19, "c": 0, "g": 0.7 },
+    "per_100g": { "calories": 88, "protein": 19, "carbs": 0, "fat": 0.7 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 150 } }
   },
   {
@@ -365,7 +365,7 @@
     "aliases": ["camarão", "camarao", "camarão grelhado"],
     "category": "carnes",
     "default_unit": "g",
-    "per_100g": { "kcal": 99, "p": 24, "c": 0, "g": 0.3 },
+    "per_100g": { "calories": 99, "protein": 24, "carbs": 0, "fat": 0.3 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -374,7 +374,7 @@
     "aliases": ["ovo", "ovos", "ovo de galinha", "ovo cozido", "ovo frito", "ovo mexido"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 143, "p": 13, "c": 1.1, "g": 9.5 },
+    "per_100g": { "calories": 143, "protein": 13, "carbs": 1.1, "fat": 9.5 },
     "units": { "unidade": { "grams": 50 }, "g": { "grams": 1 } }
   },
   {
@@ -383,7 +383,7 @@
     "aliases": ["ovo de codorna", "codorna", "ovos de codorna"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 158, "p": 13, "c": 0.4, "g": 11 },
+    "per_100g": { "calories": 158, "protein": 13, "carbs": 0.4, "fat": 11 },
     "units": { "unidade": { "grams": 10 }, "g": { "grams": 1 } }
   },
   {
@@ -392,7 +392,7 @@
     "aliases": ["omelete", "omelete simples"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 154, "p": 11, "c": 0.6, "g": 12 },
+    "per_100g": { "calories": 154, "protein": 11, "carbs": 0.6, "fat": 12 },
     "units": { "unidade": { "grams": 55 }, "g": { "grams": 1 } }
   },
   {
@@ -401,7 +401,7 @@
     "aliases": ["leite", "leite integral", "copo de leite"],
     "category": "ovos_laticinios",
     "default_unit": "copo",
-    "per_100g": { "kcal": 61, "p": 3.2, "c": 4.8, "g": 3.3 },
+    "per_100g": { "calories": 61, "protein": 3.2, "carbs": 4.8, "fat": 3.3 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -410,7 +410,7 @@
     "aliases": ["leite desnatado", "leite zero gordura", "leite skim"],
     "category": "ovos_laticinios",
     "default_unit": "copo",
-    "per_100g": { "kcal": 35, "p": 3.4, "c": 5, "g": 0.1 },
+    "per_100g": { "calories": 35, "protein": 3.4, "carbs": 5, "fat": 0.1 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -419,7 +419,7 @@
     "aliases": ["iogurte", "iogurte natural", "pote de iogurte"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 61, "p": 3.5, "c": 4.7, "g": 3.3 },
+    "per_100g": { "calories": 61, "protein": 3.5, "carbs": 4.7, "fat": 3.3 },
     "units": { "unidade": { "grams": 170 }, "g": { "grams": 1 } }
   },
   {
@@ -428,7 +428,7 @@
     "aliases": ["iogurte grego", "grego", "pote de iogurte grego"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 97, "p": 9, "c": 4, "g": 5 },
+    "per_100g": { "calories": 97, "protein": 9, "carbs": 4, "fat": 5 },
     "units": { "unidade": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -437,7 +437,7 @@
     "aliases": ["queijo", "muçarela", "mussarela", "queijo mussarela", "queijo prato"],
     "category": "ovos_laticinios",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 330, "p": 22, "c": 2.5, "g": 25 },
+    "per_100g": { "calories": 330, "protein": 22, "carbs": 2.5, "fat": 25 },
     "units": { "fatia": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -446,7 +446,7 @@
     "aliases": ["queijo minas", "minas frescal", "queijo branco"],
     "category": "ovos_laticinios",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 240, "p": 17, "c": 3, "g": 18 },
+    "per_100g": { "calories": 240, "protein": 17, "carbs": 3, "fat": 18 },
     "units": { "fatia": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -455,7 +455,7 @@
     "aliases": ["queijo coalho", "coalho"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 296, "p": 22, "c": 2, "g": 23 },
+    "per_100g": { "calories": 296, "protein": 22, "carbs": 2, "fat": 23 },
     "units": { "unidade": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -464,7 +464,7 @@
     "aliases": ["parmesão", "parmesao", "queijo parmesão", "queijo ralado"],
     "category": "ovos_laticinios",
     "default_unit": "colher",
-    "per_100g": { "kcal": 392, "p": 36, "c": 4, "g": 26 },
+    "per_100g": { "calories": 392, "protein": 36, "carbs": 4, "fat": 26 },
     "units": { "colher": { "grams": 10 }, "g": { "grams": 1 } }
   },
   {
@@ -473,7 +473,7 @@
     "aliases": ["ricota", "queijo ricota"],
     "category": "ovos_laticinios",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 174, "p": 12, "c": 3, "g": 13 },
+    "per_100g": { "calories": 174, "protein": 12, "carbs": 3, "fat": 13 },
     "units": { "fatia": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -482,7 +482,7 @@
     "aliases": ["requeijão", "requeijao"],
     "category": "ovos_laticinios",
     "default_unit": "colher",
-    "per_100g": { "kcal": 260, "p": 9, "c": 3, "g": 24 },
+    "per_100g": { "calories": 260, "protein": 9, "carbs": 3, "fat": 24 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -491,7 +491,7 @@
     "aliases": ["manteiga", "manteiga com sal"],
     "category": "ovos_laticinios",
     "default_unit": "colher",
-    "per_100g": { "kcal": 717, "p": 0.9, "c": 0.1, "g": 81 },
+    "per_100g": { "calories": 717, "protein": 0.9, "carbs": 0.1, "fat": 81 },
     "units": { "colher": { "grams": 10 }, "g": { "grams": 1 } }
   },
   {
@@ -500,7 +500,7 @@
     "aliases": ["cream cheese", "queijo cremoso"],
     "category": "ovos_laticinios",
     "default_unit": "colher",
-    "per_100g": { "kcal": 342, "p": 6, "c": 4, "g": 34 },
+    "per_100g": { "calories": 342, "protein": 6, "carbs": 4, "fat": 34 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -509,7 +509,7 @@
     "aliases": ["danoninho", "petit suisse", "danone"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 124, "p": 4.6, "c": 17, "g": 4.5 },
+    "per_100g": { "calories": 124, "protein": 4.6, "carbs": 17, "fat": 4.5 },
     "units": { "unidade": { "grams": 45 }, "g": { "grams": 1 } }
   },
   {
@@ -518,7 +518,7 @@
     "aliases": ["iogurte com fruta", "iogurte de fruta", "iogurte sabor"],
     "category": "ovos_laticinios",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 95, "p": 3, "c": 14, "g": 2.5 },
+    "per_100g": { "calories": 95, "protein": 3, "carbs": 14, "fat": 2.5 },
     "units": { "unidade": { "grams": 170 }, "g": { "grams": 1 } }
   },
   {
@@ -527,7 +527,7 @@
     "aliases": ["banana", "bananas", "banana prata", "banana nanica"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 89, "p": 1.1, "c": 23, "g": 0.3 },
+    "per_100g": { "calories": 89, "protein": 1.1, "carbs": 23, "fat": 0.3 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -536,7 +536,7 @@
     "aliases": ["maçã", "maca", "maçãs", "macas"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 52, "p": 0.3, "c": 14, "g": 0.2 },
+    "per_100g": { "calories": 52, "protein": 0.3, "carbs": 14, "fat": 0.2 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -545,7 +545,7 @@
     "aliases": ["laranja", "laranjas"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 47, "p": 0.9, "c": 12, "g": 0.1 },
+    "per_100g": { "calories": 47, "protein": 0.9, "carbs": 12, "fat": 0.1 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -554,7 +554,7 @@
     "aliases": ["mamão", "mamao", "papaia"],
     "category": "frutas",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 43, "p": 0.5, "c": 11, "g": 0.3 },
+    "per_100g": { "calories": 43, "protein": 0.5, "carbs": 11, "fat": 0.3 },
     "units": { "fatia": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -563,7 +563,7 @@
     "aliases": ["morango", "morangos"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 32, "p": 0.7, "c": 7.7, "g": 0.3 },
+    "per_100g": { "calories": 32, "protein": 0.7, "carbs": 7.7, "fat": 0.3 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 12 } }
   },
   {
@@ -572,7 +572,7 @@
     "aliases": ["melancia", "fatia de melancia"],
     "category": "frutas",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 30, "p": 0.6, "c": 7.6, "g": 0.2 },
+    "per_100g": { "calories": 30, "protein": 0.6, "carbs": 7.6, "fat": 0.2 },
     "units": { "fatia": { "grams": 200 }, "g": { "grams": 1 } }
   },
   {
@@ -581,7 +581,7 @@
     "aliases": ["melão", "melao", "fatia de melão"],
     "category": "frutas",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 36, "p": 0.8, "c": 9, "g": 0.1 },
+    "per_100g": { "calories": 36, "protein": 0.8, "carbs": 9, "fat": 0.1 },
     "units": { "fatia": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -590,7 +590,7 @@
     "aliases": ["abacaxi", "fatia de abacaxi", "ananás"],
     "category": "frutas",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 50, "p": 0.5, "c": 13, "g": 0.1 },
+    "per_100g": { "calories": 50, "protein": 0.5, "carbs": 13, "fat": 0.1 },
     "units": { "fatia": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -599,7 +599,7 @@
     "aliases": ["manga", "mangas"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 60, "p": 0.8, "c": 15, "g": 0.4 },
+    "per_100g": { "calories": 60, "protein": 0.8, "carbs": 15, "fat": 0.4 },
     "units": { "unidade": { "grams": 200 }, "g": { "grams": 1 } }
   },
   {
@@ -608,7 +608,7 @@
     "aliases": ["uva", "uvas"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 69, "p": 0.7, "c": 18, "g": 0.2 },
+    "per_100g": { "calories": 69, "protein": 0.7, "carbs": 18, "fat": 0.2 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 5 }, "porcao": { "grams": 100 } }
   },
   {
@@ -617,7 +617,7 @@
     "aliases": ["abacate", "avocado"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 160, "p": 2, "c": 9, "g": 15 },
+    "per_100g": { "calories": 160, "protein": 2, "carbs": 9, "fat": 15 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 200 } }
   },
   {
@@ -626,7 +626,7 @@
     "aliases": ["pera", "peras"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 57, "p": 0.4, "c": 15, "g": 0.1 },
+    "per_100g": { "calories": 57, "protein": 0.4, "carbs": 15, "fat": 0.1 },
     "units": { "unidade": { "grams": 170 }, "g": { "grams": 1 } }
   },
   {
@@ -635,7 +635,7 @@
     "aliases": ["kiwi", "kiwis"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 61, "p": 1.1, "c": 15, "g": 0.5 },
+    "per_100g": { "calories": 61, "protein": 1.1, "carbs": 15, "fat": 0.5 },
     "units": { "unidade": { "grams": 75 }, "g": { "grams": 1 } }
   },
   {
@@ -644,7 +644,7 @@
     "aliases": ["ameixa", "ameixas"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 46, "p": 0.7, "c": 11, "g": 0.3 },
+    "per_100g": { "calories": 46, "protein": 0.7, "carbs": 11, "fat": 0.3 },
     "units": { "unidade": { "grams": 65 }, "g": { "grams": 1 } }
   },
   {
@@ -653,7 +653,7 @@
     "aliases": ["açaí", "acai", "açaí polpa", "polpa de açaí"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 60, "p": 0.8, "c": 7, "g": 3 },
+    "per_100g": { "calories": 60, "protein": 0.8, "carbs": 7, "fat": 3 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -662,7 +662,7 @@
     "aliases": ["coco", "coco fresco", "polpa de coco"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 354, "p": 3.3, "c": 15, "g": 33 },
+    "per_100g": { "calories": 354, "protein": 3.3, "carbs": 15, "fat": 33 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 50 } }
   },
   {
@@ -671,7 +671,7 @@
     "aliases": ["limão", "limao", "limões"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 29, "p": 1.1, "c": 9, "g": 0.3 },
+    "per_100g": { "calories": 29, "protein": 1.1, "carbs": 9, "fat": 0.3 },
     "units": { "unidade": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -680,7 +680,7 @@
     "aliases": ["tangerina", "mexerica", "bergamota", "poncã", "ponca"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 53, "p": 0.8, "c": 13, "g": 0.3 },
+    "per_100g": { "calories": 53, "protein": 0.8, "carbs": 13, "fat": 0.3 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -689,7 +689,7 @@
     "aliases": ["goiaba", "goiabas"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 68, "p": 2.6, "c": 14, "g": 0.9 },
+    "per_100g": { "calories": 68, "protein": 2.6, "carbs": 14, "fat": 0.9 },
     "units": { "unidade": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -698,7 +698,7 @@
     "aliases": ["caqui", "caquis"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 70, "p": 0.6, "c": 18, "g": 0.2 },
+    "per_100g": { "calories": 70, "protein": 0.6, "carbs": 18, "fat": 0.2 },
     "units": { "unidade": { "grams": 150 }, "g": { "grams": 1 } }
   },
   {
@@ -707,7 +707,7 @@
     "aliases": ["pêssego", "pessego", "pêssegos"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 39, "p": 0.9, "c": 9.5, "g": 0.3 },
+    "per_100g": { "calories": 39, "protein": 0.9, "carbs": 9.5, "fat": 0.3 },
     "units": { "unidade": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -716,7 +716,7 @@
     "aliases": ["figo", "figos"],
     "category": "frutas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 74, "p": 0.8, "c": 19, "g": 0.3 },
+    "per_100g": { "calories": 74, "protein": 0.8, "carbs": 19, "fat": 0.3 },
     "units": { "unidade": { "grams": 40 }, "g": { "grams": 1 } }
   },
   {
@@ -725,7 +725,7 @@
     "aliases": ["jaca", "jacas"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 95, "p": 1.7, "c": 24, "g": 0.6 },
+    "per_100g": { "calories": 95, "protein": 1.7, "carbs": 24, "fat": 0.6 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 80 } }
   },
   {
@@ -734,7 +734,7 @@
     "aliases": ["maracujá", "maracuja", "polpa de maracujá", "polpa de maracuja"],
     "category": "frutas",
     "default_unit": "g",
-    "per_100g": { "kcal": 97, "p": 2.2, "c": 22, "g": 0.7 },
+    "per_100g": { "calories": 97, "protein": 2.2, "carbs": 22, "fat": 0.7 },
     "units": { "g": { "grams": 1 }, "colher": { "grams": 20 } }
   },
   {
@@ -743,7 +743,7 @@
     "aliases": ["salada", "salada de prato", "verdura", "folhas", "salada verde"],
     "category": "verduras",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 25, "p": 1, "c": 5, "g": 0.2 },
+    "per_100g": { "calories": 25, "protein": 1, "carbs": 5, "fat": 0.2 },
     "units": { "porcao": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -752,7 +752,7 @@
     "aliases": ["salada de sanduíche", "salada de sanduiche", "salada de lanche"],
     "category": "verduras",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 25, "p": 1, "c": 5, "g": 0.2 },
+    "per_100g": { "calories": 25, "protein": 1, "carbs": 5, "fat": 0.2 },
     "units": { "porcao": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -761,7 +761,7 @@
     "aliases": ["alface", "folha de alface"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 15, "p": 1.4, "c": 2.9, "g": 0.1 },
+    "per_100g": { "calories": 15, "protein": 1.4, "carbs": 2.9, "fat": 0.1 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 30 } }
   },
   {
@@ -770,7 +770,7 @@
     "aliases": ["tomate", "tomates"],
     "category": "verduras",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 18, "p": 0.9, "c": 4, "g": 0.2 },
+    "per_100g": { "calories": 18, "protein": 0.9, "carbs": 4, "fat": 0.2 },
     "units": { "unidade": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -779,7 +779,7 @@
     "aliases": ["cenoura", "cenoura crua", "cenoura ralada"],
     "category": "verduras",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 41, "p": 0.9, "c": 10, "g": 0.2 },
+    "per_100g": { "calories": 41, "protein": 0.9, "carbs": 10, "fat": 0.2 },
     "units": { "unidade": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -788,7 +788,7 @@
     "aliases": ["cenoura cozida", "cenoura refogada"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 27, "p": 0.8, "c": 6, "g": 0.2 },
+    "per_100g": { "calories": 27, "protein": 0.8, "carbs": 6, "fat": 0.2 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -797,7 +797,7 @@
     "aliases": ["cebola", "cebolas"],
     "category": "verduras",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 40, "p": 1.1, "c": 9, "g": 0.1 },
+    "per_100g": { "calories": 40, "protein": 1.1, "carbs": 9, "fat": 0.1 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -806,7 +806,7 @@
     "aliases": ["brócolis", "brocolis", "brócolis cozido"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 35, "p": 2.8, "c": 7, "g": 0.4 },
+    "per_100g": { "calories": 35, "protein": 2.8, "carbs": 7, "fat": 0.4 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -815,7 +815,7 @@
     "aliases": ["abobrinha", "abobrinha refogada"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 25, "p": 1.2, "c": 4, "g": 0.6 },
+    "per_100g": { "calories": 25, "protein": 1.2, "carbs": 4, "fat": 0.6 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -824,7 +824,7 @@
     "aliases": ["espinafre", "espinafre refogado"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 23, "p": 2.9, "c": 3.6, "g": 0.4 },
+    "per_100g": { "calories": 23, "protein": 2.9, "carbs": 3.6, "fat": 0.4 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -833,7 +833,7 @@
     "aliases": ["beterraba", "beterraba cozida"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 44, "p": 1.7, "c": 10, "g": 0.2 },
+    "per_100g": { "calories": 44, "protein": 1.7, "carbs": 10, "fat": 0.2 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -842,7 +842,7 @@
     "aliases": ["couve", "couve refogada", "couve manteiga"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 50, "p": 4, "c": 5, "g": 1.5 },
+    "per_100g": { "calories": 50, "protein": 4, "carbs": 5, "fat": 1.5 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 80 } }
   },
   {
@@ -851,7 +851,7 @@
     "aliases": ["repolho", "repolho cru"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 25, "p": 1.3, "c": 5.8, "g": 0.1 },
+    "per_100g": { "calories": 25, "protein": 1.3, "carbs": 5.8, "fat": 0.1 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 80 } }
   },
   {
@@ -860,7 +860,7 @@
     "aliases": ["vagem", "vagem cozida"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 35, "p": 1.8, "c": 7.8, "g": 0.3 },
+    "per_100g": { "calories": 35, "protein": 1.8, "carbs": 7.8, "fat": 0.3 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -869,7 +869,7 @@
     "aliases": ["pimentão", "pimentao"],
     "category": "verduras",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 31, "p": 1, "c": 6, "g": 0.3 },
+    "per_100g": { "calories": 31, "protein": 1, "carbs": 6, "fat": 0.3 },
     "units": { "unidade": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -878,7 +878,7 @@
     "aliases": ["pepino", "pepinos"],
     "category": "verduras",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 16, "p": 0.7, "c": 3.6, "g": 0.1 },
+    "per_100g": { "calories": 16, "protein": 0.7, "carbs": 3.6, "fat": 0.1 },
     "units": { "unidade": { "grams": 200 }, "g": { "grams": 1 } }
   },
   {
@@ -887,7 +887,7 @@
     "aliases": ["chuchu", "chuchu cozido"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 20, "p": 0.5, "c": 4.5, "g": 0.1 },
+    "per_100g": { "calories": 20, "protein": 0.5, "carbs": 4.5, "fat": 0.1 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -896,7 +896,7 @@
     "aliases": ["abóbora", "abobora", "abóbora cozida", "moranga"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 35, "p": 0.9, "c": 8, "g": 0.1 },
+    "per_100g": { "calories": 35, "protein": 0.9, "carbs": 8, "fat": 0.1 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -905,7 +905,7 @@
     "aliases": ["quiabo", "quiabo refogado"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 33, "p": 1.9, "c": 7, "g": 0.2 },
+    "per_100g": { "calories": 33, "protein": 1.9, "carbs": 7, "fat": 0.2 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -914,7 +914,7 @@
     "aliases": ["palmito", "palmito em conserva"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 28, "p": 2.7, "c": 4.4, "g": 0.6 },
+    "per_100g": { "calories": 28, "protein": 2.7, "carbs": 4.4, "fat": 0.6 },
     "units": { "g": { "grams": 1 }, "fatia": { "grams": 20 } }
   },
   {
@@ -923,7 +923,7 @@
     "aliases": ["couve-flor", "couve flor", "couve-flor cozida"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 25, "p": 1.9, "c": 5, "g": 0.3 },
+    "per_100g": { "calories": 25, "protein": 1.9, "carbs": 5, "fat": 0.3 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 100 } }
   },
   {
@@ -932,7 +932,7 @@
     "aliases": ["rúcula", "rucula"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 25, "p": 2.6, "c": 3.7, "g": 0.7 },
+    "per_100g": { "calories": 25, "protein": 2.6, "carbs": 3.7, "fat": 0.7 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 30 } }
   },
   {
@@ -941,7 +941,7 @@
     "aliases": ["rabanete", "rabanetes"],
     "category": "verduras",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 16, "p": 0.7, "c": 3.4, "g": 0.1 },
+    "per_100g": { "calories": 16, "protein": 0.7, "carbs": 3.4, "fat": 0.1 },
     "units": { "unidade": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -950,7 +950,7 @@
     "aliases": ["agrião", "agriao"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 11, "p": 2.3, "c": 1.3, "g": 0.1 },
+    "per_100g": { "calories": 11, "protein": 2.3, "carbs": 1.3, "fat": 0.1 },
     "units": { "g": { "grams": 1 }, "porcao": { "grams": 30 } }
   },
   {
@@ -959,7 +959,7 @@
     "aliases": ["milho em conserva", "milho de lata", "milho enlatado"],
     "category": "verduras",
     "default_unit": "g",
-    "per_100g": { "kcal": 86, "p": 3.3, "c": 19, "g": 1.2 },
+    "per_100g": { "calories": 86, "protein": 3.3, "carbs": 19, "fat": 1.2 },
     "units": { "g": { "grams": 1 }, "colher": { "grams": 30 } }
   },
   {
@@ -968,7 +968,7 @@
     "aliases": ["pão francês", "pao frances", "pão de sal", "pao de sal", "francês", "frances"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 280, "p": 8, "c": 56, "g": 2.5 },
+    "per_100g": { "calories": 280, "protein": 8, "carbs": 56, "fat": 2.5 },
     "units": { "unidade": { "grams": 50 }, "g": { "grams": 1 } }
   },
   {
@@ -977,7 +977,7 @@
     "aliases": ["pão de forma", "pao de forma", "fatia de pão", "fatia de pao"],
     "category": "paes_cereais",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 265, "p": 9, "c": 49, "g": 4 },
+    "per_100g": { "calories": 265, "protein": 9, "carbs": 49, "fat": 4 },
     "units": { "fatia": { "grams": 25 }, "g": { "grams": 1 } }
   },
   {
@@ -986,7 +986,7 @@
     "aliases": ["pão integral", "pao integral", "fatia de pão integral"],
     "category": "paes_cereais",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 247, "p": 13, "c": 41, "g": 3.5 },
+    "per_100g": { "calories": 247, "protein": 13, "carbs": 41, "fat": 3.5 },
     "units": { "fatia": { "grams": 25 }, "g": { "grams": 1 } }
   },
   {
@@ -995,7 +995,7 @@
     "aliases": ["pão de queijo", "pao de queijo"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 364, "p": 6, "c": 38, "g": 21 },
+    "per_100g": { "calories": 364, "protein": 6, "carbs": 38, "fat": 21 },
     "units": { "unidade": { "grams": 25 }, "g": { "grams": 1 } }
   },
   {
@@ -1004,7 +1004,7 @@
     "aliases": ["tapioca", "goma"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 240, "p": 0.2, "c": 60, "g": 0.1 },
+    "per_100g": { "calories": 240, "protein": 0.2, "carbs": 60, "fat": 0.1 },
     "units": { "unidade": { "grams": 50 }, "g": { "grams": 1 } }
   },
   {
@@ -1013,7 +1013,7 @@
     "aliases": ["aveia", "aveia em flocos", "flocos de aveia"],
     "category": "paes_cereais",
     "default_unit": "colher",
-    "per_100g": { "kcal": 389, "p": 17, "c": 66, "g": 7 },
+    "per_100g": { "calories": 389, "protein": 17, "carbs": 66, "fat": 7 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1022,7 +1022,7 @@
     "aliases": ["cream cracker", "biscoito cream cracker", "biscoito de água e sal", "biscoito agua e sal"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 432, "p": 9, "c": 65, "g": 14 },
+    "per_100g": { "calories": 432, "protein": 9, "carbs": 65, "fat": 14 },
     "units": { "unidade": { "grams": 8 }, "g": { "grams": 1 } }
   },
   {
@@ -1031,7 +1031,7 @@
     "aliases": ["maizena", "biscoito maizena", "biscoito doce"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 443, "p": 6.6, "c": 74, "g": 13 },
+    "per_100g": { "calories": 443, "protein": 6.6, "carbs": 74, "fat": 13 },
     "units": { "unidade": { "grams": 6 }, "g": { "grams": 1 } }
   },
   {
@@ -1040,7 +1040,7 @@
     "aliases": ["biscoito recheado", "bolacha recheada", "bolacha de chocolate"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 472, "p": 5.5, "c": 70, "g": 19 },
+    "per_100g": { "calories": 472, "protein": 5.5, "carbs": 70, "fat": 19 },
     "units": { "unidade": { "grams": 12 }, "g": { "grams": 1 } }
   },
   {
@@ -1049,7 +1049,7 @@
     "aliases": ["bolo", "bolo simples", "bolo caseiro", "fatia de bolo"],
     "category": "paes_cereais",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 354, "p": 5, "c": 60, "g": 11 },
+    "per_100g": { "calories": 354, "protein": 5, "carbs": 60, "fat": 11 },
     "units": { "fatia": { "grams": 70 }, "g": { "grams": 1 } }
   },
   {
@@ -1058,7 +1058,7 @@
     "aliases": ["bolo de chocolate", "fatia de bolo de chocolate"],
     "category": "paes_cereais",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 380, "p": 5, "c": 55, "g": 15 },
+    "per_100g": { "calories": 380, "protein": 5, "carbs": 55, "fat": 15 },
     "units": { "fatia": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -1067,7 +1067,7 @@
     "aliases": ["bolo de cenoura", "fatia de bolo de cenoura"],
     "category": "paes_cereais",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 350, "p": 4, "c": 55, "g": 13 },
+    "per_100g": { "calories": 350, "protein": 4, "carbs": 55, "fat": 13 },
     "units": { "fatia": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -1076,7 +1076,7 @@
     "aliases": ["panqueca", "panqueca doce", "panqueca americana"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 227, "p": 6, "c": 28, "g": 10 },
+    "per_100g": { "calories": 227, "protein": 6, "carbs": 28, "fat": 10 },
     "units": { "unidade": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -1085,7 +1085,7 @@
     "aliases": ["granola", "granola tradicional"],
     "category": "paes_cereais",
     "default_unit": "colher",
-    "per_100g": { "kcal": 471, "p": 9, "c": 64, "g": 19 },
+    "per_100g": { "calories": 471, "protein": 9, "carbs": 64, "fat": 19 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1094,7 +1094,7 @@
     "aliases": ["cereal", "cereal matinal", "sucrilhos", "flocos de milho"],
     "category": "paes_cereais",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 379, "p": 6, "c": 87, "g": 1.4 },
+    "per_100g": { "calories": 379, "protein": 6, "carbs": 87, "fat": 1.4 },
     "units": { "porcao": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1103,7 +1103,7 @@
     "aliases": ["wrap", "tortilha", "tortilla", "tapioca grande"],
     "category": "paes_cereais",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 290, "p": 9, "c": 49, "g": 6.6 },
+    "per_100g": { "calories": 290, "protein": 9, "carbs": 49, "fat": 6.6 },
     "units": { "unidade": { "grams": 50 }, "g": { "grams": 1 } }
   },
   {
@@ -1112,7 +1112,7 @@
     "aliases": ["whey", "whey protein", "proteína em pó", "proteina em po"],
     "category": "processados",
     "default_unit": "scoop",
-    "per_100g": { "kcal": 400, "p": 80, "c": 10, "g": 5 },
+    "per_100g": { "calories": 400, "protein": 80, "carbs": 10, "fat": 5 },
     "units": { "scoop": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1121,7 +1121,7 @@
     "aliases": ["achocolatado", "nescau", "toddy", "achocolatado em pó"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 380, "p": 5, "c": 87, "g": 3 },
+    "per_100g": { "calories": 380, "protein": 5, "carbs": 87, "fat": 3 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1130,7 +1130,7 @@
     "aliases": ["leite condensado", "lata de leite condensado"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 321, "p": 7.5, "c": 55, "g": 8.6 },
+    "per_100g": { "calories": 321, "protein": 7.5, "carbs": 55, "fat": 8.6 },
     "units": { "colher": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -1139,7 +1139,7 @@
     "aliases": ["creme de leite", "creme de leite de caixinha"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 196, "p": 2.5, "c": 4.4, "g": 19 },
+    "per_100g": { "calories": 196, "protein": 2.5, "carbs": 4.4, "fat": 19 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1148,7 +1148,7 @@
     "aliases": ["maionese", "molho maionese"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 680, "p": 1, "c": 4, "g": 73 },
+    "per_100g": { "calories": 680, "protein": 1, "carbs": 4, "fat": 73 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1157,7 +1157,7 @@
     "aliases": ["mostarda", "molho mostarda"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 60, "p": 4, "c": 6, "g": 3 },
+    "per_100g": { "calories": 60, "protein": 4, "carbs": 6, "fat": 3 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1166,7 +1166,7 @@
     "aliases": ["ketchup", "catchup"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 112, "p": 1.7, "c": 26, "g": 0.4 },
+    "per_100g": { "calories": 112, "protein": 1.7, "carbs": 26, "fat": 0.4 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1175,7 +1175,7 @@
     "aliases": ["molho de tomate", "molho", "molho vermelho"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 50, "p": 1.8, "c": 11, "g": 0.3 },
+    "per_100g": { "calories": 50, "protein": 1.8, "carbs": 11, "fat": 0.3 },
     "units": { "colher": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1184,7 +1184,7 @@
     "aliases": ["óleo", "oleo", "óleo de soja", "oleo de soja"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 884, "p": 0, "c": 0, "g": 100 },
+    "per_100g": { "calories": 884, "protein": 0, "carbs": 0, "fat": 100 },
     "units": { "colher": { "grams": 13 }, "ml": { "grams": 0.92 } }
   },
   {
@@ -1193,7 +1193,7 @@
     "aliases": ["azeite", "azeite de oliva", "azeite extra virgem"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 884, "p": 0, "c": 0, "g": 100 },
+    "per_100g": { "calories": 884, "protein": 0, "carbs": 0, "fat": 100 },
     "units": { "colher": { "grams": 13 }, "ml": { "grams": 0.92 } }
   },
   {
@@ -1202,7 +1202,7 @@
     "aliases": ["margarina", "manteiga vegetal"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 717, "p": 0.2, "c": 0.9, "g": 80 },
+    "per_100g": { "calories": 717, "protein": 0.2, "carbs": 0.9, "fat": 80 },
     "units": { "colher": { "grams": 10 }, "g": { "grams": 1 } }
   },
   {
@@ -1211,7 +1211,7 @@
     "aliases": ["açúcar", "acucar", "açúcar refinado", "açúcar branco"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 387, "p": 0, "c": 100, "g": 0 },
+    "per_100g": { "calories": 387, "protein": 0, "carbs": 100, "fat": 0 },
     "units": { "colher": { "grams": 8 }, "g": { "grams": 1 } }
   },
   {
@@ -1220,7 +1220,7 @@
     "aliases": ["açúcar mascavo", "acucar mascavo", "mascavo"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 376, "p": 0.4, "c": 97, "g": 0 },
+    "per_100g": { "calories": 376, "protein": 0.4, "carbs": 97, "fat": 0 },
     "units": { "colher": { "grams": 8 }, "g": { "grams": 1 } }
   },
   {
@@ -1229,7 +1229,7 @@
     "aliases": ["mel", "mel de abelha"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 304, "p": 0.3, "c": 82, "g": 0 },
+    "per_100g": { "calories": 304, "protein": 0.3, "carbs": 82, "fat": 0 },
     "units": { "colher": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -1238,7 +1238,7 @@
     "aliases": ["geleia", "geleia de fruta", "geleia de morango"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 250, "p": 0.3, "c": 65, "g": 0.1 },
+    "per_100g": { "calories": 250, "protein": 0.3, "carbs": 65, "fat": 0.1 },
     "units": { "colher": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -1247,7 +1247,7 @@
     "aliases": ["chocolate", "chocolate ao leite", "barra de chocolate"],
     "category": "processados",
     "default_unit": "g",
-    "per_100g": { "kcal": 535, "p": 7.6, "c": 59, "g": 30 },
+    "per_100g": { "calories": 535, "protein": 7.6, "carbs": 59, "fat": 30 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 30 } }
   },
   {
@@ -1256,7 +1256,7 @@
     "aliases": ["chocolate meio amargo", "chocolate 70", "chocolate amargo"],
     "category": "processados",
     "default_unit": "g",
-    "per_100g": { "kcal": 546, "p": 4.9, "c": 61, "g": 31 },
+    "per_100g": { "calories": 546, "protein": 4.9, "carbs": 61, "fat": 31 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 30 } }
   },
   {
@@ -1265,7 +1265,7 @@
     "aliases": ["nutella", "creme de avelã", "creme de avela"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 539, "p": 6.3, "c": 57, "g": 31 },
+    "per_100g": { "calories": 539, "protein": 6.3, "carbs": 57, "fat": 31 },
     "units": { "colher": { "grams": 15 }, "g": { "grams": 1 } }
   },
   {
@@ -1274,7 +1274,7 @@
     "aliases": ["doce de leite", "doce leite"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 315, "p": 6, "c": 56, "g": 7 },
+    "per_100g": { "calories": 315, "protein": 6, "carbs": 56, "fat": 7 },
     "units": { "colher": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -1283,7 +1283,7 @@
     "aliases": ["paçoca", "pacoca", "paçoca de amendoim"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 502, "p": 13, "c": 50, "g": 30 },
+    "per_100g": { "calories": 502, "protein": 13, "carbs": 50, "fat": 30 },
     "units": { "unidade": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -1292,7 +1292,7 @@
     "aliases": ["brigadeiro", "negrinho"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 360, "p": 6, "c": 56, "g": 13 },
+    "per_100g": { "calories": 360, "protein": 6, "carbs": 56, "fat": 13 },
     "units": { "unidade": { "grams": 25 }, "g": { "grams": 1 } }
   },
   {
@@ -1301,7 +1301,7 @@
     "aliases": ["beijinho", "branquinho"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 405, "p": 5, "c": 50, "g": 21 },
+    "per_100g": { "calories": 405, "protein": 5, "carbs": 50, "fat": 21 },
     "units": { "unidade": { "grams": 25 }, "g": { "grams": 1 } }
   },
   {
@@ -1310,7 +1310,7 @@
     "aliases": ["pudim", "pudim de leite", "pudim de leite condensado"],
     "category": "processados",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 250, "p": 5, "c": 41, "g": 7 },
+    "per_100g": { "calories": 250, "protein": 5, "carbs": 41, "fat": 7 },
     "units": { "fatia": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -1319,7 +1319,7 @@
     "aliases": ["mousse", "mousse de chocolate"],
     "category": "processados",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 252, "p": 5, "c": 30, "g": 13 },
+    "per_100g": { "calories": 252, "protein": 5, "carbs": 30, "fat": 13 },
     "units": { "porcao": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -1328,7 +1328,7 @@
     "aliases": ["cocada", "cocada doce"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 410, "p": 3.5, "c": 60, "g": 18 },
+    "per_100g": { "calories": 410, "protein": 3.5, "carbs": 60, "fat": 18 },
     "units": { "unidade": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1337,7 +1337,7 @@
     "aliases": ["sorvete", "sorvete de baunilha", "sorvete creme"],
     "category": "processados",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 207, "p": 3.5, "c": 24, "g": 11 },
+    "per_100g": { "calories": 207, "protein": 3.5, "carbs": 24, "fat": 11 },
     "units": { "porcao": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -1346,7 +1346,7 @@
     "aliases": ["sorvete de chocolate", "sorvete chocolate"],
     "category": "processados",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 216, "p": 3.8, "c": 28, "g": 11 },
+    "per_100g": { "calories": 216, "protein": 3.8, "carbs": 28, "fat": 11 },
     "units": { "porcao": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -1355,7 +1355,7 @@
     "aliases": ["suspiro", "merengue"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 395, "p": 4, "c": 97, "g": 0 },
+    "per_100g": { "calories": 395, "protein": 4, "carbs": 97, "fat": 0 },
     "units": { "unidade": { "grams": 8 }, "g": { "grams": 1 } }
   },
   {
@@ -1364,7 +1364,7 @@
     "aliases": ["brownie", "brownie de chocolate"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 466, "p": 6, "c": 60, "g": 23 },
+    "per_100g": { "calories": 466, "protein": 6, "carbs": 60, "fat": 23 },
     "units": { "unidade": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -1373,7 +1373,7 @@
     "aliases": ["churros", "churro"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 356, "p": 4, "c": 40, "g": 19 },
+    "per_100g": { "calories": 356, "protein": 4, "carbs": 40, "fat": 19 },
     "units": { "unidade": { "grams": 50 }, "g": { "grams": 1 } }
   },
   {
@@ -1382,7 +1382,7 @@
     "aliases": ["salgadinho", "salgadinho de pacote", "doritos", "ruffles", "cheetos"],
     "category": "processados",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 480, "p": 6, "c": 60, "g": 25 },
+    "per_100g": { "calories": 480, "protein": 6, "carbs": 60, "fat": 25 },
     "units": { "porcao": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1391,7 +1391,7 @@
     "aliases": ["castanha do pará", "castanha-do-pará", "castanha do para", "castanha amazônica"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 656, "p": 14, "c": 12, "g": 66 },
+    "per_100g": { "calories": 656, "protein": 14, "carbs": 12, "fat": 66 },
     "units": { "unidade": { "grams": 5 }, "g": { "grams": 1 } }
   },
   {
@@ -1400,7 +1400,7 @@
     "aliases": ["castanha de caju", "caju castanha"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 553, "p": 18, "c": 30, "g": 44 },
+    "per_100g": { "calories": 553, "protein": 18, "carbs": 30, "fat": 44 },
     "units": { "unidade": { "grams": 2 }, "g": { "grams": 1 }, "porcao": { "grams": 30 } }
   },
   {
@@ -1409,7 +1409,7 @@
     "aliases": ["amendoim", "amendoim torrado", "amendoim japonês", "amendoim japones"],
     "category": "processados",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 567, "p": 26, "c": 16, "g": 49 },
+    "per_100g": { "calories": 567, "protein": 26, "carbs": 16, "fat": 49 },
     "units": { "porcao": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1418,7 +1418,7 @@
     "aliases": ["pasta de amendoim", "manteiga de amendoim", "peanut butter"],
     "category": "processados",
     "default_unit": "colher",
-    "per_100g": { "kcal": 588, "p": 25, "c": 20, "g": 50 },
+    "per_100g": { "calories": 588, "protein": 25, "carbs": 20, "fat": 50 },
     "units": { "colher": { "grams": 16 }, "g": { "grams": 1 } }
   },
   {
@@ -1427,7 +1427,7 @@
     "aliases": ["noz", "nozes"],
     "category": "processados",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 654, "p": 15, "c": 14, "g": 65 },
+    "per_100g": { "calories": 654, "protein": 15, "carbs": 14, "fat": 65 },
     "units": { "unidade": { "grams": 5 }, "g": { "grams": 1 } }
   },
   {
@@ -1436,7 +1436,7 @@
     "aliases": ["café", "cafe", "café puro", "cafe puro", "café preto"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 2, "p": 0.3, "c": 0, "g": 0 },
+    "per_100g": { "calories": 2, "protein": 0.3, "carbs": 0, "fat": 0 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1445,7 +1445,7 @@
     "aliases": ["café com leite", "cafe com leite", "café e leite"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 60, "p": 1.5, "c": 8, "g": 2 },
+    "per_100g": { "calories": 60, "protein": 1.5, "carbs": 8, "fat": 2 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1454,7 +1454,7 @@
     "aliases": ["suco de laranja", "suco laranja", "suco natural de laranja"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 45, "p": 0.7, "c": 10, "g": 0.2 },
+    "per_100g": { "calories": 45, "protein": 0.7, "carbs": 10, "fat": 0.2 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1463,7 +1463,7 @@
     "aliases": ["suco de uva", "suco uva", "suco natural de uva"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 60, "p": 0.4, "c": 15, "g": 0.1 },
+    "per_100g": { "calories": 60, "protein": 0.4, "carbs": 15, "fat": 0.1 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1472,7 +1472,7 @@
     "aliases": ["suco de caixinha", "suco industrializado", "suco de caixa"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 50, "p": 0.3, "c": 12, "g": 0 },
+    "per_100g": { "calories": 50, "protein": 0.3, "carbs": 12, "fat": 0 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1481,7 +1481,7 @@
     "aliases": ["refrigerante", "coca", "coca-cola", "pepsi", "refrigerante cola"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 42, "p": 0, "c": 11, "g": 0 },
+    "per_100g": { "calories": 42, "protein": 0, "carbs": 11, "fat": 0 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1490,7 +1490,7 @@
     "aliases": ["refrigerante zero", "coca zero", "pepsi zero", "diet"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 0, "p": 0, "c": 0, "g": 0 },
+    "per_100g": { "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1499,7 +1499,7 @@
     "aliases": ["cerveja", "cerveja comum", "long neck", "lata de cerveja"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 43, "p": 0.5, "c": 3.6, "g": 0 },
+    "per_100g": { "calories": 43, "protein": 0.5, "carbs": 3.6, "fat": 0 },
     "units": { "copo": { "grams": 300 }, "ml": { "grams": 1 } }
   },
   {
@@ -1508,7 +1508,7 @@
     "aliases": ["vinho", "vinho tinto", "taça de vinho"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 85, "p": 0.1, "c": 2.6, "g": 0 },
+    "per_100g": { "calories": 85, "protein": 0.1, "carbs": 2.6, "fat": 0 },
     "units": { "copo": { "grams": 150 }, "ml": { "grams": 1 } }
   },
   {
@@ -1517,7 +1517,7 @@
     "aliases": ["água de coco", "agua de coco", "coco água"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 19, "p": 0.7, "c": 3.7, "g": 0.2 },
+    "per_100g": { "calories": 19, "protein": 0.7, "carbs": 3.7, "fat": 0.2 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1526,7 +1526,7 @@
     "aliases": ["energético", "energetico", "red bull", "monster"],
     "category": "bebidas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 45, "p": 0, "c": 11, "g": 0 },
+    "per_100g": { "calories": 45, "protein": 0, "carbs": 11, "fat": 0 },
     "units": { "unidade": { "grams": 250 }, "ml": { "grams": 1 } }
   },
   {
@@ -1535,7 +1535,7 @@
     "aliases": ["chá mate", "cha mate", "mate"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 5, "p": 0, "c": 1, "g": 0 },
+    "per_100g": { "calories": 5, "protein": 0, "carbs": 1, "fat": 0 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1544,7 +1544,7 @@
     "aliases": ["chá verde", "cha verde", "green tea"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 2, "p": 0, "c": 0.5, "g": 0 },
+    "per_100g": { "calories": 2, "protein": 0, "carbs": 0.5, "fat": 0 },
     "units": { "copo": { "grams": 200 }, "ml": { "grams": 1 } }
   },
   {
@@ -1553,7 +1553,7 @@
     "aliases": ["isotônico", "isotonico", "gatorade", "powerade"],
     "category": "bebidas",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 26, "p": 0, "c": 6, "g": 0 },
+    "per_100g": { "calories": 26, "protein": 0, "carbs": 6, "fat": 0 },
     "units": { "unidade": { "grams": 500 }, "ml": { "grams": 1 } }
   },
   {
@@ -1562,7 +1562,7 @@
     "aliases": ["vitamina", "vitamina de banana", "smoothie de banana"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 90, "p": 3, "c": 18, "g": 1 },
+    "per_100g": { "calories": 90, "protein": 3, "carbs": 18, "fat": 1 },
     "units": { "copo": { "grams": 300 }, "ml": { "grams": 1 } }
   },
   {
@@ -1571,7 +1571,7 @@
     "aliases": ["smoothie", "smoothie de fruta", "smoothie de frutas"],
     "category": "bebidas",
     "default_unit": "copo",
-    "per_100g": { "kcal": 65, "p": 1.2, "c": 14, "g": 0.5 },
+    "per_100g": { "calories": 65, "protein": 1.2, "carbs": 14, "fat": 0.5 },
     "units": { "copo": { "grams": 300 }, "ml": { "grams": 1 } }
   },
   {
@@ -1580,7 +1580,7 @@
     "aliases": ["pão de hambúrguer", "pao de hamburguer", "pão de burger", "pao de burger"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 300, "p": 10, "c": 50, "g": 7 },
+    "per_100g": { "calories": 300, "protein": 10, "carbs": 50, "fat": 7 },
     "units": { "unidade": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -1589,7 +1589,7 @@
     "aliases": ["hambúrguer blend", "hamburguer blend", "blend", "carne de hambúrguer gourmet", "carne de hamburguer gourmet"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 250, "p": 19, "c": 0, "g": 17 },
+    "per_100g": { "calories": 250, "protein": 19, "carbs": 0, "fat": 17 },
     "units": { "unidade": { "grams": 180 }, "g": { "grams": 1 } }
   },
   {
@@ -1598,7 +1598,7 @@
     "aliases": ["hambúrguer", "hamburguer", "hambúrguer comum", "hamburguer comum", "cheeseburger"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 250, "p": 19, "c": 0, "g": 17 },
+    "per_100g": { "calories": 250, "protein": 19, "carbs": 0, "fat": 17 },
     "units": { "unidade": { "grams": 90 }, "g": { "grams": 1 } }
   },
   {
@@ -1607,7 +1607,7 @@
     "aliases": ["bacon", "bacon frito", "fatia de bacon"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 500, "p": 30, "c": 0, "g": 42 },
+    "per_100g": { "calories": 500, "protein": 30, "carbs": 0, "fat": 42 },
     "units": { "fatia": { "grams": 10 }, "g": { "grams": 1 } }
   },
   {
@@ -1616,7 +1616,7 @@
     "aliases": ["pizza muçarela", "pizza mussarela", "fatia de pizza muçarela", "fatia de pizza mussarela"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 233, "p": 10, "c": 25, "g": 10 },
+    "per_100g": { "calories": 233, "protein": 10, "carbs": 25, "fat": 10 },
     "units": { "fatia": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -1625,7 +1625,7 @@
     "aliases": ["pizza calabresa", "pizza tradicional", "fatia de pizza calabresa", "fatia de pizza tradicional"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 233, "p": 10, "c": 23, "g": 11 },
+    "per_100g": { "calories": 233, "protein": 10, "carbs": 23, "fat": 11 },
     "units": { "fatia": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -1634,7 +1634,7 @@
     "aliases": ["pizza portuguesa", "fatia de pizza portuguesa"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 250, "p": 12, "c": 25, "g": 12 },
+    "per_100g": { "calories": 250, "protein": 12, "carbs": 25, "fat": 12 },
     "units": { "fatia": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -1643,7 +1643,7 @@
     "aliases": ["pizza 4 queijos", "pizza quatro queijos", "fatia de pizza 4 queijos"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 277, "p": 14, "c": 23, "g": 14 },
+    "per_100g": { "calories": 277, "protein": 14, "carbs": 23, "fat": 14 },
     "units": { "fatia": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -1652,7 +1652,7 @@
     "aliases": ["pizza marguerita", "pizza margherita", "fatia de pizza marguerita"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 245, "p": 11, "c": 27, "g": 10 },
+    "per_100g": { "calories": 245, "protein": 11, "carbs": 27, "fat": 10 },
     "units": { "fatia": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -1661,7 +1661,7 @@
     "aliases": ["pizza de frango", "pizza frango catupiry", "pizza frango com catupiry"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 240, "p": 12, "c": 26, "g": 10 },
+    "per_100g": { "calories": 240, "protein": 12, "carbs": 26, "fat": 10 },
     "units": { "fatia": { "grams": 130 }, "g": { "grams": 1 } }
   },
   {
@@ -1670,7 +1670,7 @@
     "aliases": ["pizza doce", "pizza de chocolate", "pizza romeu e julieta"],
     "category": "composicao_lanche",
     "default_unit": "fatia",
-    "per_100g": { "kcal": 290, "p": 6, "c": 35, "g": 14 },
+    "per_100g": { "calories": 290, "protein": 6, "carbs": 35, "fat": 14 },
     "units": { "fatia": { "grams": 120 }, "g": { "grams": 1 } }
   },
   {
@@ -1679,7 +1679,7 @@
     "aliases": ["frango empanado", "filé de frango empanado", "file de frango empanado", "frango crispy"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 240, "p": 22, "c": 16, "g": 10 },
+    "per_100g": { "calories": 240, "protein": 22, "carbs": 16, "fat": 10 },
     "units": { "unidade": { "grams": 180 }, "g": { "grams": 1 } }
   },
   {
@@ -1688,7 +1688,7 @@
     "aliases": ["pulled pork", "costela desfiada", "costela pulled", "carne desfiada"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 290, "p": 22, "c": 0, "g": 22 },
+    "per_100g": { "calories": 290, "protein": 22, "carbs": 0, "fat": 22 },
     "units": { "unidade": { "grams": 180 }, "g": { "grams": 1 } }
   },
   {
@@ -1697,7 +1697,7 @@
     "aliases": ["hambúrguer vegetal", "hamburguer vegetal", "hambúrguer vegano", "burger vegano", "hambúrguer de soja"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 195, "p": 12, "c": 18, "g": 9 },
+    "per_100g": { "calories": 195, "protein": 12, "carbs": 18, "fat": 9 },
     "units": { "unidade": { "grams": 180 }, "g": { "grams": 1 } }
   },
   {
@@ -1706,7 +1706,7 @@
     "aliases": ["hambúrguer de peixe", "hamburguer de peixe", "burger de peixe", "fish burger"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 180, "p": 18, "c": 5, "g": 9 },
+    "per_100g": { "calories": 180, "protein": 18, "carbs": 5, "fat": 9 },
     "units": { "unidade": { "grams": 180 }, "g": { "grams": 1 } }
   },
   {
@@ -1715,7 +1715,7 @@
     "aliases": ["cebola caramelizada", "cebola roxa caramelizada"],
     "category": "composicao_lanche",
     "default_unit": "colher",
-    "per_100g": { "kcal": 100, "p": 1.2, "c": 22, "g": 0.5 },
+    "per_100g": { "calories": 100, "protein": 1.2, "carbs": 22, "fat": 0.5 },
     "units": { "colher": { "grams": 20 }, "g": { "grams": 1 } }
   },
   {
@@ -1724,7 +1724,7 @@
     "aliases": ["picles", "pickles", "conserva de pepino"],
     "category": "composicao_lanche",
     "default_unit": "g",
-    "per_100g": { "kcal": 11, "p": 0.3, "c": 2.3, "g": 0.1 },
+    "per_100g": { "calories": 11, "protein": 0.3, "carbs": 2.3, "fat": 0.1 },
     "units": { "g": { "grams": 1 }, "unidade": { "grams": 10 } }
   },
   {
@@ -1733,7 +1733,7 @@
     "aliases": ["nuggets", "nuggets de frango", "chicken nuggets"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 297, "p": 14, "c": 18, "g": 19 },
+    "per_100g": { "calories": 297, "protein": 14, "carbs": 18, "fat": 19 },
     "units": { "unidade": { "grams": 17 }, "g": { "grams": 1 } }
   },
   {
@@ -1742,7 +1742,7 @@
     "aliases": ["coxinha", "coxinha de frango"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 270, "p": 8, "c": 28, "g": 14 },
+    "per_100g": { "calories": 270, "protein": 8, "carbs": 28, "fat": 14 },
     "units": { "unidade": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -1751,7 +1751,7 @@
     "aliases": ["pastel", "pastel de queijo", "pastel frito"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 320, "p": 8, "c": 28, "g": 20 },
+    "per_100g": { "calories": 320, "protein": 8, "carbs": 28, "fat": 20 },
     "units": { "unidade": { "grams": 80 }, "g": { "grams": 1 } }
   },
   {
@@ -1760,7 +1760,7 @@
     "aliases": ["esfiha", "esfiha de carne", "esfirra"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 250, "p": 11, "c": 28, "g": 11 },
+    "per_100g": { "calories": 250, "protein": 11, "carbs": 28, "fat": 11 },
     "units": { "unidade": { "grams": 70 }, "g": { "grams": 1 } }
   },
   {
@@ -1769,7 +1769,7 @@
     "aliases": ["empada", "empada de frango", "empadinha"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 290, "p": 7, "c": 30, "g": 16 },
+    "per_100g": { "calories": 290, "protein": 7, "carbs": 30, "fat": 16 },
     "units": { "unidade": { "grams": 60 }, "g": { "grams": 1 } }
   },
   {
@@ -1778,7 +1778,7 @@
     "aliases": ["sushi", "niguiri", "sushi niguiri", "peça de sushi"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 130, "p": 5, "c": 22, "g": 1.5 },
+    "per_100g": { "calories": 130, "protein": 5, "carbs": 22, "fat": 1.5 },
     "units": { "unidade": { "grams": 30 }, "g": { "grams": 1 } }
   },
   {
@@ -1787,7 +1787,7 @@
     "aliases": ["hot roll", "hot-roll", "uramaki frito"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 320, "p": 12, "c": 35, "g": 14 },
+    "per_100g": { "calories": 320, "protein": 12, "carbs": 35, "fat": 14 },
     "units": { "unidade": { "grams": 40 }, "g": { "grams": 1 } }
   },
   {
@@ -1796,7 +1796,7 @@
     "aliases": ["tapioca recheada", "tapioca de queijo", "tapioca de banana"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 270, "p": 8, "c": 50, "g": 5 },
+    "per_100g": { "calories": 270, "protein": 8, "carbs": 50, "fat": 5 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -1805,7 +1805,7 @@
     "aliases": ["crepioca", "crepioca de queijo"],
     "category": "composicao_lanche",
     "default_unit": "unidade",
-    "per_100g": { "kcal": 200, "p": 14, "c": 18, "g": 8 },
+    "per_100g": { "calories": 200, "protein": 14, "carbs": 18, "fat": 8 },
     "units": { "unidade": { "grams": 100 }, "g": { "grams": 1 } }
   },
   {
@@ -1814,7 +1814,7 @@
     "aliases": ["açaí na tigela", "acai na tigela", "açaí no copo"],
     "category": "composicao_lanche",
     "default_unit": "porcao",
-    "per_100g": { "kcal": 220, "p": 3, "c": 38, "g": 6 },
+    "per_100g": { "calories": 220, "protein": 3, "carbs": 38, "fat": 6 },
     "units": { "porcao": { "grams": 200 }, "g": { "grams": 1 } }
   }
 ]
