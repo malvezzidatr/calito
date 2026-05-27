@@ -78,10 +78,6 @@ const MACRO_LABELS: Record<Macro, { emoji: string; label: string; unit: 'g' | ''
 
 const EMPTY_DAY_MESSAGE = 'Você ainda não registrou nada hoje 🍽️\n\nMe manda o que comeu que eu calculo tudo pra você 💪';
 
-export const EMPTY_DELETE_MESSAGE = 'Não tenho nada pra apagar 🤔';
-export const EMPTY_EDIT_MESSAGE = 'Não tenho nada pra editar 🤔';
-export const VAGUE_EDIT_MESSAGE = 'Não entendi o que você quer mudar 🤔 Me diz junto, ex: "era 1 ovo, não 2"';
-
 export function formatDeleteConfirmation(mealType: MealType, description: string, calories: number, dateLabel: string = 'hoje'): string {
   const dayPart = dateLabel === 'hoje' ? '' : ` de ${dateLabel}`;
   return `Apaguei seu ${MEAL_LABELS[mealType]}${dayPart} de ${description} (${calories}kcal) 🗑️`;

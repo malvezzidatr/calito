@@ -13,7 +13,22 @@ import { describeFromFoods, stripMealVerbs } from './utils/meal.text';
 import { ParsedMessagesRepository } from './parsed-messages.repository';
 import { normalize } from '../foods/utils/food.matcher';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, EMPTY_DELETE_MESSAGE, formatEditConfirmation, EMPTY_EDIT_MESSAGE, VAGUE_EDIT_MESSAGE, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatEditNotFound, formatEditAmbiguous, formatEditTimeNotFound, formatDateLabel } from './utils/meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, formatEditConfirmation, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatEditNotFound, formatEditAmbiguous, formatEditTimeNotFound, formatDateLabel } from './utils/meal.format';
+import {
+    DELETE_REFERENCE_PARSE_FAILED,
+    EDIT_REFERENCE_PARSE_FAILED,
+    EMPTY_DELETE_MESSAGE,
+    EMPTY_EDIT_MESSAGE,
+    MACRO_NOT_RECOGNIZED,
+    MEAL_CALC_FAILED,
+    MEAL_EDIT_CALC_FAILED,
+    MEAL_EDIT_PARSE_FAILED,
+    MEAL_PARSE_FAILED,
+    MEAL_TECH_ERROR_DELETE,
+    MEAL_TECH_ERROR_EDIT,
+    MEAL_TECH_ERROR_REGISTER,
+    VAGUE_EDIT_MESSAGE,
+} from './messages/meals.messages';
 import { isMealReferenceClarification, MEAL_REFERENCE_PROMPT, MealReferenceResult } from './utils/meal-reference.prompt';
 import { validateMealReference } from './utils/meal-reference.validation';
 import { validateMealExtraction } from './utils/meal.validation';
@@ -54,7 +69,7 @@ export class MealsService {
                 result = validateMealExtraction(JSON.parse(reply));
             } catch (err) {
                 this.logger.warn(`Falha ao extrair refeição: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
+                await this.whatsappService.sendText(jid, MEAL_PARSE_FAILED);
                 return;
             }
 
@@ -78,7 +93,7 @@ export class MealsService {
                 });
             } catch (err) {
                 this.logger.error(`Falha ao persistir refeição do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao registrar 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_REGISTER);
                 return;
             }
 
@@ -166,7 +181,7 @@ export class MealsService {
         await this.withUser(phone, async (user) => {
             const macro = detectMacro(text);
             if (!macro) {
-                await this.whatsappService.sendText(jid, 'Posso te mostrar calorias, proteína, carboidrato ou gordura. Qual deles? 🤔');
+                await this.whatsappService.sendText(jid, MACRO_NOT_RECOGNIZED);
                 return;
             }
 
@@ -204,7 +219,7 @@ export class MealsService {
         await this.withUser(phone, async (user) => {
             const reference = await this.extractMealReference(text);
             if (reference === null) {
-                await this.whatsappService.sendText(jid, 'Não entendi qual refeição você quer apagar 🤔 Tenta assim: "apaga o almoço" ou "apaga o lanche das 16h"');
+                await this.whatsappService.sendText(jid, DELETE_REFERENCE_PARSE_FAILED);
                 return;
             }
             if (isMealReferenceClarification(reference)) {
@@ -245,7 +260,7 @@ export class MealsService {
             await this.mealsRepository.deleteById(meal.id);
         } catch (err) {
             this.logger.error(`Falha ao apagar refeição ${meal.id} do user ${user_id}: ${(err as Error).message}`);
-            await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
+            await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_DELETE);
             return;
         }
         await this.whatsappService.sendText(jid, formatDeleteConfirmation(meal.meal_type, meal.description, meal.calories, dateLabel));
@@ -276,7 +291,7 @@ export class MealsService {
                 await this.mealsRepository.deleteById(lastMeal.id);
             } catch (err) {
                 this.logger.error(`Falha ao apagar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_DELETE);
                 return;
             }
 
@@ -301,7 +316,7 @@ export class MealsService {
                 result = validateMealExtraction(JSON.parse(reply));
             } catch (err) {
                 this.logger.warn(`Falha ao re-extrair refeição ${target.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                await this.whatsappService.sendText(jid, MEAL_EDIT_PARSE_FAILED);
                 return;
             }
 
@@ -330,7 +345,7 @@ export class MealsService {
                 });
             } catch (err) {
                 this.logger.error(`Falha ao atualizar refeição ${target.id} do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_EDIT);
                 return;
             }
 
@@ -345,7 +360,7 @@ export class MealsService {
 
             const parsed = await this.runParser(buildParserEditMessage(target.description, text));
             if (parsed === null) {
-                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                await this.whatsappService.sendText(jid, MEAL_EDIT_PARSE_FAILED);
                 return;
             }
             if (isMealParserClarification(parsed)) {
@@ -357,7 +372,7 @@ export class MealsService {
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
                 this.logger.warn(`[local] all items failed on edit for meal=${target.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
-                await this.whatsappService.sendText(jid, 'Não consegui calcular essa refeição corrigida 🤔 Tenta ser mais específico?');
+                await this.whatsappService.sendText(jid, MEAL_EDIT_CALC_FAILED);
                 return;
             }
 
@@ -383,7 +398,7 @@ export class MealsService {
                 });
             } catch (err) {
                 this.logger.error(`[local] Falha ao atualizar refeição ${target.id} do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_EDIT);
                 return;
             }
 
@@ -394,7 +409,7 @@ export class MealsService {
     private async resolveEditTarget(user_id: string, text: string, jid: string): Promise<{ id: string; meal_type: MealType; description: string; calories: number; created_at: Date } | null> {
         const reference = await this.extractMealReference(text);
         if (reference === null) {
-            await this.whatsappService.sendText(jid, 'Não entendi qual refeição você quer corrigir 🤔 Tenta assim: "corrige meu almoço" ou "corrige o lanche das 16h"');
+            await this.whatsappService.sendText(jid, EDIT_REFERENCE_PARSE_FAILED);
             return null;
         }
         if (isMealReferenceClarification(reference)) {
@@ -448,7 +463,7 @@ export class MealsService {
                 result = validateMealExtraction(JSON.parse(reply));
             } catch (err) {
                 this.logger.warn(`Falha ao re-extrair refeição ${lastMeal.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                await this.whatsappService.sendText(jid, MEAL_EDIT_PARSE_FAILED);
                 return;
             }
 
@@ -477,7 +492,7 @@ export class MealsService {
                 });
             } catch (err) {
                 this.logger.error(`Falha ao atualizar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_EDIT);
                 return;
             }
 
@@ -492,7 +507,7 @@ export class MealsService {
             const parsed: MealParserResult | null = cached ?? await this.runParser(text);
 
             if (parsed === null) {
-                await this.whatsappService.sendText(jid, 'Não consegui entender essa refeição 🤔 Pode mandar de novo com mais detalhe?');
+                await this.whatsappService.sendText(jid, MEAL_PARSE_FAILED);
                 return;
             }
             if (isMealParserClarification(parsed)) {
@@ -510,7 +525,7 @@ export class MealsService {
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
                 this.logger.warn(`[local] all items failed for user=${user.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
-                await this.whatsappService.sendText(jid, 'Não consegui calcular essa refeição 🤔 Tenta ser mais específico no que comeu?');
+                await this.whatsappService.sendText(jid, MEAL_CALC_FAILED);
                 return;
             }
 
@@ -537,7 +552,7 @@ export class MealsService {
                 });
             } catch (err) {
                 this.logger.error(`[local] Falha ao persistir refeição do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao registrar 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_REGISTER);
                 return;
             }
 
@@ -575,7 +590,7 @@ export class MealsService {
 
             const parsed = await this.runParser(buildParserEditMessage(lastMeal.description, text));
             if (parsed === null) {
-                await this.whatsappService.sendText(jid, 'Não consegui entender essa correção 🤔 Pode mandar de novo com mais detalhe?');
+                await this.whatsappService.sendText(jid, MEAL_EDIT_PARSE_FAILED);
                 return;
             }
             if (isMealParserClarification(parsed)) {
@@ -587,7 +602,7 @@ export class MealsService {
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
                 this.logger.warn(`[local] all items failed on edit for meal=${lastMeal.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
-                await this.whatsappService.sendText(jid, 'Não consegui calcular essa refeição corrigida 🤔 Tenta ser mais específico?');
+                await this.whatsappService.sendText(jid, MEAL_EDIT_CALC_FAILED);
                 return;
             }
 
@@ -613,7 +628,7 @@ export class MealsService {
                 });
             } catch (err) {
                 this.logger.error(`[local] Falha ao atualizar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
-                await this.whatsappService.sendText(jid, 'Tive um problema técnico ao corrigir 😬 Pode tentar de novo daqui a pouquinho?');
+                await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_EDIT);
                 return;
             }
 
