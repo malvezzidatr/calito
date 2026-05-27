@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Groq from 'groq-sdk';
 import { SYSTEM_PROMPT } from './prompts/ai.prompts';
+import { ConfigurationError } from '../common/errors/configuration.error';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type ChatOptions = {
@@ -22,7 +23,7 @@ export class AiService implements OnModuleInit {
 
   onModuleInit() {
     const apiKey = this.config.get<string>('GROQ_API_KEY');
-    if (!apiKey) throw new Error('GROQ_API_KEY não configurada');
+    if (!apiKey) throw new ConfigurationError('GROQ_API_KEY não configurada');
 
     this.client = new Groq({ apiKey });
     this.model = this.config.get<string>('GROQ_MODEL') ?? 'llama-3.3-70b-versatile';

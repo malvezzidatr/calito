@@ -1,4 +1,5 @@
-import { validateFoodEstimate, isZeroEstimate, InvalidFoodEstimateError } from '../../utils/food.estimate.validation';
+import { validateFoodEstimate, isZeroEstimate } from '../../utils/food.estimate.validation';
+import { InvalidFoodEstimateError } from '../../exceptions/foods.errors';
 
 const valid = { calories: 280, protein: 8, carbs: 25, fat: 18 };
 

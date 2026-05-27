@@ -1,4 +1,5 @@
 import { FoodEstimate } from './food.estimate.prompt';
+import { InvalidFoodEstimateError } from '../exceptions/foods.errors';
 
 const RANGES = {
   calories: { min: 0, max: 2000 },
@@ -8,13 +9,6 @@ const RANGES = {
 } as const;
 
 const FIELDS = ['calories', 'protein', 'carbs', 'fat'] as const;
-
-export class InvalidFoodEstimateError extends Error {
-  constructor(reason: string) {
-    super(`Invalid food estimate: ${reason}`);
-    this.name = 'InvalidFoodEstimateError';
-  }
-}
 
 function isFiniteInRange(n: unknown, min: number, max: number): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;

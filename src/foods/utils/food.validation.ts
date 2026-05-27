@@ -1,16 +1,10 @@
 import { FoodCategory, FoodEntry, Nutrition, Unit } from './food.types';
+import { InvalidFoodEntryError } from '../exceptions/foods.errors';
 
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const VALID_CATEGORIES = Object.values(FoodCategory);
 const VALID_UNITS = Object.values(Unit);
 const NUTRITION_FIELDS = ['calories', 'protein', 'carbs', 'fat'] as const;
-
-export class InvalidFoodEntryError extends Error {
-  constructor(reason: string) {
-    super(`Invalid food entry: ${reason}`);
-    this.name = 'InvalidFoodEntryError';
-  }
-}
 
 function isFiniteNonNegative(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n >= 0;

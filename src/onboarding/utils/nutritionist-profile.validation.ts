@@ -1,4 +1,5 @@
 import { NutritionistProfileResult } from './nutritionist-profile.prompt';
+import { InvalidNutritionistProfileError } from '../exceptions/onboarding.errors';
 
 const RANGES = {
   weight: { min: 20,  max: 350 },
@@ -9,37 +10,30 @@ const RANGES = {
 const GENDERS = ['MALE', 'FEMALE'] as const;
 type GenderEnum = typeof GENDERS[number];
 
-export class InvalidNutritionistProfileError extends Error {
-  constructor(reason: string) {
-    super(`Invalid nutritionist profile: ${reason}`);
-    this.name = 'InvalidNutritionistProfileError';
-  }
-}
-
 function isFiniteInRange(n: unknown, min: number, max: number): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;
 }
 
-export function validateNutritionistProfile(raw: unknown): NutritionistProfileResult {
-  if (raw === null || typeof raw !== 'object') {
+export function validateNutritionistProfile(rawInput: unknown): NutritionistProfileResult {
+  if (rawInput === null || typeof rawInput !== 'object') {
     throw new InvalidNutritionistProfileError('payload is not an object');
   }
-  const r = raw as Record<string, unknown>;
+  const raw = rawInput as Record<string, unknown>;
 
-  if (typeof r.needs_clarification === 'string' && r.needs_clarification.trim() !== '') {
-    return { needs_clarification: r.needs_clarification.trim() };
+  if (typeof raw.needs_clarification === 'string' && raw.needs_clarification.trim() !== '') {
+    return { needs_clarification: raw.needs_clarification.trim() };
   }
 
   for (const field of ['weight', 'height'] as const) {
     const { min, max } = RANGES[field];
-    if (!isFiniteInRange(r[field], min, max)) {
+    if (!isFiniteInRange(raw[field], min, max)) {
       throw new InvalidNutritionistProfileError(
-        `${field} must be a finite number in [${min}, ${max}] (got ${JSON.stringify(r[field])})`,
+        `${field} must be a finite number in [${min}, ${max}] (got ${JSON.stringify(raw[field])})`,
       );
     }
   }
 
-  const ageValue = r.age;
+  const ageValue = raw.age;
   const { min: ageMin, max: ageMax } = RANGES.age;
   if (!isFiniteInRange(ageValue, ageMin, ageMax) || !Number.isInteger(ageValue)) {
     throw new InvalidNutritionistProfileError(
@@ -47,16 +41,16 @@ export function validateNutritionistProfile(raw: unknown): NutritionistProfileRe
     );
   }
 
-  if (!GENDERS.includes(r.gender as GenderEnum)) {
+  if (!GENDERS.includes(raw.gender as GenderEnum)) {
     throw new InvalidNutritionistProfileError(
-      `gender must be one of ${GENDERS.join('|')} (got ${JSON.stringify(r.gender)})`,
+      `gender must be one of ${GENDERS.join('|')} (got ${JSON.stringify(raw.gender)})`,
     );
   }
 
   return {
-    weight: r.weight as number,
-    height: Math.round(r.height as number),
-    age:    r.age    as number,
-    gender: r.gender as GenderEnum,
+    weight: raw.weight as number,
+    height: Math.round(raw.height as number),
+    age:    raw.age    as number,
+    gender: raw.gender as GenderEnum,
   };
 }

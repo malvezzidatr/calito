@@ -1,4 +1,5 @@
-import { validateMealReference, InvalidMealReferenceError } from '../../utils/meal-reference.validation';
+import { validateMealReference } from '../../utils/meal-reference.validation';
+import { InvalidMealReferenceError } from '../../exceptions/meals.errors';
 import {
   MealReferenceExtraction,
   MealReferenceResult,

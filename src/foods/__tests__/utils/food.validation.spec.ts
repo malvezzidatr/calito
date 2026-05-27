@@ -1,4 +1,5 @@
-import { validateFoodEntry, validateFoodCatalog, InvalidFoodEntryError } from '../../utils/food.validation';
+import { validateFoodEntry, validateFoodCatalog } from '../../utils/food.validation';
+import { InvalidFoodEntryError } from '../../exceptions/foods.errors';
 import foodsCatalog from '../../data/foods.json';
 
 const validEntry = {

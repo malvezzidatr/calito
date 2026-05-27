@@ -1,4 +1,5 @@
-import { validateMealParserResult, InvalidMealParserError } from '../../utils/meal.parser.validation';
+import { validateMealParserResult } from '../../utils/meal.parser.validation';
+import { InvalidMealParserError } from '../../exceptions/meals.errors';
 import {
   MealParserExtraction,
   MealParserResult,
