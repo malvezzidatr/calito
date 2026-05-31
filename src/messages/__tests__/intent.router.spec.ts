@@ -49,7 +49,6 @@ describe('IntentRouter', () => {
     ['update_goal',    'atualizar seu objetivo'],
     ['delete_account', 'exclusão da sua conta'],
     ['subscribe',      'link de assinatura'],
-    ['help',           'explicar tudo que sei fazer'],
     ['greeting',       'Bora registrar o que comeu'],
     ['unknown',        'Não entendi'],
   ])('routes %s to its handler', async (intent, snippet) => {
@@ -59,6 +58,31 @@ describe('IntentRouter', () => {
       '5511999@s.whatsapp.net',
       expect.stringContaining(snippet),
     );
+  });
+
+  describe('help handler', () => {
+    it('lists registering, querying, listing and editing capabilities with concrete examples', async () => {
+      await router.route('help', '5511999', 'o que você faz?', '5511999@s.whatsapp.net');
+
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Registrar refeições');
+      expect(message).toContain('Consultar o dia');
+      expect(message).toContain('Listar refeições');
+      expect(message).toContain('Editar ou apagar');
+      expect(message).toContain('"comi 2 ovos e 1 banana"');
+      expect(message).toContain('"como foi meu dia?"');
+      expect(message).toContain('"corrige meu almoço pra carne com salada"');
+    });
+
+    it('does NOT promise features that are still stubs (assinatura, update_goal, delete_account)', async () => {
+      await router.route('help', '5511999', 'ajuda', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).not.toMatch(/assinatura|assinar|pagamento/i);
+      expect(message).not.toMatch(/mudar.*objetivo|atualizar.*objetivo/i);
+      expect(message).not.toMatch(/apagar minha conta|deletar conta/i);
+    });
   });
 
   it('routes register_meal to MealsService.register', async () => {

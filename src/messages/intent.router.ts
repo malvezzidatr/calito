@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
+import { HELP_MESSAGE } from './messages/general.messages';
 
 type IntentHandler = (_phone: string, _text: string, jid: string) => Promise<void>;
 
@@ -88,7 +89,7 @@ export class IntentRouter {
   }
 
   private async handleHelp(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te explicar tudo que sei fazer! 🚧');
+    await this.whatsapp.sendText(jid, HELP_MESSAGE);
   }
 
   private async handleGreeting(_phone: string, _text: string, jid: string) {
