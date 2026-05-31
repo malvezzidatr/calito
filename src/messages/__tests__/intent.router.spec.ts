@@ -49,8 +49,6 @@ describe('IntentRouter', () => {
     ['update_goal',    'atualizar seu objetivo'],
     ['delete_account', 'exclusão da sua conta'],
     ['subscribe',      'link de assinatura'],
-    ['greeting',       'Bora registrar o que comeu'],
-    ['unknown',        'Não entendi'],
   ])('routes %s to its handler', async (intent, snippet) => {
     await router.route(intent, '5511999', 'qualquer', '5511999@s.whatsapp.net');
     expect(sendText).toHaveBeenCalledTimes(1);
@@ -154,21 +152,72 @@ describe('IntentRouter', () => {
   });
 
   describe('unknown handler', () => {
-    it('returns a friendly message that lists the main capabilities', async () => {
+    it('returns a message that mentions registering and editing capabilities', async () => {
       await router.route('unknown', '5511999', 'oi tudo bem?', '5511999@s.whatsapp.net');
 
       const [, message] = sendText.mock.calls[0];
       expect(message).toMatch(/registrar/i);
-      expect(message).toMatch(/consultar/i);
-      expect(message).toMatch(/objetivo/i);
-      expect(message).toMatch(/editar|apagar/i);
+      expect(message).toMatch(/editar|apagar|corrigir/i);
     });
 
-    it('includes a concrete example for each capability', async () => {
+    it('does NOT promise stubbed features (update_goal, subscribe, delete_account)', async () => {
       await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
 
       const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('"');
+      expect(message).not.toMatch(/objetivo/i);
+      expect(message).not.toMatch(/assinar|assinatura/i);
+      expect(message).not.toMatch(/apagar minha conta|deletar conta/i);
+    });
+
+    it('cycles through variants when Math.random changes', async () => {
+      const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+      await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
+      const [, firstVariant] = sendText.mock.calls[0];
+
+      randomSpy.mockReturnValue(0.999);
+      await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
+      const [, lastVariant] = sendText.mock.calls[1];
+
+      expect(firstVariant).not.toBe(lastVariant);
+      randomSpy.mockRestore();
+    });
+  });
+
+  describe('greeting handler', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+      jest.useRealTimers();
+    });
+
+    it('returns a morning variant during SP morning hours', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-28T13:00:00Z')); // 10:00 SP
+
+      await router.route('greeting', '5511999', 'bom dia', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/bom dia|café|começar/i);
+    });
+
+    it('returns an evening variant during SP evening hours', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-28T23:00:00Z')); // 20:00 SP
+
+      await router.route('greeting', '5511999', 'boa noite', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/boa noite|jantar|fechar o dia|como tá indo/i);
+    });
+
+    it('returns a thanks variant when message is "obrigado" regardless of hour', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-28T13:00:00Z')); // morning
+
+      await router.route('greeting', '5511999', 'obrigado!', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/de nada|imagina|é nóis|disponha/i);
+      expect(message).not.toMatch(/bom dia|registr/i);
     });
   });
 });

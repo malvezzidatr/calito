@@ -1,4 +1,5 @@
 import { MealExtraction } from './meal.prompt';
+import { pickRandom } from '../../common/utils/pick-random';
 
 export type DailyTotals = {
   calories: number;
@@ -124,7 +125,7 @@ export function pickPraise(extraction: MealExtraction): string {
     else pool = BALANCED_PRAISES;
   }
 
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pickRandom(pool);
 }
 
 export function pickWeeklyResumePraise(ctx: {

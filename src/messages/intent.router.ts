@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
-import { HELP_MESSAGE } from './messages/general.messages';
+import { HELP_MESSAGE, UNKNOWN_VARIANTS } from './messages/general.messages';
+import { pickGreeting } from './utils/greeting.picker';
+import { pickRandom } from '../common/utils/pick-random';
 
 type IntentHandler = (_phone: string, _text: string, jid: string) => Promise<void>;
 
@@ -92,22 +94,11 @@ export class IntentRouter {
     await this.whatsapp.sendText(jid, HELP_MESSAGE);
   }
 
-  private async handleGreeting(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'E aí! Bora registrar o que comeu? 🍽️');
+  private async handleGreeting(_phone: string, text: string, jid: string) {
+    await this.whatsapp.sendText(jid, pickGreeting(text, new Date()));
   }
 
   private async handleUnknown(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(
-      jid,
-      [
-        'Não entendi muito bem 🤔 Posso te ajudar com:',
-        '',
-        '🍽️ Registrar refeições: "almocei arroz e frango"',
-        '📊 Consultar o dia/semana: "como foi meu dia?"',
-        '📋 Listar refeições do dia: "lista o que comi hoje"',
-        '🎯 Atualizar objetivo: "quero ganhar massa"',
-        '✏️ Editar/apagar refeições: "era 1 ovo não 2"',
-      ].join('\n'),
-    );
+    await this.whatsapp.sendText(jid, pickRandom(UNKNOWN_VARIANTS));
   }
 }
