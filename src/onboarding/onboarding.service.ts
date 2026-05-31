@@ -47,27 +47,21 @@ export class OnboardingService {
         };
     }
 
-    async routeMessage(phone: string, text: string, jid: string): Promise<'handled' | 'delegate_to_ai'> {
-        let user = await this.users.findByPhone(phone)
-        if (!user) {
-            user = await this.users.create({
-                phone,
-                onboarding_step: OnboardingStep.WaitingConsent
-            });
-            await this.whatsapp.sendText(jid, LGPD_MESSAGE);
-            return 'handled';
-        }
+    async startNewUser(phone: string, jid: string): Promise<void> {
+        await this.users.create({
+            phone,
+            onboarding_step: OnboardingStep.WaitingConsent,
+        });
+        await this.whatsapp.sendText(jid, LGPD_MESSAGE);
+    }
 
-        if (user.onboarding_step === null) return 'delegate_to_ai';
-
-        const step = user.onboarding_step as OnboardingStep;
-        const handler = this.handlers[step];
+    async handleStep(step: string, phone: string, text: string, jid: string): Promise<'handled' | 'unknown'> {
+        const handler = this.handlers[step as OnboardingStep];
         if (!handler) {
-            this.logger.warn(`Unknown step: ${step}`);
-            return 'delegate_to_ai';
+            this.logger.warn(`Unknown onboarding step: ${step}`);
+            return 'unknown';
         }
-
-        await handler(user.phone, text, jid);
+        await handler(phone, text, jid);
         return 'handled';
     }
 

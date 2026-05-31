@@ -28,4 +28,10 @@ export class UsersRepository {
       where: { phone },
     });
   }
+
+  deleteByPhone(phone: string) {
+    return this.prisma.user.delete({
+      where: { phone },
+    });
+  }
 }

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
+import { UsersService } from '../users/users.service';
 import { HELP_MESSAGE, UNKNOWN_VARIANTS } from './messages/general.messages';
 import { pickGreeting } from './utils/greeting.picker';
 import { pickRandom } from '../common/utils/pick-random';
@@ -16,6 +17,7 @@ export class IntentRouter {
   constructor(
     private readonly whatsapp: WhatsappService,
     private readonly meals: MealsService,
+    private readonly users: UsersService,
 ) {
     this.handlers = {
       register_meal:  this.handleRegisterMeal.bind(this),
@@ -82,8 +84,8 @@ export class IntentRouter {
     await this.meals.deleteLast(phone, jid);
   }
 
-  private async handleDeleteAccount(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou cuidar da exclusão da sua conta! 🚧');
+  private async handleDeleteAccount(phone: string, _text: string, jid: string) {
+    await this.users.requestAccountDeletion(phone, jid);
   }
 
   private async handleSubscribe(_phone: string, _text: string, jid: string) {

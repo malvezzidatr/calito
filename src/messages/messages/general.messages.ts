@@ -32,6 +32,25 @@ export const GREETING_VARIANTS_BY_BUCKET: Record<GreetingBucket, readonly string
   ],
 } as const;
 
+export const DELETE_ACCOUNT_CONFIRMATION_QUESTION = [
+  '⚠️ Quer mesmo apagar sua conta?',
+  '',
+  'Isso vai remover TODOS os seus dados (refeições, metas, perfil) e não tem como voltar atrás 😔',
+  '',
+  'Pra confirmar, responda exatamente com: *apagar tudo*',
+  'Qualquer outra resposta cancela.',
+].join('\n');
+
+export const DELETE_ACCOUNT_SUCCESS = [
+  'Pronto, sua conta e todos os dados foram apagados 👋',
+  '',
+  'Sentirei sua falta! Se mudar de ideia, é só me mandar "oi" que a gente recomeça do zero 🙂',
+].join('\n');
+
+export const DELETE_ACCOUNT_CANCELLED = 'Beleza, cancelei a exclusão. Seus dados continuam aqui 🙂';
+
+export const DELETE_ACCOUNT_TECH_ERROR = 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?';
+
 export const THANKS_VARIANTS = [
   'De nada! Tô aqui pra ajudar 💪',
   'Imagina! Bora continuar firme 🔥',

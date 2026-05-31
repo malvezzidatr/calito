@@ -6,11 +6,16 @@ jest.mock('../../meals/meals.service', () => ({
   MealsService: class {},
 }));
 
+jest.mock('../../users/users.service', () => ({
+  UsersService: class {},
+}));
+
 import { Test } from '@nestjs/testing';
 import { IntentRouter } from '../intent.router';
 import { Intent } from '../../ai/intents';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { MealsService } from '../../meals/meals.service';
+import { UsersService } from '../../users/users.service';
 
 describe('IntentRouter', () => {
   let router: IntentRouter;
@@ -23,6 +28,7 @@ describe('IntentRouter', () => {
   let deleteMeal: jest.Mock;
   let editLast: jest.Mock;
   let editMeal: jest.Mock;
+  let requestAccountDeletion: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -34,21 +40,22 @@ describe('IntentRouter', () => {
     deleteMeal = jest.fn().mockResolvedValue(undefined);
     editLast = jest.fn().mockResolvedValue(undefined);
     editMeal = jest.fn().mockResolvedValue(undefined);
+    requestAccountDeletion = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
         { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast, editMeal } },
+        { provide: UsersService, useValue: { requestAccountDeletion } },
       ],
     }).compile();
     router = module.get(IntentRouter);
   });
 
   it.each<[Intent, string]>([
-    ['update_goal',    'atualizar seu objetivo'],
-    ['delete_account', 'exclusão da sua conta'],
-    ['subscribe',      'link de assinatura'],
+    ['update_goal', 'atualizar seu objetivo'],
+    ['subscribe',   'link de assinatura'],
   ])('routes %s to its handler', async (intent, snippet) => {
     await router.route(intent, '5511999', 'qualquer', '5511999@s.whatsapp.net');
     expect(sendText).toHaveBeenCalledTimes(1);
@@ -56,6 +63,14 @@ describe('IntentRouter', () => {
       '5511999@s.whatsapp.net',
       expect.stringContaining(snippet),
     );
+  });
+
+  it('routes delete_account to UsersService.requestAccountDeletion', async () => {
+    await router.route('delete_account', '5511999', 'apagar minha conta', '5511999@s.whatsapp.net');
+
+    expect(requestAccountDeletion).toHaveBeenCalledTimes(1);
+    expect(requestAccountDeletion).toHaveBeenCalledWith('5511999', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
   });
 
   describe('help handler', () => {
