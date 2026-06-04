@@ -29,6 +29,15 @@ export class UsersRepository {
     });
   }
 
+  findOnboardedWithMealsInRange(startInclusive: Date, endExclusive: Date) {
+    return this.prisma.user.findMany({
+      where: {
+        onboarding_step: null,
+        meals: { some: { created_at: { gte: startInclusive, lt: endExclusive } } },
+      },
+    });
+  }
+
   deleteByPhone(phone: string) {
     return this.prisma.user.delete({
       where: { phone },

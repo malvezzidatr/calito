@@ -118,32 +118,34 @@ export class MealsService {
         });
     }
 
+    async buildDailyResumeMessage(user: User, today: Date): Promise<string> {
+        const [totals, meals] = await Promise.all([
+            this.mealsRepository.sumDailyByUser(user.id, today),
+            this.mealsRepository.findDailyByUser(user.id, today),
+        ]);
+
+        const praise = pickDailyResumePraise({
+            totalCalories: totals.calories,
+            calorieGoal: user.calorie_goal,
+        });
+
+        return formatDailyResume(
+            today,
+            meals,
+            totals,
+            {
+                calorie: user.calorie_goal,
+                protein: user.protein_goal,
+                carbs:   user.carbs_goal,
+                fat:     user.fat_goal,
+            },
+            praise,
+        );
+    }
+
     async dailyResume(phone: string, jid: string) {
         await this.withUser(phone, async (user) => {
-            const today = new Date();
-            const [totals, meals] = await Promise.all([
-                this.mealsRepository.sumDailyByUser(user.id, today),
-                this.mealsRepository.findDailyByUser(user.id, today),
-            ]);
-
-            const praise = pickDailyResumePraise({
-                totalCalories: totals.calories,
-                calorieGoal: user.calorie_goal,
-            });
-
-            const message = formatDailyResume(
-                today,
-                meals,
-                totals,
-                {
-                    calorie: user.calorie_goal,
-                    protein: user.protein_goal,
-                    carbs:   user.carbs_goal,
-                    fat:     user.fat_goal,
-                },
-                praise,
-            );
-
+            const message = await this.buildDailyResumeMessage(user, new Date());
             await this.whatsappService.sendText(jid, message);
         });
     }

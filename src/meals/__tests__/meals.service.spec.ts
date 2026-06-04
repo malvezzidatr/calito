@@ -4,6 +4,7 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { User } from '@prisma/client';
 import { MealsService } from '../meals.service';
 import { MealsRepository } from '../meals.repository';
 import { AiService } from '../../ai/ai.service';
@@ -314,6 +315,59 @@ describe('MealsService', () => {
       await service.dailyResume('phone-1', 'jid-1');
 
       const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('📊 Resumo de hoje');
+      expect(message).toContain('Você ainda não registrou nada hoje');
+      expect(message).not.toContain('🔥 Calorias');
+    });
+  });
+
+  describe('buildDailyResumeMessage', () => {
+    const today = new Date('2026-06-02T18:00:00Z');
+
+    it('builds the message with totals, meal list and praise without sending', async () => {
+      const user = {
+        id: 'user-1',
+        calorie_goal: 2150, protein_goal: 160, carbs_goal: 240, fat_goal: 72,
+      } as unknown as User;
+      sumDailyByUser.mockResolvedValue({ calories: 1650, protein: 120, carbs: 200, fat: 50 });
+      findDailyByUser.mockResolvedValue([
+        { meal_type: 'BREAKFAST', calories: 350 },
+        { meal_type: 'LUNCH',     calories: 750 },
+      ]);
+
+      const message = await service.buildDailyResumeMessage(user, today);
+
+      expect(message).toContain('📊 Resumo de hoje');
+      expect(message).toContain('🔥 Calorias: 1.650 / 2.150');
+      expect(message).toContain('• Café: 350kcal');
+      expect(message).toContain('• Almoço: 750kcal');
+      expect(sendText).not.toHaveBeenCalled();
+    });
+
+    it('queries totals and meal list for the same user and date in parallel', async () => {
+      const user = { id: 'user-1', calorie_goal: 2000, protein_goal: 100 } as unknown as User;
+
+      await service.buildDailyResumeMessage(user, today);
+
+      expect(sumDailyByUser).toHaveBeenCalledWith('user-1', today);
+      expect(findDailyByUser).toHaveBeenCalledWith('user-1', today);
+    });
+
+    it('uses a goal-less praise when the user has no calorie_goal', async () => {
+      const user = { id: 'user-1', calorie_goal: null } as unknown as User;
+      sumDailyByUser.mockResolvedValue({ calories: 1200, protein: 70, carbs: 150, fat: 40 });
+
+      const message = await service.buildDailyResumeMessage(user, today);
+
+      expect(message).toContain('Tô anotando');
+    });
+
+    it('builds header + empty-day message when no meals were registered', async () => {
+      const user = { id: 'user-1', calorie_goal: 2000 } as unknown as User;
+      findDailyByUser.mockResolvedValue([]);
+
+      const message = await service.buildDailyResumeMessage(user, today);
+
       expect(message).toContain('📊 Resumo de hoje');
       expect(message).toContain('Você ainda não registrou nada hoje');
       expect(message).not.toContain('🔥 Calorias');
