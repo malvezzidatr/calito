@@ -23,6 +23,7 @@ describeMaybe('IntentClassifier (integration)', () => {
     ['quanto comi hoje?', 'query_daily'],
     ['como foi minha semana?', 'query_period'],
     ['quanta proteína comi hoje?', 'query_macro'],
+    ['meu perfil', 'view_profile'],
     ['agora quero ganhar massa', 'update_goal'],
     ['era 1 ovo, não 2', 'edit_last'],
     ['apaga o último', 'delete_last'],

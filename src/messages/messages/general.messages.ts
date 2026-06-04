@@ -92,6 +92,43 @@ export function formatUpdateGoalSuccess(goal: Goal, goals: GoalTargets): string 
   ].join('\n');
 }
 
+type ProfileView = {
+  weight: number | null;
+  height: number | null;
+  age: number | null;
+  goal: Goal | null;
+  calorie_goal: number | null;
+  protein_goal: number | null;
+  carbs_goal: number | null;
+  fat_goal: number | null;
+};
+
+export function formatProfile(profile: ProfileView): string {
+  const lines: string[] = [
+    '👤 Seu perfil',
+    '',
+    `⚖️ Peso: ${profile.weight !== null ? `${profile.weight} kg` : 'não informado'}`,
+    `📏 Altura: ${profile.height !== null ? `${profile.height} cm` : 'não informada'}`,
+    `🎂 Idade: ${profile.age !== null ? `${profile.age} anos` : 'não informada'}`,
+    `🎯 Objetivo: ${profile.goal !== null ? GOAL_LABELS[profile.goal] : 'não definido'}`,
+  ];
+
+  if (profile.calorie_goal !== null) {
+    lines.push(
+      '',
+      'Metas diárias:',
+      `🔥 ${profile.calorie_goal.toLocaleString('pt-BR')} kcal`,
+      `🥩 ${profile.protein_goal ?? 0}g de proteína`,
+      `🍚 ${profile.carbs_goal ?? 0}g de carboidrato`,
+      `🧈 ${profile.fat_goal ?? 0}g de gordura`,
+    );
+  } else {
+    lines.push('', 'Suas metas ainda não foram definidas. Manda "oi" pra gente fechar seu cadastro 💪');
+  }
+
+  return lines.join('\n');
+}
+
 export const THANKS_VARIANTS = [
   'De nada! Tô aqui pra ajudar 💪',
   'Imagina! Bora continuar firme 🔥',

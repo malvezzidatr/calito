@@ -29,6 +29,7 @@ describe('IntentRouter', () => {
   let editMeal: jest.Mock;
   let requestAccountDeletion: jest.Mock;
   let updateGoal: jest.Mock;
+  let viewProfile: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -42,13 +43,14 @@ describe('IntentRouter', () => {
     editMeal = jest.fn().mockResolvedValue(undefined);
     requestAccountDeletion = jest.fn().mockResolvedValue(undefined);
     updateGoal = jest.fn().mockResolvedValue(undefined);
+    viewProfile = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
         { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast, editMeal } },
-        { provide: UsersService, useValue: { requestAccountDeletion, updateGoal } },
+        { provide: UsersService, useValue: { requestAccountDeletion, updateGoal, viewProfile } },
       ],
     }).compile();
     router = module.get(IntentRouter);
@@ -61,6 +63,14 @@ describe('IntentRouter', () => {
       '5511999@s.whatsapp.net',
       expect.stringContaining('link de assinatura'),
     );
+  });
+
+  it('routes view_profile to UsersService.viewProfile', async () => {
+    await router.route('view_profile', '5511999', 'meu perfil', '5511999@s.whatsapp.net');
+
+    expect(viewProfile).toHaveBeenCalledTimes(1);
+    expect(viewProfile).toHaveBeenCalledWith('5511999', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
   });
 
   it('routes update_goal to UsersService.updateGoal', async () => {

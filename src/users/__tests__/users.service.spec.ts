@@ -85,4 +85,44 @@ describe('UsersService', () => {
       expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_GOAL_QUESTION);
     });
   });
+
+  describe('viewProfile', () => {
+    it('sends weight, height, goal and daily targets', async () => {
+      findByPhone.mockResolvedValue({
+        ...fullProfile,
+        goal: 'GAIN',
+        calorie_goal: 2400,
+        protein_goal: 144,
+        carbs_goal: 250,
+        fat_goal: 80,
+      });
+
+      await service.viewProfile('5511999', 'jid-1');
+
+      const [jid, message] = sendText.mock.calls[0];
+      expect(jid).toBe('jid-1');
+      expect(message).toContain('80 kg');
+      expect(message).toContain('180 cm');
+      expect(message).toContain('ganhar massa');
+      expect(message).toContain('2.400 kcal');
+      expect(message).toContain('144g de proteína');
+    });
+
+    it('says targets are not set when the user has no calorie_goal', async () => {
+      findByPhone.mockResolvedValue({ ...fullProfile, calorie_goal: null });
+
+      await service.viewProfile('5511999', 'jid-1');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('metas ainda não foram definidas');
+    });
+
+    it('does nothing when the user is not found', async () => {
+      findByPhone.mockResolvedValue(null);
+
+      await service.viewProfile('5511999', 'jid-1');
+
+      expect(sendText).not.toHaveBeenCalled();
+    });
+  });
 });

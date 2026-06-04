@@ -14,6 +14,7 @@ import {
   UPDATE_GOAL_NEEDS_PROFILE,
   UPDATE_GOAL_TECH_ERROR,
   formatUpdateGoalSuccess,
+  formatProfile,
 } from '../messages/messages/general.messages';
 
 const DELETE_CONFIRMATION_PHRASE = 'apagar tudo';
@@ -29,6 +30,12 @@ export class UsersService {
 
   findByPhone(phone: string) {
     return this.usersRepository.findByPhone(phone);
+  }
+
+  async viewProfile(phone: string, jid: string): Promise<void> {
+    const user = await this.usersRepository.findByPhone(phone);
+    if (!user) return;
+    await this.whatsapp.sendText(jid, formatProfile(user));
   }
 
   async updateGoal(phone: string, text: string, jid: string): Promise<void> {

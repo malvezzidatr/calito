@@ -25,6 +25,7 @@ export class IntentRouter {
       query_period:   this.handleQueryPeriod.bind(this),
       query_macro:    this.handleQueryMacro.bind(this),
       list_meals:     this.handleListMeals.bind(this),
+      view_profile:   this.handleViewProfile.bind(this),
       update_goal:    this.handleUpdateGoal.bind(this),
       edit_meal:      this.handleEditMeal.bind(this),
       delete_meal:    this.handleDeleteMeal.bind(this),
@@ -62,6 +63,10 @@ export class IntentRouter {
 
   private async handleListMeals(phone: string, _text: string, jid: string) {
     await this.meals.listMeals(phone, jid);
+  }
+
+  private async handleViewProfile(phone: string, _text: string, jid: string) {
+    await this.users.viewProfile(phone, jid);
   }
 
   private async handleUpdateGoal(phone: string, text: string, jid: string) {
