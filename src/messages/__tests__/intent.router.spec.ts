@@ -12,7 +12,6 @@ jest.mock('../../users/users.service', () => ({
 
 import { Test } from '@nestjs/testing';
 import { IntentRouter } from '../intent.router';
-import { Intent } from '../../ai/intents';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { MealsService } from '../../meals/meals.service';
 import { UsersService } from '../../users/users.service';
@@ -29,6 +28,7 @@ describe('IntentRouter', () => {
   let editLast: jest.Mock;
   let editMeal: jest.Mock;
   let requestAccountDeletion: jest.Mock;
+  let updateGoal: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -41,28 +41,34 @@ describe('IntentRouter', () => {
     editLast = jest.fn().mockResolvedValue(undefined);
     editMeal = jest.fn().mockResolvedValue(undefined);
     requestAccountDeletion = jest.fn().mockResolvedValue(undefined);
+    updateGoal = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
         { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast, editMeal } },
-        { provide: UsersService, useValue: { requestAccountDeletion } },
+        { provide: UsersService, useValue: { requestAccountDeletion, updateGoal } },
       ],
     }).compile();
     router = module.get(IntentRouter);
   });
 
-  it.each<[Intent, string]>([
-    ['update_goal', 'atualizar seu objetivo'],
-    ['subscribe',   'link de assinatura'],
-  ])('routes %s to its handler', async (intent, snippet) => {
-    await router.route(intent, '5511999', 'qualquer', '5511999@s.whatsapp.net');
+  it('routes the still-stubbed subscribe to its handler', async () => {
+    await router.route('subscribe', '5511999', 'qualquer', '5511999@s.whatsapp.net');
     expect(sendText).toHaveBeenCalledTimes(1);
     expect(sendText).toHaveBeenCalledWith(
       '5511999@s.whatsapp.net',
-      expect.stringContaining(snippet),
+      expect.stringContaining('link de assinatura'),
     );
+  });
+
+  it('routes update_goal to UsersService.updateGoal', async () => {
+    await router.route('update_goal', '5511999', 'agora quero ganhar massa', '5511999@s.whatsapp.net');
+
+    expect(updateGoal).toHaveBeenCalledTimes(1);
+    expect(updateGoal).toHaveBeenCalledWith('5511999', 'agora quero ganhar massa', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
   });
 
   it('routes delete_account to UsersService.requestAccountDeletion', async () => {

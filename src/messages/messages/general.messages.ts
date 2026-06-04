@@ -4,6 +4,15 @@
  * Não listar features futuras (assinatura, update_goal, delete_account) — quebra confiança do usuário.
  */
 
+import { Goal } from '@prisma/client';
+
+type GoalTargets = {
+  calorie_goal: number;
+  protein_goal: number;
+  carbs_goal: number;
+  fat_goal: number;
+};
+
 export type GreetingBucket = 'dawn' | 'morning' | 'afternoon' | 'evening';
 
 export const GREETING_VARIANTS_BY_BUCKET: Record<GreetingBucket, readonly string[]> = {
@@ -50,6 +59,38 @@ export const DELETE_ACCOUNT_SUCCESS = [
 export const DELETE_ACCOUNT_CANCELLED = 'Beleza, cancelei a exclusão. Seus dados continuam aqui 🙂';
 
 export const DELETE_ACCOUNT_TECH_ERROR = 'Tive um problema técnico ao apagar 😬 Pode tentar de novo daqui a pouquinho?';
+
+const GOAL_LABELS: Record<Goal, string> = {
+  LOSE: 'emagrecer',
+  MAINTAIN: 'manter o peso',
+  GAIN: 'ganhar massa',
+};
+
+export const UPDATE_GOAL_QUESTION = [
+  '🎯 Qual seu novo objetivo?',
+  '',
+  'Me diz um deles:',
+  '• *emagrecer*',
+  '• *manter* o peso',
+  '• *ganhar massa*',
+].join('\n');
+
+export const UPDATE_GOAL_NEEDS_PROFILE =
+  'Pra recalcular suas metas eu preciso do seu perfil completo (peso, altura, idade, sexo e nível de atividade), mas tá faltando algum dado 😕 Manda "oi" pra gente refazer seu cadastro.';
+
+export const UPDATE_GOAL_TECH_ERROR = 'Tive um problema técnico ao atualizar seu objetivo 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatUpdateGoalSuccess(goal: Goal, goals: GoalTargets): string {
+  return [
+    `Pronto! Atualizei seu objetivo pra *${GOAL_LABELS[goal]}* 🎯`,
+    '',
+    'Suas novas metas diárias:',
+    `🔥 ${goals.calorie_goal.toLocaleString('pt-BR')} kcal`,
+    `🥩 ${goals.protein_goal}g de proteína`,
+    `🍚 ${goals.carbs_goal}g de carboidrato`,
+    `🧈 ${goals.fat_goal}g de gordura`,
+  ].join('\n');
+}
 
 export const THANKS_VARIANTS = [
   'De nada! Tô aqui pra ajudar 💪',

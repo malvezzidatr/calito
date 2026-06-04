@@ -49,6 +49,11 @@ export class MessagesHandler {
       return;
     }
 
+    if (user.onboarding_step === UserPendingState.WaitingGoalChoice) {
+      await this.users.handleGoalChoice(phone, realText, fromPhone);
+      return;
+    }
+
     if (user.onboarding_step !== null) {
       const result = await this.onboarding.handleStep(user.onboarding_step, phone, realText, fromPhone);
       if (result === 'handled') return;
