@@ -4,10 +4,11 @@ import { OnboardingModule } from 'src/onboarding/onboarding.module';
 import { AiModule } from 'src/ai/ai.module';
 import { WhatsappModule } from 'src/whatsapp/whatsapp.module';
 import { MealsModule } from 'src/meals/meals.module';
+import { UsersModule } from 'src/users/users.module';
 import { IntentRouter } from './intent.router';
 
 @Module({
-  imports: [OnboardingModule, AiModule, WhatsappModule, MealsModule],
+  imports: [OnboardingModule, AiModule, WhatsappModule, MealsModule, UsersModule],
   providers: [MessagesHandler, IntentRouter],
 })
 export class MessagesModule {}

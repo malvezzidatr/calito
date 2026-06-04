@@ -6,11 +6,15 @@ jest.mock('../../meals/meals.service', () => ({
   MealsService: class {},
 }));
 
+jest.mock('../../users/users.service', () => ({
+  UsersService: class {},
+}));
+
 import { Test } from '@nestjs/testing';
 import { IntentRouter } from '../intent.router';
-import { Intent } from '../../ai/intents';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { MealsService } from '../../meals/meals.service';
+import { UsersService } from '../../users/users.service';
 
 describe('IntentRouter', () => {
   let router: IntentRouter;
@@ -23,6 +27,9 @@ describe('IntentRouter', () => {
   let deleteMeal: jest.Mock;
   let editLast: jest.Mock;
   let editMeal: jest.Mock;
+  let requestAccountDeletion: jest.Mock;
+  let updateGoal: jest.Mock;
+  let viewProfile: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -34,31 +41,77 @@ describe('IntentRouter', () => {
     deleteMeal = jest.fn().mockResolvedValue(undefined);
     editLast = jest.fn().mockResolvedValue(undefined);
     editMeal = jest.fn().mockResolvedValue(undefined);
+    requestAccountDeletion = jest.fn().mockResolvedValue(undefined);
+    updateGoal = jest.fn().mockResolvedValue(undefined);
+    viewProfile = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
         IntentRouter,
         { provide: WhatsappService, useValue: { sendText } },
         { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast, editMeal } },
+        { provide: UsersService, useValue: { requestAccountDeletion, updateGoal, viewProfile } },
       ],
     }).compile();
     router = module.get(IntentRouter);
   });
 
-  it.each<[Intent, string]>([
-    ['update_goal',    'atualizar seu objetivo'],
-    ['delete_account', 'exclusão da sua conta'],
-    ['subscribe',      'link de assinatura'],
-    ['help',           'explicar tudo que sei fazer'],
-    ['greeting',       'Bora registrar o que comeu'],
-    ['unknown',        'Não entendi'],
-  ])('routes %s to its handler', async (intent, snippet) => {
-    await router.route(intent, '5511999', 'qualquer', '5511999@s.whatsapp.net');
+  it('routes the still-stubbed subscribe to its handler', async () => {
+    await router.route('subscribe', '5511999', 'qualquer', '5511999@s.whatsapp.net');
     expect(sendText).toHaveBeenCalledTimes(1);
     expect(sendText).toHaveBeenCalledWith(
       '5511999@s.whatsapp.net',
-      expect.stringContaining(snippet),
+      expect.stringContaining('link de assinatura'),
     );
+  });
+
+  it('routes view_profile to UsersService.viewProfile', async () => {
+    await router.route('view_profile', '5511999', 'meu perfil', '5511999@s.whatsapp.net');
+
+    expect(viewProfile).toHaveBeenCalledTimes(1);
+    expect(viewProfile).toHaveBeenCalledWith('5511999', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
+  it('routes update_goal to UsersService.updateGoal', async () => {
+    await router.route('update_goal', '5511999', 'agora quero ganhar massa', '5511999@s.whatsapp.net');
+
+    expect(updateGoal).toHaveBeenCalledTimes(1);
+    expect(updateGoal).toHaveBeenCalledWith('5511999', 'agora quero ganhar massa', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
+  it('routes delete_account to UsersService.requestAccountDeletion', async () => {
+    await router.route('delete_account', '5511999', 'apagar minha conta', '5511999@s.whatsapp.net');
+
+    expect(requestAccountDeletion).toHaveBeenCalledTimes(1);
+    expect(requestAccountDeletion).toHaveBeenCalledWith('5511999', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
+  describe('help handler', () => {
+    it('lists registering, querying, listing and editing capabilities with concrete examples', async () => {
+      await router.route('help', '5511999', 'o que você faz?', '5511999@s.whatsapp.net');
+
+      expect(sendText).toHaveBeenCalledTimes(1);
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Registrar refeições');
+      expect(message).toContain('Consultar o dia');
+      expect(message).toContain('Listar refeições');
+      expect(message).toContain('Editar ou apagar');
+      expect(message).toContain('"comi 2 ovos e 1 banana"');
+      expect(message).toContain('"como foi meu dia?"');
+      expect(message).toContain('"corrige meu almoço pra carne com salada"');
+    });
+
+    it('does NOT promise features that are still stubs (assinatura, update_goal, delete_account)', async () => {
+      await router.route('help', '5511999', 'ajuda', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).not.toMatch(/assinatura|assinar|pagamento/i);
+      expect(message).not.toMatch(/mudar.*objetivo|atualizar.*objetivo/i);
+      expect(message).not.toMatch(/apagar minha conta|deletar conta/i);
+    });
   });
 
   it('routes register_meal to MealsService.register', async () => {
@@ -130,21 +183,72 @@ describe('IntentRouter', () => {
   });
 
   describe('unknown handler', () => {
-    it('returns a friendly message that lists the main capabilities', async () => {
+    it('returns a message that mentions registering and editing capabilities', async () => {
       await router.route('unknown', '5511999', 'oi tudo bem?', '5511999@s.whatsapp.net');
 
       const [, message] = sendText.mock.calls[0];
       expect(message).toMatch(/registrar/i);
-      expect(message).toMatch(/consultar/i);
-      expect(message).toMatch(/objetivo/i);
-      expect(message).toMatch(/editar|apagar/i);
+      expect(message).toMatch(/editar|apagar|corrigir/i);
     });
 
-    it('includes a concrete example for each capability', async () => {
+    it('does NOT promise stubbed features (update_goal, subscribe, delete_account)', async () => {
       await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
 
       const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('"');
+      expect(message).not.toMatch(/objetivo/i);
+      expect(message).not.toMatch(/assinar|assinatura/i);
+      expect(message).not.toMatch(/apagar minha conta|deletar conta/i);
+    });
+
+    it('cycles through variants when Math.random changes', async () => {
+      const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+      await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
+      const [, firstVariant] = sendText.mock.calls[0];
+
+      randomSpy.mockReturnValue(0.999);
+      await router.route('unknown', '5511999', 'foo', '5511999@s.whatsapp.net');
+      const [, lastVariant] = sendText.mock.calls[1];
+
+      expect(firstVariant).not.toBe(lastVariant);
+      randomSpy.mockRestore();
+    });
+  });
+
+  describe('greeting handler', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+      jest.useRealTimers();
+    });
+
+    it('returns a morning variant during SP morning hours', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-28T13:00:00Z')); // 10:00 SP
+
+      await router.route('greeting', '5511999', 'bom dia', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/bom dia|café|começar/i);
+    });
+
+    it('returns an evening variant during SP evening hours', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-28T23:00:00Z')); // 20:00 SP
+
+      await router.route('greeting', '5511999', 'boa noite', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/boa noite|jantar|fechar o dia|como tá indo/i);
+    });
+
+    it('returns a thanks variant when message is "obrigado" regardless of hour', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-28T13:00:00Z')); // morning
+
+      await router.route('greeting', '5511999', 'obrigado!', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toMatch(/de nada|imagina|é nóis|disponha/i);
+      expect(message).not.toMatch(/bom dia|registr/i);
     });
   });
 });

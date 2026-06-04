@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { type IncomingMessage } from '../whatsapp/whatsapp.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
-import { IntentClassifier } from 'src/ai/intent.classifier';
+import { UsersService } from '../users/users.service';
+import { UserPendingState } from '../users/utils/user-states';
+import { IntentClassifier } from '../ai/intent.classifier';
 import { IntentRouter } from './intent.router';
 
 @Injectable()
@@ -10,8 +12,9 @@ export class MessagesHandler {
   private readonly logger = new Logger(MessagesHandler.name);
   constructor(
     private readonly onboarding: OnboardingService,
+    private readonly users: UsersService,
     private readonly classifier: IntentClassifier,
-    private readonly router: IntentRouter
+    private readonly router: IntentRouter,
   ) {}
 
   @OnEvent('whatsapp.message')
@@ -33,13 +36,32 @@ export class MessagesHandler {
     const realText = text.replace(/^\s*calito\b\s*/i, '');
 
     const phone = fromPhone.split('@')[0];
-    const result = await this.onboarding.routeMessage(phone, realText, fromPhone);
 
-    if (result === 'delegate_to_ai') {
-      const intent = await this.classifier.classify(realText);
-      this.logger.log(`Intent classificada: ${intent}`);
-      await this.router.route(intent, phone, realText, fromPhone);
+    const user = await this.users.findByPhone(phone);
+
+    if (!user) {
+      await this.onboarding.startNewUser(phone, fromPhone);
+      return;
     }
+
+    if (user.onboarding_step === UserPendingState.WaitingDeleteConfirm) {
+      await this.users.handleDeleteConfirmation(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingGoalChoice) {
+      await this.users.handleGoalChoice(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step !== null) {
+      const result = await this.onboarding.handleStep(user.onboarding_step, phone, realText, fromPhone);
+      if (result === 'handled') return;
+    }
+
+    const intent = await this.classifier.classify(realText);
+    this.logger.log(`Intent classificada: ${intent}`);
+    await this.router.route(intent, phone, realText, fromPhone);
   }
 
   private extractText(msg: IncomingMessage): string | undefined {

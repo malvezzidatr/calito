@@ -6,6 +6,7 @@ Intents (with pt-BR examples):
 - query_period: multi-day totals. Ex: "como foi minha semana?"
 - query_macro: a single macro for today. Ex: "quanta proteína comi hoje?"
 - list_meals: detailed list of today's meals (each with time). Ex: "lista minhas refeições", "detalha o que comi"
+- view_profile: show the user's own profile/targets (weight, height, goal, daily targets) — NOT consumed food. Ex: "meu perfil", "meus dados", "quais são minhas metas?"
 - update_goal: change goal. Ex: "agora quero ganhar massa"
 - edit_meal: correct a specific meal of the day. Ex: "corrige meu almoço pra arroz e carne"
 - delete_meal: delete a specific meal. Ex: "apaga meu café da manhã"

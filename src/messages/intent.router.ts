@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
+import { UsersService } from '../users/users.service';
+import { HELP_MESSAGE, UNKNOWN_VARIANTS } from './messages/general.messages';
+import { pickGreeting } from './utils/greeting.picker';
+import { pickRandom } from '../common/utils/pick-random';
 
 type IntentHandler = (_phone: string, _text: string, jid: string) => Promise<void>;
 
@@ -13,6 +17,7 @@ export class IntentRouter {
   constructor(
     private readonly whatsapp: WhatsappService,
     private readonly meals: MealsService,
+    private readonly users: UsersService,
 ) {
     this.handlers = {
       register_meal:  this.handleRegisterMeal.bind(this),
@@ -20,6 +25,7 @@ export class IntentRouter {
       query_period:   this.handleQueryPeriod.bind(this),
       query_macro:    this.handleQueryMacro.bind(this),
       list_meals:     this.handleListMeals.bind(this),
+      view_profile:   this.handleViewProfile.bind(this),
       update_goal:    this.handleUpdateGoal.bind(this),
       edit_meal:      this.handleEditMeal.bind(this),
       delete_meal:    this.handleDeleteMeal.bind(this),
@@ -59,8 +65,12 @@ export class IntentRouter {
     await this.meals.listMeals(phone, jid);
   }
 
-  private async handleUpdateGoal(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou atualizar seu objetivo! 🚧');
+  private async handleViewProfile(phone: string, _text: string, jid: string) {
+    await this.users.viewProfile(phone, jid);
+  }
+
+  private async handleUpdateGoal(phone: string, text: string, jid: string) {
+    await this.users.updateGoal(phone, text, jid);
   }
 
   private async handleEditMeal(phone: string, text: string, jid: string) {
@@ -79,8 +89,8 @@ export class IntentRouter {
     await this.meals.deleteLast(phone, jid);
   }
 
-  private async handleDeleteAccount(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou cuidar da exclusão da sua conta! 🚧');
+  private async handleDeleteAccount(phone: string, _text: string, jid: string) {
+    await this.users.requestAccountDeletion(phone, jid);
   }
 
   private async handleSubscribe(_phone: string, _text: string, jid: string) {
@@ -88,25 +98,14 @@ export class IntentRouter {
   }
 
   private async handleHelp(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te explicar tudo que sei fazer! 🚧');
+    await this.whatsapp.sendText(jid, HELP_MESSAGE);
   }
 
-  private async handleGreeting(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'E aí! Bora registrar o que comeu? 🍽️');
+  private async handleGreeting(_phone: string, text: string, jid: string) {
+    await this.whatsapp.sendText(jid, pickGreeting(text, new Date()));
   }
 
   private async handleUnknown(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(
-      jid,
-      [
-        'Não entendi muito bem 🤔 Posso te ajudar com:',
-        '',
-        '🍽️ Registrar refeições: "almocei arroz e frango"',
-        '📊 Consultar o dia/semana: "como foi meu dia?"',
-        '📋 Listar refeições do dia: "lista o que comi hoje"',
-        '🎯 Atualizar objetivo: "quero ganhar massa"',
-        '✏️ Editar/apagar refeições: "era 1 ovo não 2"',
-      ].join('\n'),
-    );
+    await this.whatsapp.sendText(jid, pickRandom(UNKNOWN_VARIANTS));
   }
 }
