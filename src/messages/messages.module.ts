@@ -5,10 +5,11 @@ import { AiModule } from 'src/ai/ai.module';
 import { WhatsappModule } from 'src/whatsapp/whatsapp.module';
 import { MealsModule } from 'src/meals/meals.module';
 import { UsersModule } from 'src/users/users.module';
+import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { IntentRouter } from './intent.router';
 
 @Module({
-  imports: [OnboardingModule, AiModule, WhatsappModule, MealsModule, UsersModule],
+  imports: [OnboardingModule, AiModule, WhatsappModule, MealsModule, UsersModule, SubscriptionModule],
   providers: [MessagesHandler, IntentRouter],
 })
 export class MessagesModule {}

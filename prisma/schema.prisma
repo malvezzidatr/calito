@@ -38,6 +38,7 @@ model User {
   status UserStatus @default(INACTIVE)
   onboarding_step String?
   subscription_id String?
+  subscription_expires_at DateTime?
 
   weight Float?
   height Float?

@@ -6,6 +6,7 @@ import { UsersService } from '../users/users.service';
 import { UserPendingState } from '../users/utils/user-states';
 import { IntentClassifier } from '../ai/intent.classifier';
 import { IntentRouter } from './intent.router';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 @Injectable()
 export class MessagesHandler {
@@ -15,6 +16,7 @@ export class MessagesHandler {
     private readonly users: UsersService,
     private readonly classifier: IntentClassifier,
     private readonly router: IntentRouter,
+    private readonly subscription: SubscriptionService,
   ) {}
 
   @OnEvent('whatsapp.message')
@@ -66,6 +68,12 @@ export class MessagesHandler {
 
     const intent = await this.classifier.classify(realText);
     this.logger.log(`Intent classificada: ${intent}`);
+
+    if (this.subscription.requiresSubscription(intent) && !this.subscription.isActive(user)) {
+      await this.subscription.sendPaywall(fromPhone);
+      return;
+    }
+
     await this.router.route(intent, phone, realText, fromPhone);
   }
 
