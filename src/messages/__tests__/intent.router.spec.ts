@@ -114,13 +114,20 @@ describe('IntentRouter', () => {
       expect(message).toContain('"corrige meu almoço pra carne com salada"');
     });
 
-    it('does NOT promise features that are still stubs (assinatura, update_goal, delete_account)', async () => {
+    it('does NOT promise features that are still stubs (assinatura, delete_account)', async () => {
       await router.route('help', '5511999', 'ajuda', '5511999@s.whatsapp.net');
 
       const [, message] = sendText.mock.calls[0];
       expect(message).not.toMatch(/assinatura|assinar|pagamento/i);
-      expect(message).not.toMatch(/mudar.*objetivo|atualizar.*objetivo/i);
       expect(message).not.toMatch(/apagar minha conta|deletar conta/i);
+    });
+
+    it('lists profile and goal capabilities now that they are implemented', async () => {
+      await router.route('help', '5511999', 'ajuda', '5511999@s.whatsapp.net');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('Perfil e metas');
+      expect(message).toContain('meu perfil');
     });
   });
 

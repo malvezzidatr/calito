@@ -1,7 +1,7 @@
 /**
  * MANUTENÇÃO: este arquivo lista APENAS o que já está implementado.
  * Toda HU nova de feature precisa atualizar HELP_MESSAGE e UNKNOWN_VARIANTS.
- * Não listar features futuras (assinatura, update_goal, delete_account) — quebra confiança do usuário.
+ * Não listar features futuras ainda em stub (assinatura) — quebra confiança do usuário.
  */
 
 import { Goal } from '@prisma/client';
@@ -212,6 +212,11 @@ export const HELP_MESSAGE = [
   '• "apaga o último"',
   '• "corrige meu almoço pra carne com salada"',
   '• "apaga o lanche das 16h"',
+  '',
+  '👤 *Perfil e metas*',
+  '• "meu perfil" (mostra seus dados e metas)',
+  '• "agora quero ganhar massa" (muda o objetivo)',
+  '• "atualiza meu peso pra 75" (recalcula as metas)',
   '',
   'É só mandar do seu jeito que eu te entendo 💪',
 ].join('\n');
