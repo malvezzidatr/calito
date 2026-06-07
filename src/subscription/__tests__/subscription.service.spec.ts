@@ -4,15 +4,16 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 
 import { User } from '@prisma/client';
 import { SubscriptionService } from '../subscription.service';
-import { PAYWALL_MESSAGE } from '../messages/subscription.messages';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
   let sendText: jest.Mock;
+  let configGet: jest.Mock;
 
   beforeEach(() => {
     sendText = jest.fn().mockResolvedValue(undefined);
-    service = new SubscriptionService({ sendText } as never);
+    configGet = jest.fn().mockReturnValue(undefined); // sem env -> usa default
+    service = new SubscriptionService({ sendText } as never, { get: configGet } as never);
   });
 
   it('isActive is true for an ACTIVE user whose subscription has not expired', () => {
@@ -31,8 +32,19 @@ describe('SubscriptionService', () => {
     expect(service.requiresSubscription('help')).toBe(false);
   });
 
-  it('sendPaywall sends the paywall message to the jid', async () => {
+  it('defaults the monthly price to 9.90 when not configured', () => {
+    expect(service.getMonthlyPriceBRL()).toBe(9.9);
+  });
+
+  it('reads the monthly price from SUBSCRIPTION_PRICE_BRL when set', () => {
+    configGet.mockReturnValue('19.90');
+    expect(service.getMonthlyPriceBRL()).toBe(19.9);
+  });
+
+  it('sendPaywall sends a paywall message with the configured price', async () => {
     await service.sendPaywall('jid-1');
-    expect(sendText).toHaveBeenCalledWith('jid-1', PAYWALL_MESSAGE);
+    const [jid, message] = sendText.mock.calls[0];
+    expect(jid).toBe('jid-1');
+    expect(message).toContain('R$ 9,90/mês');
   });
 });
