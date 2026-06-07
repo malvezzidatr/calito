@@ -4,7 +4,7 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 
 import { User } from '@prisma/client';
 import { UsersService } from '../users.service';
-import { UPDATE_GOAL_QUESTION, UPDATE_GOAL_NEEDS_PROFILE } from '../../messages/messages/general.messages';
+import { UPDATE_GOAL_QUESTION, UPDATE_GOAL_NEEDS_PROFILE, UPDATE_WEIGHT_QUESTION } from '../../messages/messages/general.messages';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -123,6 +123,66 @@ describe('UsersService', () => {
       await service.viewProfile('5511999', 'jid-1');
 
       expect(sendText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateWeight', () => {
+    it('updates the weight and recalculates targets when the message has a valid weight', async () => {
+      await service.updateWeight('5511999', 'atualiza meu peso pra 75', 'jid-1');
+
+      expect(update).toHaveBeenCalledTimes(1);
+      const [phone, data] = update.mock.calls[0];
+      expect(phone).toBe('5511999');
+      expect(data).toMatchObject({ weight: 75, onboarding_step: null });
+      expect(typeof data.calorie_goal).toBe('number');
+
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('75 kg');
+      expect(message).toContain('kcal');
+    });
+
+    it('asks for the weight and parks in WaitingWeightUpdate when none is given', async () => {
+      await service.updateWeight('5511999', 'quero mudar meu peso', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: 'waiting_weight_update' });
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_WEIGHT_QUESTION);
+      expect(findByPhone).not.toHaveBeenCalled();
+    });
+
+    it('asks again when the weight is out of the accepted range', async () => {
+      await service.updateWeight('5511999', 'meu peso é 5', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: 'waiting_weight_update' });
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_WEIGHT_QUESTION);
+    });
+
+    it('saves the weight without recalculating when the profile is incomplete', async () => {
+      findByPhone.mockResolvedValue({ ...fullProfile, height: null });
+
+      await service.updateWeight('5511999', 'peso 70', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { weight: 70, onboarding_step: null });
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('70 kg');
+      expect(message).toContain('perfil completo');
+    });
+  });
+
+  describe('handleWeightUpdate', () => {
+    it('applies a valid weight reply', async () => {
+      await service.handleWeightUpdate('5511999', '82', 'jid-1');
+
+      const [, data] = update.mock.calls[0];
+      expect(data).toMatchObject({ weight: 82, onboarding_step: null });
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('82 kg');
+    });
+
+    it('re-asks when the reply is not a valid weight', async () => {
+      await service.handleWeightUpdate('5511999', 'sei lá', 'jid-1');
+
+      expect(update).not.toHaveBeenCalled();
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_WEIGHT_QUESTION);
     });
   });
 });

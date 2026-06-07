@@ -129,6 +129,26 @@ export function formatProfile(profile: ProfileView): string {
   return lines.join('\n');
 }
 
+export const UPDATE_WEIGHT_QUESTION = '⚖️ Qual seu peso atual? Me manda em kg (ex.: 75)';
+
+export const UPDATE_WEIGHT_TECH_ERROR = 'Tive um problema técnico ao atualizar seu peso 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatWeightUpdateSuccess(weight: number, goals: GoalTargets): string {
+  return [
+    `Pronto! Atualizei seu peso pra *${weight} kg* ⚖️`,
+    '',
+    'Recalculei suas metas diárias:',
+    `🔥 ${goals.calorie_goal.toLocaleString('pt-BR')} kcal`,
+    `🥩 ${goals.protein_goal}g de proteína`,
+    `🍚 ${goals.carbs_goal}g de carboidrato`,
+    `🧈 ${goals.fat_goal}g de gordura`,
+  ].join('\n');
+}
+
+export function formatWeightSavedNoRecalc(weight: number): string {
+  return `Salvei seu novo peso (*${weight} kg*) ⚖️ Mas pra recalcular as metas eu preciso do seu perfil completo (altura, idade, sexo, atividade e objetivo). Manda "oi" pra gente fechar o cadastro 💪`;
+}
+
 export const THANKS_VARIANTS = [
   'De nada! Tô aqui pra ajudar 💪',
   'Imagina! Bora continuar firme 🔥',
