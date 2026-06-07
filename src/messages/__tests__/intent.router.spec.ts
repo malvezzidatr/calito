@@ -10,11 +10,16 @@ jest.mock('../../users/users.service', () => ({
   UsersService: class {},
 }));
 
+jest.mock('../../subscription/subscription.service', () => ({
+  SubscriptionService: class {},
+}));
+
 import { Test } from '@nestjs/testing';
 import { IntentRouter } from '../intent.router';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { MealsService } from '../../meals/meals.service';
 import { UsersService } from '../../users/users.service';
+import { SubscriptionService } from '../../subscription/subscription.service';
 
 describe('IntentRouter', () => {
   let router: IntentRouter;
@@ -31,6 +36,7 @@ describe('IntentRouter', () => {
   let updateGoal: jest.Mock;
   let updateWeight: jest.Mock;
   let viewProfile: jest.Mock;
+  let startCheckout: jest.Mock;
 
   beforeEach(async () => {
     sendText = jest.fn().mockResolvedValue(undefined);
@@ -46,6 +52,7 @@ describe('IntentRouter', () => {
     updateGoal = jest.fn().mockResolvedValue(undefined);
     updateWeight = jest.fn().mockResolvedValue(undefined);
     viewProfile = jest.fn().mockResolvedValue(undefined);
+    startCheckout = jest.fn().mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       providers: [
@@ -53,18 +60,18 @@ describe('IntentRouter', () => {
         { provide: WhatsappService, useValue: { sendText } },
         { provide: MealsService, useValue: { register, dailyResume, weeklyResume, macroResume, deleteLast, deleteMeal, editLast, editMeal } },
         { provide: UsersService, useValue: { requestAccountDeletion, updateGoal, updateWeight, viewProfile } },
+        { provide: SubscriptionService, useValue: { startCheckout } },
       ],
     }).compile();
     router = module.get(IntentRouter);
   });
 
-  it('routes the still-stubbed subscribe to its handler', async () => {
-    await router.route('subscribe', '5511999', 'qualquer', '5511999@s.whatsapp.net');
-    expect(sendText).toHaveBeenCalledTimes(1);
-    expect(sendText).toHaveBeenCalledWith(
-      '5511999@s.whatsapp.net',
-      expect.stringContaining('link de assinatura'),
-    );
+  it('routes subscribe to SubscriptionService.startCheckout', async () => {
+    await router.route('subscribe', '5511999', 'quero assinar', '5511999@s.whatsapp.net');
+
+    expect(startCheckout).toHaveBeenCalledTimes(1);
+    expect(startCheckout).toHaveBeenCalledWith('5511999', '5511999@s.whatsapp.net');
+    expect(sendText).not.toHaveBeenCalled();
   });
 
   it('routes view_profile to UsersService.viewProfile', async () => {

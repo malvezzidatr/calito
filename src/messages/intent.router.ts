@@ -3,6 +3,7 @@ import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
 import { UsersService } from '../users/users.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { HELP_MESSAGE, UNKNOWN_VARIANTS } from './messages/general.messages';
 import { pickGreeting } from './utils/greeting.picker';
 import { pickRandom } from '../common/utils/pick-random';
@@ -18,6 +19,7 @@ export class IntentRouter {
     private readonly whatsapp: WhatsappService,
     private readonly meals: MealsService,
     private readonly users: UsersService,
+    private readonly subscription: SubscriptionService,
 ) {
     this.handlers = {
       register_meal:  this.handleRegisterMeal.bind(this),
@@ -98,8 +100,8 @@ export class IntentRouter {
     await this.users.requestAccountDeletion(phone, jid);
   }
 
-  private async handleSubscribe(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mandar o link de assinatura! 🚧');
+  private async handleSubscribe(phone: string, _text: string, jid: string) {
+    await this.subscription.startCheckout(phone, jid);
   }
 
   private async handleHelp(_phone: string, _text: string, jid: string) {
