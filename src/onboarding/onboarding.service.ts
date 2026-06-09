@@ -20,6 +20,7 @@ import { validateNutritionistGoals } from './utils/nutritionist-goals.validation
 import { isNutritionistProfileClarification, NUTRITIONIST_PROFILE_PROMPT, NutritionistProfileResult } from './utils/nutritionist-profile.prompt';
 import { validateNutritionistProfile } from './utils/nutritionist-profile.validation';
 import { parseYesNo } from '../common/utils/yes-no.parser';
+import { SubscriptionService } from 'src/subscription/subscription.service';
 
 @Injectable()
 export class OnboardingService {
@@ -30,6 +31,7 @@ export class OnboardingService {
         private readonly users: UsersRepository,
         private readonly whatsapp: WhatsappService,
         private readonly ai: AiService,
+        private readonly subscription: SubscriptionService,
     ) {
         this.handlers = {
             [OnboardingStep.WaitingConsent]:                    this.handleWaitingConsent.bind(this),
@@ -176,6 +178,7 @@ export class OnboardingService {
                 carbs:   user.carbs_goal,
                 fat:     user.fat_goal,
             }));
+            await this.subscription.sendPaywall(jid);
             return;
         }
         if (choice === 'no') {
@@ -329,5 +332,6 @@ export class OnboardingService {
             onboarding_step: null,
         });
         await this.whatsapp.sendText(jid, welcomeMessage(goals));
+        await this.subscription.sendPaywall(jid);
     }
 }
