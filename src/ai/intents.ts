@@ -6,6 +6,7 @@ export const INTENTS = [
   'list_meals',
   'view_profile',
   'update_goal',
+  'update_weight',
   'edit_meal',
   'delete_meal',
   'edit_last',

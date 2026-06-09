@@ -3,6 +3,7 @@ import { Intent } from '../ai/intents';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { MealsService } from '../meals/meals.service';
 import { UsersService } from '../users/users.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { HELP_MESSAGE, UNKNOWN_VARIANTS } from './messages/general.messages';
 import { pickGreeting } from './utils/greeting.picker';
 import { pickRandom } from '../common/utils/pick-random';
@@ -18,6 +19,7 @@ export class IntentRouter {
     private readonly whatsapp: WhatsappService,
     private readonly meals: MealsService,
     private readonly users: UsersService,
+    private readonly subscription: SubscriptionService,
 ) {
     this.handlers = {
       register_meal:  this.handleRegisterMeal.bind(this),
@@ -27,6 +29,7 @@ export class IntentRouter {
       list_meals:     this.handleListMeals.bind(this),
       view_profile:   this.handleViewProfile.bind(this),
       update_goal:    this.handleUpdateGoal.bind(this),
+      update_weight:  this.handleUpdateWeight.bind(this),
       edit_meal:      this.handleEditMeal.bind(this),
       delete_meal:    this.handleDeleteMeal.bind(this),
       edit_last:      this.handleEditLast.bind(this),
@@ -73,6 +76,10 @@ export class IntentRouter {
     await this.users.updateGoal(phone, text, jid);
   }
 
+  private async handleUpdateWeight(phone: string, text: string, jid: string) {
+    await this.users.updateWeight(phone, text, jid);
+  }
+
   private async handleEditMeal(phone: string, text: string, jid: string) {
     await this.meals.editMeal(phone, text, jid);
   }
@@ -93,8 +100,8 @@ export class IntentRouter {
     await this.users.requestAccountDeletion(phone, jid);
   }
 
-  private async handleSubscribe(_phone: string, _text: string, jid: string) {
-    await this.whatsapp.sendText(jid, 'Em breve vou te mandar o link de assinatura! 🚧');
+  private async handleSubscribe(phone: string, _text: string, jid: string) {
+    await this.subscription.startCheckout(phone, jid);
   }
 
   private async handleHelp(_phone: string, _text: string, jid: string) {

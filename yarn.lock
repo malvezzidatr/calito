@@ -4380,6 +4380,11 @@ memfs@^3.4.1:
   dependencies:
     fs-monkey "^1.0.4"
 
+mercadopago@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/mercadopago/-/mercadopago-3.1.0.tgz#93ebdd9e0ffb4b0c3d732175c9781ef1cd22e718"
+  integrity sha512-3VB8AFpE8eZgm67e22kVbR19k9JC/1j66voLSh7m9tPvkASuRKNH2Y7yb793rO+fIpMtvl+wBj27UY4jIItWYA==
+
 merge-descriptors@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/merge-descriptors/-/merge-descriptors-2.0.0.tgz#ea922f660635a2249ee565e0449f951e6b603808"

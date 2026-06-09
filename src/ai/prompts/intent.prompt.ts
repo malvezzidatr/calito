@@ -8,6 +8,7 @@ Intents (with pt-BR examples):
 - list_meals: detailed list of today's meals (each with time). Ex: "lista minhas refeições", "detalha o que comi"
 - view_profile: show the user's own profile/targets (weight, height, goal, daily targets) — NOT consumed food. Ex: "meu perfil", "meus dados", "quais são minhas metas?"
 - update_goal: change goal. Ex: "agora quero ganhar massa"
+- update_weight: user reports a NEW body weight (to update their profile, NOT a food amount). Ex: "atualiza meu peso pra 75", "agora tô com 80kg", "me pesei, 78 quilos"
 - edit_meal: correct a specific meal of the day. Ex: "corrige meu almoço pra arroz e carne"
 - delete_meal: delete a specific meal. Ex: "apaga meu café da manhã"
 - edit_last: correct the last logged meal. Ex: "era 1 ovo, não 2"

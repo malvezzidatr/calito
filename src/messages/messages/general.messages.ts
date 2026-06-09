@@ -1,7 +1,7 @@
 /**
  * MANUTENÇÃO: este arquivo lista APENAS o que já está implementado.
  * Toda HU nova de feature precisa atualizar HELP_MESSAGE e UNKNOWN_VARIANTS.
- * Não listar features futuras (assinatura, update_goal, delete_account) — quebra confiança do usuário.
+ * Não listar features futuras ainda em stub (assinatura) — quebra confiança do usuário.
  */
 
 import { Goal } from '@prisma/client';
@@ -75,8 +75,9 @@ export const UPDATE_GOAL_QUESTION = [
   '• *ganhar massa*',
 ].join('\n');
 
-export const UPDATE_GOAL_NEEDS_PROFILE =
-  'Pra recalcular suas metas eu preciso do seu perfil completo (peso, altura, idade, sexo e nível de atividade), mas tá faltando algum dado 😕 Manda "oi" pra gente refazer seu cadastro.';
+export function formatGoalUpdatedKeepingTargets(goal: Goal): string {
+  return `Pronto, atualizei seu objetivo pra *${GOAL_LABELS[goal]}* 🎯 Como suas metas foram definidas no seu cadastro, elas continuam as mesmas. 👌`;
+}
 
 export const UPDATE_GOAL_TECH_ERROR = 'Tive um problema técnico ao atualizar seu objetivo 😬 Pode tentar de novo daqui a pouquinho?';
 
@@ -127,6 +128,26 @@ export function formatProfile(profile: ProfileView): string {
   }
 
   return lines.join('\n');
+}
+
+export const UPDATE_WEIGHT_QUESTION = '⚖️ Qual seu peso atual? Me manda em kg (ex.: 75)';
+
+export const UPDATE_WEIGHT_TECH_ERROR = 'Tive um problema técnico ao atualizar seu peso 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatWeightUpdateSuccess(weight: number, goals: GoalTargets): string {
+  return [
+    `Pronto! Atualizei seu peso pra *${weight} kg* ⚖️`,
+    '',
+    'Recalculei suas metas diárias:',
+    `🔥 ${goals.calorie_goal.toLocaleString('pt-BR')} kcal`,
+    `🥩 ${goals.protein_goal}g de proteína`,
+    `🍚 ${goals.carbs_goal}g de carboidrato`,
+    `🧈 ${goals.fat_goal}g de gordura`,
+  ].join('\n');
+}
+
+export function formatWeightSavedKeepingTargets(weight: number): string {
+  return `Atualizei seu peso pra *${weight} kg* ⚖️ Como suas metas foram definidas no seu cadastro, elas continuam as mesmas. 👌`;
 }
 
 export const THANKS_VARIANTS = [
@@ -192,6 +213,11 @@ export const HELP_MESSAGE = [
   '• "apaga o último"',
   '• "corrige meu almoço pra carne com salada"',
   '• "apaga o lanche das 16h"',
+  '',
+  '👤 *Perfil e metas*',
+  '• "meu perfil" (mostra seus dados e metas)',
+  '• "agora quero ganhar massa" (muda o objetivo)',
+  '• "atualiza meu peso pra 75" (recalcula as metas)',
   '',
   'É só mandar do seu jeito que eu te entendo 💪',
 ].join('\n');
