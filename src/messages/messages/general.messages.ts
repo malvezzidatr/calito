@@ -75,8 +75,9 @@ export const UPDATE_GOAL_QUESTION = [
   '• *ganhar massa*',
 ].join('\n');
 
-export const UPDATE_GOAL_NEEDS_PROFILE =
-  'Pra recalcular suas metas eu preciso do seu perfil completo (peso, altura, idade, sexo e nível de atividade), mas tá faltando algum dado 😕 Manda "oi" pra gente refazer seu cadastro.';
+export function formatGoalUpdatedKeepingTargets(goal: Goal): string {
+  return `Pronto, atualizei seu objetivo pra *${GOAL_LABELS[goal]}* 🎯 Como suas metas foram definidas no seu cadastro, elas continuam as mesmas. 👌`;
+}
 
 export const UPDATE_GOAL_TECH_ERROR = 'Tive um problema técnico ao atualizar seu objetivo 😬 Pode tentar de novo daqui a pouquinho?';
 
@@ -145,8 +146,8 @@ export function formatWeightUpdateSuccess(weight: number, goals: GoalTargets): s
   ].join('\n');
 }
 
-export function formatWeightSavedNoRecalc(weight: number): string {
-  return `Salvei seu novo peso (*${weight} kg*) ⚖️ Mas pra recalcular as metas eu preciso do seu perfil completo (altura, idade, sexo, atividade e objetivo). Manda "oi" pra gente fechar o cadastro 💪`;
+export function formatWeightSavedKeepingTargets(weight: number): string {
+  return `Atualizei seu peso pra *${weight} kg* ⚖️ Como suas metas foram definidas no seu cadastro, elas continuam as mesmas. 👌`;
 }
 
 export const THANKS_VARIANTS = [

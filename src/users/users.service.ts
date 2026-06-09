@@ -12,13 +12,13 @@ import {
   DELETE_ACCOUNT_SUCCESS,
   DELETE_ACCOUNT_TECH_ERROR,
   UPDATE_GOAL_QUESTION,
-  UPDATE_GOAL_NEEDS_PROFILE,
   UPDATE_GOAL_TECH_ERROR,
   UPDATE_WEIGHT_QUESTION,
   UPDATE_WEIGHT_TECH_ERROR,
   formatUpdateGoalSuccess,
   formatWeightUpdateSuccess,
-  formatWeightSavedNoRecalc,
+  formatGoalUpdatedKeepingTargets,
+  formatWeightSavedKeepingTargets,
   formatProfile,
 } from '../messages/messages/general.messages';
 
@@ -120,8 +120,10 @@ export class UsersService {
 
     const goals = this.buildGoalsFor(user, { goal });
     if (goals === null) {
-      await this.usersRepository.update(phone, { onboarding_step: null });
-      await this.whatsapp.sendText(jid, UPDATE_GOAL_NEEDS_PROFILE);
+      // Perfil sem dados antropométricos (ex.: veio do fluxo nutricionista):
+      // não dá pra recalcular, então só registra o novo objetivo e mantém as metas.
+      await this.usersRepository.update(phone, { goal, onboarding_step: null });
+      await this.whatsapp.sendText(jid, formatGoalUpdatedKeepingTargets(goal));
       return;
     }
 
@@ -144,8 +146,9 @@ export class UsersService {
 
     try {
       if (goals === null) {
+        // Perfil sem dados pra recalcular (fluxo nutricionista): salva o peso e mantém as metas.
         await this.usersRepository.update(phone, { weight, onboarding_step: null });
-        await this.whatsapp.sendText(jid, formatWeightSavedNoRecalc(weight));
+        await this.whatsapp.sendText(jid, formatWeightSavedKeepingTargets(weight));
         return;
       }
       await this.usersRepository.update(phone, { weight, ...goals, onboarding_step: null });

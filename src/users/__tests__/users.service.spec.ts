@@ -4,7 +4,7 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 
 import { User } from '@prisma/client';
 import { UsersService } from '../users.service';
-import { UPDATE_GOAL_QUESTION, UPDATE_GOAL_NEEDS_PROFILE, UPDATE_WEIGHT_QUESTION } from '../../messages/messages/general.messages';
+import { UPDATE_GOAL_QUESTION, UPDATE_WEIGHT_QUESTION } from '../../messages/messages/general.messages';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -57,14 +57,16 @@ describe('UsersService', () => {
       expect(findByPhone).not.toHaveBeenCalled();
     });
 
-    it('does not recalculate when the profile is incomplete', async () => {
+    it('updates the goal but keeps targets when the profile is incomplete (nutricionista)', async () => {
       findByPhone.mockResolvedValue({ ...fullProfile, weight: null });
 
       await service.updateGoal('5511999', 'quero emagrecer', 'jid-1');
 
       expect(update).toHaveBeenCalledTimes(1);
-      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: null });
-      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_GOAL_NEEDS_PROFILE);
+      expect(update).toHaveBeenCalledWith('5511999', { goal: 'LOSE', onboarding_step: null });
+      const [, message] = sendText.mock.calls[0];
+      expect(message).toContain('emagrecer');
+      expect(message).toContain('continuam as mesmas');
     });
   });
 
@@ -164,7 +166,7 @@ describe('UsersService', () => {
       expect(update).toHaveBeenCalledWith('5511999', { weight: 70, onboarding_step: null });
       const [, message] = sendText.mock.calls[0];
       expect(message).toContain('70 kg');
-      expect(message).toContain('perfil completo');
+      expect(message).toContain('continuam as mesmas');
     });
   });
 
