@@ -22,6 +22,15 @@ export function formatTrialStarted(trialEndsAt: Date, trialDays: number): string
   ].join('\n');
 }
 
+export function formatTrialEndingReminder(priceBRL: number): string {
+  return [
+    '⏳ Seu teste grátis do Calito termina amanhã!',
+    '',
+    `Pra não perder o registro das suas refeições, garante a assinatura por ${formatBRL(priceBRL)}/mês.`,
+    'Manda *assinar* que eu já te passo o Pix 🚀',
+  ].join('\n');
+}
+
 export function formatPaywallMessage(priceBRL: number): string {
   return [
     '🔒 Seu teste grátis do Calito chegou ao fim 🙌',
