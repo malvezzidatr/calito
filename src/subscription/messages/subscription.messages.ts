@@ -2,12 +2,32 @@ function formatBRL(value: number): string {
   return `R$ ${value.toFixed(2).replace('.', ',')}`;
 }
 
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: 'America/Sao_Paulo',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+function formatDate(date: Date): string {
+  return dateFormatter.format(date);
+}
+
+export function formatTrialStarted(trialEndsAt: Date, trialDays: number): string {
+  return [
+    `🎁 Seus ${trialDays} dias grátis começaram!`,
+    '',
+    `Você tem o Calito completo até ${formatDate(trialEndsAt)} — registra à vontade.`,
+    'Quando o teste acabar eu te aviso, aí é só assinar pra continuar. Bora! 💪',
+  ].join('\n');
+}
+
 export function formatPaywallMessage(priceBRL: number): string {
   return [
-    '🔒 Pra continuar usando o Calito você precisa de uma assinatura ativa.',
+    '🔒 Seu teste grátis do Calito chegou ao fim 🙌',
     '',
-    `Por apenas ${formatBRL(priceBRL)}/mês você libera tudo 💪`,
-    'Manda *assinar* pra ativar.',
+    `Pra continuar registrando suas refeições, ativa a assinatura por apenas ${formatBRL(priceBRL)}/mês.`,
+    'Manda *assinar* pra continuar 💪',
   ].join('\n');
 }
 
