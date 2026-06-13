@@ -39,6 +39,7 @@ model User {
   onboarding_step String?
   subscription_id String?
   subscription_expires_at DateTime?
+  trial_ends_at DateTime?
 
   weight Float?
   height Float?

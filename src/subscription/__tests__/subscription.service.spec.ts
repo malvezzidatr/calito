@@ -62,6 +62,25 @@ describe('SubscriptionService', () => {
     });
   });
 
+  describe('startTrial', () => {
+    it('persists a future trial end and announces the free days', async () => {
+      await service.startTrial('5511999', 'jid-1');
+
+      const [phone, data] = update.mock.calls[0];
+      expect(phone).toBe('5511999');
+      expect(data.trial_ends_at.getTime()).toBeGreaterThan(Date.now());
+      expect(sendText).toHaveBeenCalledWith('jid-1', expect.stringContaining('dias grátis'));
+    });
+
+    it('grants exactly 3 days of trial', async () => {
+      const before = Date.now();
+      await service.startTrial('5511999', 'jid-1');
+      const trialEndsAt: Date = update.mock.calls[0][1].trial_ends_at;
+      const days = (trialEndsAt.getTime() - before) / (24 * 60 * 60 * 1000);
+      expect(days).toBeCloseTo(3, 1);
+    });
+  });
+
   describe('startCheckout', () => {
     it('creates a Pix charge, stores the payment id and sends the copia-e-cola', async () => {
       createPixCharge.mockResolvedValue({ paymentId: 'pay-1', qrCode: 'PIXCODE', qrCodeBase64: 'b64' });

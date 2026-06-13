@@ -4,19 +4,29 @@ import { Intent } from '../../ai/intents';
 type SubscriptionView = {
   status: UserStatus;
   subscription_expires_at: Date | null;
+  trial_ends_at?: Date | null;
 };
 
-/**
- * Portão único de acesso: a assinatura está ativa se o usuário está marcado
- * como ACTIVE e a validade ainda não passou. Para adicionar trial/uso grátis
- * no futuro, basta acrescentar uma cláusula aqui (ex.: free_meals_remaining > 0).
- */
-export function isSubscriptionActive(user: SubscriptionView, now: Date): boolean {
+/** Assinatura paga ativa: marcado como ACTIVE e a validade ainda não passou. */
+function isPaidActive(user: SubscriptionView, now: Date): boolean {
   return (
     user.status === 'ACTIVE' &&
     user.subscription_expires_at !== null &&
     user.subscription_expires_at.getTime() > now.getTime()
   );
+}
+
+/** Trial em andamento: o fim do trial (3 dias do onboarding) ainda não passou. */
+export function isInTrial(user: Pick<SubscriptionView, 'trial_ends_at'>, now: Date): boolean {
+  return user.trial_ends_at != null && user.trial_ends_at.getTime() > now.getTime();
+}
+
+/**
+ * Portão único de acesso: liberado quando há assinatura paga ativa OU o trial
+ * ainda está valendo.
+ */
+export function isSubscriptionActive(user: SubscriptionView, now: Date): boolean {
+  return isPaidActive(user, now) || isInTrial(user, now);
 }
 
 const FREE_INTENTS: ReadonlySet<Intent> = new Set<Intent>([

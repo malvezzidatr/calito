@@ -178,7 +178,7 @@ export class OnboardingService {
                 carbs:   user.carbs_goal,
                 fat:     user.fat_goal,
             }));
-            await this.subscription.sendPaywall(jid);
+            await this.subscription.startTrial(phone, jid);
             return;
         }
         if (choice === 'no') {
@@ -332,6 +332,6 @@ export class OnboardingService {
             onboarding_step: null,
         });
         await this.whatsapp.sendText(jid, welcomeMessage(goals));
-        await this.subscription.sendPaywall(jid);
+        await this.subscription.startTrial(phone, jid);
     }
 }

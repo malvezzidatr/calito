@@ -10,11 +10,13 @@ import {
   formatPaywallMessage,
   formatCheckoutMessage,
   formatSubscriptionActivated,
+  formatTrialStarted,
   CHECKOUT_ERROR,
 } from './messages/subscription.messages';
 
 const DEFAULT_MONTHLY_PRICE_BRL = 9.9;
 const SUBSCRIPTION_DAYS = 30;
+const TRIAL_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const APPROVED = 'approved';
 
@@ -45,6 +47,17 @@ export class SubscriptionService {
 
   async sendPaywall(jid: string): Promise<void> {
     await this.whatsapp.sendText(jid, formatPaywallMessage(this.getMonthlyPriceBRL()));
+  }
+
+  /**
+   * Concede o trial de 3 dias no fim do onboarding e avisa o usuário. O acesso
+   * durante o trial é resolvido por `trial_ends_at` em isSubscriptionActive — o
+   * status segue INACTIVE (reservado pra assinatura paga).
+   */
+  async startTrial(phone: string, jid: string): Promise<void> {
+    const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * DAY_MS);
+    await this.usersRepository.update(phone, { trial_ends_at: trialEndsAt });
+    await this.whatsapp.sendText(jid, formatTrialStarted(trialEndsAt, TRIAL_DAYS));
   }
 
   async startCheckout(phone: string, jid: string): Promise<void> {
