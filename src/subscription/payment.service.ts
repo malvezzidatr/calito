@@ -11,8 +11,9 @@ export type PixCharge = {
 
 export type PaymentInfo = {
   id: string;
-  status: string; // 'approved' | 'pending' | 'rejected' | ...
+  status: string; // 'approved' | 'pending' | 'rejected' | 'cancelled' | ...
   externalReference: string | null;
+  qrCode: string; // copia-e-cola atual; vazio quando o Pix não está mais disponível
 };
 
 @Injectable()
@@ -65,6 +66,7 @@ export class PaymentService {
       id: String(result.id),
       status: result.status ?? 'unknown',
       externalReference: result.external_reference ?? null,
+      qrCode: result.point_of_interaction?.transaction_data?.qr_code ?? '',
     };
   }
 }

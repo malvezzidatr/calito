@@ -53,6 +53,14 @@ export function formatCheckoutMessage(priceBRL: number): string {
 
 export const CHECKOUT_ERROR = 'Tive um problema ao gerar o Pix 😬 Tenta de novo daqui a pouquinho?';
 
+export const CHECKOUT_STILL_PENDING = [
+  '💳 Você ainda tem um Pix em aberto!',
+  '',
+  'É só pagar o código abaixo 👇 que eu libero tudo na hora 🚀',
+].join('\n');
+
+export const PIX_EXPIRED_REISSUE = 'Seu Pix anterior expirou ⏱️ Gerei um novo agora, é só pagar 👇';
+
 export function formatSubscriptionActivated(expiresAt: Date): string {
   const date = expiresAt.toLocaleDateString('pt-BR');
   return [
