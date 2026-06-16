@@ -6,6 +6,12 @@
 
 import { Goal } from '@prisma/client';
 
+export const MEDIA_NOT_SUPPORTED = [
+  'Ainda não consigo ler foto, áudio ou figurinha 🙈',
+  '',
+  'Me conta por texto o que você comeu que eu calculo tudo 💪',
+].join('\n');
+
 type GoalTargets = {
   calorie_goal: number;
   protein_goal: number;
