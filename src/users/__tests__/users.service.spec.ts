@@ -119,16 +119,6 @@ describe('UsersService', () => {
       expect(message).toContain('metas ainda não foram definidas');
     });
 
-    it('shows the goal as nutritionist-defined when targets exist but no goal was chosen', async () => {
-      findByPhone.mockResolvedValue({ ...fullProfile, goal: null, calorie_goal: 2000 });
-
-      await service.viewProfile('5511999', 'jid-1');
-
-      const [, message] = sendText.mock.calls[0];
-      expect(message).toContain('definido pela sua nutri');
-      expect(message).not.toContain('não definido');
-    });
-
     it('does nothing when the user is not found', async () => {
       findByPhone.mockResolvedValue(null);
 

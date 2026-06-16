@@ -104,13 +104,6 @@ type ProfileView = {
   fat_goal: number | null;
 };
 
-function formatGoalLabel(profile: ProfileView): string {
-  if (profile.goal !== null) return GOAL_LABELS[profile.goal];
-  // Fluxo nutricionista: tem metas mas nunca escolheu objetivo (LOSE/MAINTAIN/GAIN).
-  if (profile.calorie_goal !== null) return 'definido pela sua nutri';
-  return 'não definido';
-}
-
 export function formatProfile(profile: ProfileView): string {
   const lines: string[] = [
     '👤 Seu perfil',
@@ -118,7 +111,7 @@ export function formatProfile(profile: ProfileView): string {
     `⚖️ Peso: ${profile.weight !== null ? `${profile.weight} kg` : 'não informado'}`,
     `📏 Altura: ${profile.height !== null ? `${profile.height} cm` : 'não informada'}`,
     `🎂 Idade: ${profile.age !== null ? `${profile.age} anos` : 'não informada'}`,
-    `🎯 Objetivo: ${formatGoalLabel(profile)}`,
+    `🎯 Objetivo: ${profile.goal !== null ? GOAL_LABELS[profile.goal] : 'não definido'}`,
   ];
 
   if (profile.calorie_goal !== null) {

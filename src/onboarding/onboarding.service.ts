@@ -9,8 +9,8 @@ import {
   GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION,
   INVALID_OPTION, LGPD_MESSAGE, NUTRITIONIST_CHOICE_QUESTION, NUTRITIONIST_GOALS_PARSE_ERROR,
   NUTRITIONIST_GOALS_QUESTION, NUTRITIONIST_GOALS_REDO, NUTRITIONIST_PROFILE_PARSE_ERROR,
-  NUTRITIONIST_PROFILE_QUESTION, NUTRITIONIST_PROFILE_REDO, nutritionistWelcomeMessage,
-  WEIGHT_QUESTION, welcomeMessage,
+  NUTRITIONIST_GOAL_QUESTION, NUTRITIONIST_PROFILE_QUESTION, NUTRITIONIST_PROFILE_REDO,
+  nutritionistWelcomeMessage, WEIGHT_QUESTION, welcomeMessage,
 } from './utils/onboarding.messages';
 import { calcGoals } from './utils/nutrition.calculator';
 import { parseDecimal, parseHeightCm, parseInteger } from './utils/numeric.parser';
@@ -36,6 +36,7 @@ export class OnboardingService {
         this.handlers = {
             [OnboardingStep.WaitingConsent]:                    this.handleWaitingConsent.bind(this),
             [OnboardingStep.WaitingNutritionistChoice]:         this.handleWaitingNutritionistChoice.bind(this),
+            [OnboardingStep.WaitingNutritionistGoal]:           this.handleWaitingNutritionistGoal.bind(this),
             [OnboardingStep.WaitingNutritionistGoals]:          this.handleWaitingNutritionistGoals.bind(this),
             [OnboardingStep.WaitingNutritionistGoalsConfirm]:   this.handleWaitingNutritionistGoalsConfirm.bind(this),
             [OnboardingStep.WaitingNutritionistProfile]:        this.handleWaitingNutritionistProfile.bind(this),
@@ -88,8 +89,8 @@ export class OnboardingService {
     private async handleWaitingNutritionistChoice(phone: string, text: string, jid: string) {
         const choice = parseYesNo(text);
         if (choice === 'yes') {
-            await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingNutritionistGoals });
-            await this.whatsapp.sendText(jid, NUTRITIONIST_GOALS_QUESTION);
+            await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingNutritionistGoal });
+            await this.whatsapp.sendText(jid, NUTRITIONIST_GOAL_QUESTION);
             return;
         }
         if (choice === 'no') {
@@ -98,6 +99,21 @@ export class OnboardingService {
             return;
         }
         await this.whatsapp.sendText(jid, CONFIRM_INVALID);
+    }
+
+    private async handleWaitingNutritionistGoal(phone: string, text: string, jid: string) {
+        const goal = matchGoal(text);
+        if (goal === null) {
+            await this.whatsapp.sendText(jid, INVALID_OPTION);
+            await this.whatsapp.sendText(jid, NUTRITIONIST_GOAL_QUESTION);
+            return;
+        }
+
+        await this.users.update(phone, {
+            goal,
+            onboarding_step: OnboardingStep.WaitingNutritionistGoals,
+        });
+        await this.whatsapp.sendText(jid, NUTRITIONIST_GOALS_QUESTION);
     }
 
     private async handleWaitingNutritionistGoals(phone: string, text: string, jid: string) {

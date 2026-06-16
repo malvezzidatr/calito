@@ -19,7 +19,13 @@ export const NUTRITIONIST_CHOICE_QUESTION = `Antes de seguir, me conta uma coisa
 
 Você já tem acompanhamento com nutricionista? (sim/não)`
 
-export const NUTRITIONIST_GOALS_QUESTION = `Show! Pra usar a prescrição da sua nutri, me manda os 4 valores das metas diárias numa mensagem só 🎯
+export const NUTRITIONIST_GOAL_QUESTION = `Show! Antes das metas, qual seu objetivo? 🎯
+
+1 - Emagrecer
+2 - Manter o peso
+3 - Ganhar massa`
+
+export const NUTRITIONIST_GOALS_QUESTION = `Boa! Agora, pra usar a prescrição da sua nutri, me manda os 4 valores das metas diárias numa mensagem só 🎯
 
 Ex: 2000 kcal, 150g de proteína, 200g de carbo, 60g de gordura`
 

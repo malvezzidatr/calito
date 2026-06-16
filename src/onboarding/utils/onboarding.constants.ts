@@ -1,6 +1,7 @@
 export const OnboardingStep = {
     WaitingConsent:                  'waiting_consent',
     WaitingNutritionistChoice:       'waiting_nutritionist_choice',
+    WaitingNutritionistGoal:         'waiting_nutritionist_goal',
     WaitingNutritionistGoals:        'waiting_nutritionist_goals',
     WaitingNutritionistGoalsConfirm: 'waiting_nutritionist_goals_confirm',
     WaitingNutritionistProfile:      'waiting_nutritionist_profile',
