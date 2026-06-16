@@ -199,7 +199,8 @@ function formatWeekday(spDayStart: Date): string {
 export function formatMealConfirmation(mealType: MealType, extraction: MealExtraction, praise: string): string {
   const label = MEAL_LABELS[mealType];
   return [
-    `✓ ${label} — ${extraction.calories}kcal`,
+    `✓ ${label} — ${extraction.description}`,
+    `🔥 ${extraction.calories}kcal`,
     `🥩 P: ${extraction.protein}g`,
     `🍚 C: ${extraction.carbs}g`,
     `🧈 G: ${extraction.fat}g`,
