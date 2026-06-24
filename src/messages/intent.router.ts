@@ -26,6 +26,7 @@ export class IntentRouter {
       query_daily:    this.handleQueryDaily.bind(this),
       query_period:   this.handleQueryPeriod.bind(this),
       query_macro:    this.handleQueryMacro.bind(this),
+      query_food:     this.handleQueryFood.bind(this),
       list_meals:     this.handleListMeals.bind(this),
       view_profile:   this.handleViewProfile.bind(this),
       update_goal:    this.handleUpdateGoal.bind(this),
@@ -62,6 +63,10 @@ export class IntentRouter {
 
   private async handleQueryMacro(phone: string, text: string, jid: string) {
     await this.meals.macroResume(phone, text, jid);
+  }
+
+  private async handleQueryFood(_phone: string, text: string, jid: string) {
+    await this.meals.queryFood(text, jid);
   }
 
   private async handleListMeals(phone: string, _text: string, jid: string) {

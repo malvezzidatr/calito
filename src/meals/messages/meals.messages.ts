@@ -12,6 +12,9 @@ export const EDIT_REFERENCE_PARSE_FAILED   = 'Não entendi qual refeição você
 
 export const MACRO_NOT_RECOGNIZED = 'Posso te mostrar calorias, proteína, carboidrato ou gordura. Qual deles? 🤔';
 
+export const FOOD_LOOKUP_PARSE_FAILED = 'Não entendi qual alimento você quer consultar 🤔 Tenta assim: "calorias de 100g de arroz" ou "quanto tem de proteína no ovo?"';
+export const FOOD_LOOKUP_CALC_FAILED  = 'Não consegui calcular esse alimento 🤔 Pode ser mais específico?';
+
 export const EMPTY_DELETE_MESSAGE = 'Não tenho nada pra apagar 🤔';
 export const EMPTY_EDIT_MESSAGE   = 'Não tenho nada pra editar 🤔';
 export const VAGUE_EDIT_MESSAGE   = 'Não entendi o que você quer mudar 🤔 Me diz junto, ex: "era 1 ovo, não 2"';

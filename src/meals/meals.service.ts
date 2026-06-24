@@ -13,12 +13,14 @@ import { describeFromFoods, stripMealVerbs } from './utils/meal.text';
 import { ParsedMessagesRepository } from './parsed-messages.repository';
 import { normalize } from '../foods/utils/food.matcher';
 import { pickPraise, pickGoalAwarePraise, pickDailyResumePraise, subtractMeal, pickWeeklyResumePraise } from './utils/meal.praise';
-import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, formatEditConfirmation, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatEditNotFound, formatEditAmbiguous, formatEditTimeNotFound, formatDateLabel } from './utils/meal.format';
+import { formatMealConfirmation, formatDailyResume, DailyGoals, formatWeeklyResume, formatMacroResume, formatDeleteConfirmation, formatEditConfirmation, formatMealList, formatMealTime, formatDeleteNotFound, formatDeleteAmbiguous, formatDeleteTimeNotFound, formatEditNotFound, formatEditAmbiguous, formatEditTimeNotFound, formatDateLabel, formatFoodLookup } from './utils/meal.format';
 import {
     DELETE_REFERENCE_PARSE_FAILED,
     EDIT_REFERENCE_PARSE_FAILED,
     EMPTY_DELETE_MESSAGE,
     EMPTY_EDIT_MESSAGE,
+    FOOD_LOOKUP_CALC_FAILED,
+    FOOD_LOOKUP_PARSE_FAILED,
     MACRO_NOT_RECOGNIZED,
     MEAL_CALC_FAILED,
     MEAL_EDIT_CALC_FAILED,
@@ -676,6 +678,34 @@ export class MealsService {
         } catch (err) {
             this.logger.warn(`[parser] cache-upsert-fail: ${(err as Error).message}`);
         }
+    }
+
+    async queryFood(text: string, jid: string) {
+        const parsed = await this.runParser(text);
+        if (parsed === null) {
+            await this.whatsappService.sendText(jid, FOOD_LOOKUP_PARSE_FAILED);
+            return;
+        }
+        if (isMealParserClarification(parsed)) {
+            await this.whatsappService.sendText(jid, parsed.needs_clarification);
+            return;
+        }
+
+        const calc = await this.foodsService.calculateWithFallback(parsed.foods);
+
+        if (calc.matched.length === 0 && calc.estimated.length === 0) {
+            await this.whatsappService.sendText(jid, FOOD_LOOKUP_CALC_FAILED);
+            return;
+        }
+
+        const description = parsed.foods.map((f) => `${f.quantity}${f.unit} ${f.food}`).join(' + ');
+        await this.whatsappService.sendText(jid, formatFoodLookup({
+            description,
+            calories: calc.totals.calories,
+            protein:  calc.totals.protein,
+            carbs:    calc.totals.carbs,
+            fat:      calc.totals.fat,
+        }));
     }
 
     private async withUser(phone: string, fn: (user: User) => Promise<void>): Promise<void> {
