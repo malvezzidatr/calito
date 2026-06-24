@@ -1,6 +1,7 @@
 import { Goals } from "./nutrition.calculator"
 import { NutritionistGoalsExtraction } from "./nutritionist-goals.prompt"
 import { NutritionistProfileExtraction } from "./nutritionist-profile.prompt"
+import { LGPD_CONTROLLER_NAME, LGPD_DPO_CONTACT } from "./lgpd.config"
 
 export const LGPD_MESSAGE = `Olá! 👋 Sou o Calito, seu parceiro de nutrição!
 
@@ -10,7 +11,10 @@ Antes de começar, preciso do seu OK sobre seus dados 🔒
 ⚕️ Parte disso é *dado de saúde* (sensível). Você está autorizando, de forma específica, que eu trate esses dados pra calcular calorias, macros e acompanhar seu progresso.
 🤝 Pra funcionar, uso parceiros que processam seus dados: uma inteligência artificial que interpreta o que você comeu (em servidores fora do Brasil), o Mercado Pago (pagamento) e ferramentas de monitoramento técnico. Não vendo seus dados nem uso pra publicidade.
 🗑️ Você pode pedir pra apagar tudo a qualquer momento.
+📬 Dúvidas ou pedidos sobre seus dados? Fala com a gente: ${LGPD_DPO_CONTACT}
 ⚠️ O Calito NÃO substitui orientação de um nutricionista.
+
+*Responsável pelos seus dados:* ${LGPD_CONTROLLER_NAME}
 
 Topa começar? Responda com "sim" ou "não".
 `
