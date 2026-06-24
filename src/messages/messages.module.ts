@@ -7,9 +7,10 @@ import { MealsModule } from 'src/meals/meals.module';
 import { UsersModule } from 'src/users/users.module';
 import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { IntentRouter } from './intent.router';
+import { UserMessageLock } from './user-message.lock';
 
 @Module({
   imports: [OnboardingModule, AiModule, WhatsappModule, MealsModule, UsersModule, SubscriptionModule],
-  providers: [MessagesHandler, IntentRouter],
+  providers: [MessagesHandler, IntentRouter, UserMessageLock],
 })
 export class MessagesModule {}

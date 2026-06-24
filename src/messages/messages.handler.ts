@@ -8,6 +8,7 @@ import { IntentClassifier } from '../ai/intent.classifier';
 import { IntentRouter } from './intent.router';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { MEDIA_NOT_SUPPORTED } from './messages/general.messages';
+import { UserMessageLock } from './user-message.lock';
 
 @Injectable()
 export class MessagesHandler {
@@ -19,6 +20,7 @@ export class MessagesHandler {
     private readonly router: IntentRouter,
     private readonly subscription: SubscriptionService,
     private readonly whatsapp: WhatsappService,
+    private readonly lock: UserMessageLock,
   ) {}
 
   @OnEvent('whatsapp.message')
@@ -29,11 +31,16 @@ export class MessagesHandler {
     // Quando o WhatsApp usa LID (remoteJid = <id>@lid), o telefone real
     // vem em remoteJidAlt como <phone>@s.whatsapp.net.
     const fromPhone = msg.key.remoteJidAlt ?? from;
+    const phone = fromPhone.split('@')[0];
+
+    await this.lock.run(phone, () => this.process(msg, phone, fromPhone));
+  }
+
+  private async process(msg: IncomingMessage, phone: string, fromPhone: string) {
+    const from = msg.key.remoteJid!;
     const text = this.extractText(msg);
 
     this.logger.log(`Msg de ${from}: ${text ?? '[não-texto]'}`);
-
-    const phone = fromPhone.split('@')[0];
 
     // Sem texto utilizável: se for mídia (foto/áudio/figurinha) de um usuário já
     // cadastrado, responde que ainda não lê esse formato em vez de ignorar.
