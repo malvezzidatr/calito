@@ -80,6 +80,12 @@ export class OnboardingService {
             return;
         }
         if (choice === 'no') {
+            // Minimização (LGPD Art. 6 III): quem recusa não tem o telefone retido.
+            try {
+                await this.users.deleteByPhone(phone);
+            } catch (err) {
+                this.logger.warn(`Falha ao apagar registro pré-consentimento de ${phone}: ${(err as Error).message}`);
+            }
             await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
             return;
         }
