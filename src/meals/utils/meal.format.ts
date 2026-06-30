@@ -199,7 +199,8 @@ function formatWeekday(spDayStart: Date): string {
 export function formatMealConfirmation(mealType: MealType, extraction: MealExtraction, praise: string): string {
   const label = MEAL_LABELS[mealType];
   return [
-    `✓ ${label} — ${extraction.calories}kcal`,
+    `✓ ${label} — ${extraction.description}`,
+    `🔥 ${extraction.calories}kcal`,
     `🥩 P: ${extraction.protein}g`,
     `🍚 C: ${extraction.carbs}g`,
     `🧈 G: ${extraction.fat}g`,
@@ -338,4 +339,25 @@ export function formatMacroResume(macro: Macro, total: number, goal: number | nu
   const faltam = goal - totalRounded;
   const lineWithFaltam = `${baseLine} (faltam ${fmt(faltam)}${unit})`;
   return [header, '', lineWithFaltam, '', 'Bora completar essa meta! 💪'].join('\n');
+}
+
+export type FoodLookupResult = {
+  description: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+};
+
+export function formatFoodLookup(result: FoodLookupResult): string {
+  return [
+    `🔍 ${result.description}`,
+    '',
+    `🔥 ${result.calories} kcal`,
+    `🥩 P: ${result.protein}g`,
+    `🍚 C: ${result.carbs}g`,
+    `🧈 G: ${result.fat}g`,
+    '',
+    '_Valores estimados — podem variar por marca e preparo._',
+  ].join('\n');
 }

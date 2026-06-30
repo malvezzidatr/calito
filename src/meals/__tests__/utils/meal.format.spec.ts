@@ -46,6 +46,7 @@ describe('formatMealConfirmation', () => {
   it('formats lunch with calories, macros and the provided praise', () => {
     const result = formatMealConfirmation('LUNCH', sampleExtraction, 'Mandou bem!');
     expect(result).toContain('Almoço');
+    expect(result).toContain('arroz e frango');
     expect(result).toContain('650kcal');
     expect(result).toContain('P: 45g');
     expect(result).toContain('C: 75g');

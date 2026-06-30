@@ -1,25 +1,35 @@
 import { Goals } from "./nutrition.calculator"
 import { NutritionistGoalsExtraction } from "./nutritionist-goals.prompt"
 import { NutritionistProfileExtraction } from "./nutritionist-profile.prompt"
+import { LGPD_CONTROLLER_NAME, LGPD_DPO_CONTACT } from "./lgpd.config"
 
 export const LGPD_MESSAGE = `Olá! 👋 Sou o Calito, seu parceiro de nutrição!
 
-Antes de começar, preciso te informar:
-• Coletamos seu telefone, dados corporais (peso, altura, idade, sexo), refeições e metas
-• São usados apenas para calcular calorias, macros e acompanhar seu progresso
-• Ficam armazenados de forma segura e nunca são compartilhados com terceiros
-• Você pode pedir pra apagar tudo a qualquer momento
-• Este bot NÃO substitui orientação de um nutricionista
+Antes de começar, preciso do seu OK sobre seus dados 🔒
 
-Ao continuar, você concorda com isso.
-Quer prosseguir? Responda com "sim" ou "não".
+📋 Coleto seu telefone, dados corporais (peso, altura, idade, sexo), refeições e metas.
+⚕️ Parte disso é *dado de saúde* (sensível). Você está autorizando, de forma específica, que eu trate esses dados pra calcular calorias, macros e acompanhar seu progresso.
+🤝 Pra funcionar, uso parceiros que processam seus dados: uma inteligência artificial que interpreta o que você comeu (em servidores fora do Brasil), o Mercado Pago (pagamento) e ferramentas de monitoramento técnico. Não vendo seus dados nem uso pra publicidade.
+🗑️ Você pode pedir pra apagar tudo a qualquer momento.
+📬 Dúvidas ou pedidos sobre seus dados? Fala com a gente: ${LGPD_DPO_CONTACT}
+⚠️ O Calito NÃO substitui orientação de um nutricionista.
+
+*Responsável pelos seus dados:* ${LGPD_CONTROLLER_NAME}
+
+Topa começar? Responda com "sim" ou "não".
 `
 
 export const NUTRITIONIST_CHOICE_QUESTION = `Antes de seguir, me conta uma coisa 🙂
 
 Você já tem acompanhamento com nutricionista? (sim/não)`
 
-export const NUTRITIONIST_GOALS_QUESTION = `Show! Pra usar a prescrição da sua nutri, me manda os 4 valores das metas diárias numa mensagem só 🎯
+export const NUTRITIONIST_GOAL_QUESTION = `Show! Antes das metas, qual seu objetivo? 🎯
+
+1 - Emagrecer
+2 - Manter o peso
+3 - Ganhar massa`
+
+export const NUTRITIONIST_GOALS_QUESTION = `Boa! Agora, pra usar a prescrição da sua nutri, me manda os 4 valores das metas diárias numa mensagem só 🎯
 
 Ex: 2000 kcal, 150g de proteína, 200g de carbo, 60g de gordura`
 

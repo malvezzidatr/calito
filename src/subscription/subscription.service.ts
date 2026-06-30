@@ -10,13 +10,18 @@ import {
   formatPaywallMessage,
   formatCheckoutMessage,
   formatSubscriptionActivated,
+  formatTrialStarted,
   CHECKOUT_ERROR,
+  CHECKOUT_STILL_PENDING,
+  PIX_EXPIRED_REISSUE,
 } from './messages/subscription.messages';
 
 const DEFAULT_MONTHLY_PRICE_BRL = 9.9;
 const SUBSCRIPTION_DAYS = 30;
+const TRIAL_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const APPROVED = 'approved';
+const PENDING = 'pending';
 
 @Injectable()
 export class SubscriptionService {
@@ -47,8 +52,24 @@ export class SubscriptionService {
     await this.whatsapp.sendText(jid, formatPaywallMessage(this.getMonthlyPriceBRL()));
   }
 
+  /**
+   * Concede o trial de 3 dias no fim do onboarding e avisa o usuário. O acesso
+   * durante o trial é resolvido por `trial_ends_at` em isSubscriptionActive — o
+   * status segue INACTIVE (reservado pra assinatura paga).
+   */
+  async startTrial(phone: string, jid: string): Promise<void> {
+    const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * DAY_MS);
+    await this.usersRepository.update(phone, { trial_ends_at: trialEndsAt });
+    await this.whatsapp.sendText(jid, formatTrialStarted(trialEndsAt, TRIAL_DAYS));
+  }
+
   async startCheckout(phone: string, jid: string): Promise<void> {
     const price = this.getMonthlyPriceBRL();
+
+    const user = await this.usersRepository.findByPhone(phone);
+    if (user?.subscription_id && (await this.resolveExistingCharge(user.subscription_id, jid))) {
+      return;
+    }
 
     let charge;
     try {
@@ -68,6 +89,35 @@ export class SubscriptionService {
 
     await this.whatsapp.sendText(jid, formatCheckoutMessage(price));
     await this.whatsapp.sendText(jid, charge.qrCode);
+  }
+
+  /**
+   * Antes de gerar um Pix novo, olha o anterior: pendente → reenvia o mesmo (sem
+   * duplicar cobrança); aprovado → ativa (recupera webhook perdido); qualquer
+   * outro (expirado/cancelado) → avisa e devolve false pra gerar outro.
+   */
+  private async resolveExistingCharge(paymentId: string, jid: string): Promise<boolean> {
+    let payment;
+    try {
+      payment = await this.paymentService.getPayment(paymentId);
+    } catch (err) {
+      this.logger.warn(`Falha ao consultar Pix anterior ${paymentId}: ${(err as Error).message}`);
+      return false;
+    }
+
+    if (payment.status === APPROVED) {
+      await this.activateFromPayment(paymentId);
+      return true;
+    }
+
+    if (payment.status === PENDING && payment.qrCode) {
+      await this.whatsapp.sendText(jid, CHECKOUT_STILL_PENDING);
+      await this.whatsapp.sendText(jid, payment.qrCode);
+      return true;
+    }
+
+    await this.whatsapp.sendText(jid, PIX_EXPIRED_REISSUE);
+    return false;
   }
 
   async activateFromPayment(paymentId: string): Promise<void> {

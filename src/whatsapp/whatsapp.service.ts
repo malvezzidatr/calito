@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   makeWASocket,
@@ -19,13 +20,22 @@ import { createPrismaAuthState } from './prisma-auth-state';
 import { PrismaService } from '../prisma/prisma.service';
 import { WhatsappNotConnectedError } from './exceptions/whatsapp.errors';
 
+const RECONNECT_BASE_MS = 2_000;
+const RECONNECT_CAP_MS = 5 * 60 * 1_000;
+
 @Injectable()
 export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WhatsappService.name);
   private sock!: WASocket;
   private readyAt = 0;
+  private reconnectAttempt = 0;
+  private disconnectedAt = 0;
 
-  constructor(private readonly eventEmitter: EventEmitter2, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly eventEmitter: EventEmitter2,
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async onModuleInit() {
     await this.connect();
@@ -54,16 +64,22 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
-        this.logger.log('QR code gerado — escaneia com o WhatsApp:');
+        this.logger.error('WhatsApp precisa parear — escaneia o QR abaixo:');
         qrcodeTerminal.generate(qr, { small: true });
+        void this.notifyAdminQr(qr);
       }
 
       if (connection === 'open') {
-        this.readyAt = Math.floor(Date.now() / 1000) - 60;
+        // Se houve disconnect anterior, volta readyAt para capturar mensagens offline
+        const nowSec = Math.floor(Date.now() / 1000);
+        this.readyAt = this.disconnectedAt > 0 ? this.disconnectedAt - 5 : nowSec - 60;
+        this.disconnectedAt = 0;
+        this.reconnectAttempt = 0;
         this.logger.log('WhatsApp conectado');
       }
 
       if (connection === 'close') {
+        this.disconnectedAt = Math.floor(Date.now() / 1000);
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         const loggedOut = statusCode === DisconnectReason.loggedOut;
 
@@ -71,15 +87,18 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           this.logger.warn(
             'Sessão encerrada pelo usuário. Limpando credenciais e reiniciando pareamento...',
           );
+          this.disconnectedAt = 0;
+          this.reconnectAttempt = 0;
           await this.clearAuthState();
           void this.connect();
           return;
         }
 
+        const delayMs = this.nextReconnectDelayMs();
         this.logger.warn(
-          `Conexão caiu (code=${statusCode}). Reconectando...`,
+          `Conexão caiu (code=${statusCode}). Reconectando em ${delayMs}ms (tentativa ${this.reconnectAttempt})...`,
         );
-        void this.connect();
+        setTimeout(() => void this.connect(), delayMs);
       }
     });
 
@@ -94,6 +113,27 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         this.eventEmitter.emit('whatsapp.message', msg);
       }
     });
+  }
+
+  private async notifyAdminQr(qr: string): Promise<void> {
+    const webhookUrl = this.config.get<string>('ADMIN_WEBHOOK_URL');
+    if (!webhookUrl) return;
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'whatsapp_qr_required', qr, ts: new Date().toISOString() }),
+      });
+      this.logger.log('Admin notificado sobre QR via ADMIN_WEBHOOK_URL');
+    } catch (err) {
+      this.logger.warn(`Falha ao notificar admin sobre QR: ${(err as Error).message}`);
+    }
+  }
+
+  nextReconnectDelayMs(): number {
+    const delay = Math.min(Math.pow(2, this.reconnectAttempt) * RECONNECT_BASE_MS, RECONNECT_CAP_MS);
+    this.reconnectAttempt++;
+    return delay;
   }
 
   private async clearAuthState() {

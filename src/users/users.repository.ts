@@ -38,6 +38,28 @@ export class UsersRepository {
     });
   }
 
+  /** Usuários em trial (ainda não pagantes) cujo fim do trial cai no intervalo. */
+  findTrialEndingBetween(startInclusive: Date, endExclusive: Date) {
+    return this.prisma.user.findMany({
+      where: {
+        onboarding_step: null,
+        status: { not: 'ACTIVE' },
+        trial_ends_at: { gte: startInclusive, lt: endExclusive },
+      },
+    });
+  }
+
+  /** Assinantes pagos cuja assinatura vence no intervalo. */
+  findSubscriptionExpiringBetween(startInclusive: Date, endExclusive: Date) {
+    return this.prisma.user.findMany({
+      where: {
+        onboarding_step: null,
+        status: 'ACTIVE',
+        subscription_expires_at: { gte: startInclusive, lt: endExclusive },
+      },
+    });
+  }
+
   deleteByPhone(phone: string) {
     return this.prisma.user.delete({
       where: { phone },

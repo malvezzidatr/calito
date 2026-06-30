@@ -62,6 +62,25 @@ describe('SubscriptionService', () => {
     });
   });
 
+  describe('startTrial', () => {
+    it('persists a future trial end and announces the free days', async () => {
+      await service.startTrial('5511999', 'jid-1');
+
+      const [phone, data] = update.mock.calls[0];
+      expect(phone).toBe('5511999');
+      expect(data.trial_ends_at.getTime()).toBeGreaterThan(Date.now());
+      expect(sendText).toHaveBeenCalledWith('jid-1', expect.stringContaining('dias grátis'));
+    });
+
+    it('grants exactly 3 days of trial', async () => {
+      const before = Date.now();
+      await service.startTrial('5511999', 'jid-1');
+      const trialEndsAt: Date = update.mock.calls[0][1].trial_ends_at;
+      const days = (trialEndsAt.getTime() - before) / (24 * 60 * 60 * 1000);
+      expect(days).toBeCloseTo(3, 1);
+    });
+  });
+
   describe('startCheckout', () => {
     it('creates a Pix charge, stores the payment id and sends the copia-e-cola', async () => {
       createPixCharge.mockResolvedValue({ paymentId: 'pay-1', qrCode: 'PIXCODE', qrCodeBase64: 'b64' });
@@ -83,6 +102,51 @@ describe('SubscriptionService', () => {
 
       expect(update).not.toHaveBeenCalled();
       expect(sendText).toHaveBeenCalledWith('jid-1', CHECKOUT_ERROR);
+    });
+
+    describe('with a previous Pix charge', () => {
+      beforeEach(() => {
+        findByPhone.mockResolvedValue({ phone: '5511999', subscription_id: 'old-pay' });
+      });
+
+      it('resends the same Pix when the previous one is still pending', async () => {
+        getPayment.mockResolvedValue({ id: 'old-pay', status: 'pending', externalReference: '5511999', qrCode: 'OLDPIX' });
+
+        await service.startCheckout('5511999', 'jid-1');
+
+        expect(createPixCharge).not.toHaveBeenCalled();
+        expect(sendText).toHaveBeenNthCalledWith(2, 'jid-1', 'OLDPIX');
+      });
+
+      it('activates and skips a new charge when the previous payment was approved', async () => {
+        getPayment.mockResolvedValue({ id: 'old-pay', status: 'approved', externalReference: '5511999', qrCode: '' });
+        findByPhone.mockResolvedValue({ phone: '5511999', subscription_id: 'old-pay', status: 'INACTIVE', subscription_expires_at: null });
+
+        await service.startCheckout('5511999', 'jid-1');
+
+        expect(createPixCharge).not.toHaveBeenCalled();
+        expect(update).toHaveBeenCalledWith('5511999', expect.objectContaining({ status: 'ACTIVE' }));
+      });
+
+      it('warns and generates a new Pix when the previous one expired', async () => {
+        getPayment.mockResolvedValue({ id: 'old-pay', status: 'cancelled', externalReference: '5511999', qrCode: '' });
+        createPixCharge.mockResolvedValue({ paymentId: 'new-pay', qrCode: 'NEWPIX', qrCodeBase64: 'b64' });
+
+        await service.startCheckout('5511999', 'jid-1');
+
+        expect(sendText.mock.calls[0][1]).toContain('expirou');
+        expect(createPixCharge).toHaveBeenCalledTimes(1);
+        expect(update).toHaveBeenCalledWith('5511999', { subscription_id: 'new-pay' });
+      });
+
+      it('generates a new Pix when the previous payment cannot be fetched', async () => {
+        getPayment.mockRejectedValue(new Error('mp down'));
+        createPixCharge.mockResolvedValue({ paymentId: 'new-pay', qrCode: 'NEWPIX', qrCodeBase64: 'b64' });
+
+        await service.startCheckout('5511999', 'jid-1');
+
+        expect(createPixCharge).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
