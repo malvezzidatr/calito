@@ -19,11 +19,15 @@ import { createPrismaAuthState } from './prisma-auth-state';
 import { PrismaService } from '../prisma/prisma.service';
 import { WhatsappNotConnectedError } from './exceptions/whatsapp.errors';
 
+const RECONNECT_BASE_MS = 2_000;
+const RECONNECT_CAP_MS = 5 * 60 * 1_000;
+
 @Injectable()
 export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WhatsappService.name);
   private sock!: WASocket;
   private readyAt = 0;
+  private reconnectAttempt = 0;
 
   constructor(private readonly eventEmitter: EventEmitter2, private readonly prisma: PrismaService) {}
 
@@ -60,6 +64,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
       if (connection === 'open') {
         this.readyAt = Math.floor(Date.now() / 1000) - 60;
+        this.reconnectAttempt = 0;
         this.logger.log('WhatsApp conectado');
       }
 
@@ -71,15 +76,17 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           this.logger.warn(
             'Sessão encerrada pelo usuário. Limpando credenciais e reiniciando pareamento...',
           );
+          this.reconnectAttempt = 0;
           await this.clearAuthState();
           void this.connect();
           return;
         }
 
+        const delayMs = this.nextReconnectDelayMs();
         this.logger.warn(
-          `Conexão caiu (code=${statusCode}). Reconectando...`,
+          `Conexão caiu (code=${statusCode}). Reconectando em ${delayMs}ms (tentativa ${this.reconnectAttempt})...`,
         );
-        void this.connect();
+        setTimeout(() => void this.connect(), delayMs);
       }
     });
 
@@ -94,6 +101,12 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         this.eventEmitter.emit('whatsapp.message', msg);
       }
     });
+  }
+
+  nextReconnectDelayMs(): number {
+    const delay = Math.min(Math.pow(2, this.reconnectAttempt) * RECONNECT_BASE_MS, RECONNECT_CAP_MS);
+    this.reconnectAttempt++;
+    return delay;
   }
 
   private async clearAuthState() {
