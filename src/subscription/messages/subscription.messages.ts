@@ -61,6 +61,24 @@ export const CHECKOUT_STILL_PENDING = [
 
 export const PIX_EXPIRED_REISSUE = 'Seu Pix anterior expirou ⏱️ Gerei um novo agora, é só pagar 👇';
 
+export function formatRenewalReminder(priceBRL: number, expiresAt: Date): string {
+  return [
+    `⚠️ Sua assinatura do Calito termina amanhã (${formatDate(expiresAt)}).`,
+    '',
+    `Pra não perder o acesso, renova por ${formatBRL(priceBRL)}/mês.`,
+    'Manda *assinar* que eu já te passo o Pix 🚀',
+  ].join('\n');
+}
+
+export function formatSubscriptionExpired(priceBRL: number): string {
+  return [
+    '🔒 Sua assinatura do Calito venceu.',
+    '',
+    `Pra voltar a registrar suas refeições, renova por ${formatBRL(priceBRL)}/mês.`,
+    'Manda *assinar* pra reativar 💪',
+  ].join('\n');
+}
+
 export function formatSubscriptionActivated(expiresAt: Date): string {
   const date = expiresAt.toLocaleDateString('pt-BR');
   return [
