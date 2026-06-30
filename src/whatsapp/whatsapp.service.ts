@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   makeWASocket,
@@ -30,7 +31,11 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private reconnectAttempt = 0;
   private disconnectedAt = 0;
 
-  constructor(private readonly eventEmitter: EventEmitter2, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly eventEmitter: EventEmitter2,
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async onModuleInit() {
     await this.connect();
@@ -59,8 +64,9 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
-        this.logger.log('QR code gerado — escaneia com o WhatsApp:');
+        this.logger.error('WhatsApp precisa parear — escaneia o QR abaixo:');
         qrcodeTerminal.generate(qr, { small: true });
+        void this.notifyAdminQr(qr);
       }
 
       if (connection === 'open') {
@@ -107,6 +113,21 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         this.eventEmitter.emit('whatsapp.message', msg);
       }
     });
+  }
+
+  private async notifyAdminQr(qr: string): Promise<void> {
+    const webhookUrl = this.config.get<string>('ADMIN_WEBHOOK_URL');
+    if (!webhookUrl) return;
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'whatsapp_qr_required', qr, ts: new Date().toISOString() }),
+      });
+      this.logger.log('Admin notificado sobre QR via ADMIN_WEBHOOK_URL');
+    } catch (err) {
+      this.logger.warn(`Falha ao notificar admin sobre QR: ${(err as Error).message}`);
+    }
   }
 
   nextReconnectDelayMs(): number {

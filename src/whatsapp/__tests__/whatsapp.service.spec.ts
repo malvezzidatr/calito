@@ -14,7 +14,7 @@ describe('WhatsappService — reconnect backoff', () => {
   let service: WhatsappService;
 
   beforeEach(() => {
-    service = new WhatsappService(null as never, null as never);
+    service = new WhatsappService(null as never, null as never, null as never);
   });
 
   it('starts at 2s on first disconnect', () => {
@@ -45,7 +45,7 @@ describe('WhatsappService — readyAt on reconnect (CS-111)', () => {
   let service: WhatsappService;
 
   beforeEach(() => {
-    service = new WhatsappService(null as never, null as never);
+    service = new WhatsappService(null as never, null as never, null as never);
   });
 
   it('uses now-60s as readyAt on first connection (no prior disconnect)', () => {
