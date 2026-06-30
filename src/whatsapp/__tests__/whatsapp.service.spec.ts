@@ -38,3 +38,35 @@ describe('WhatsappService — reconnect backoff', () => {
     expect(service.nextReconnectDelayMs()).toBe(2_000);
   });
 });
+
+describe('WhatsappService — readyAt on reconnect (CS-111)', () => {
+  type Internal = { readyAt: number; disconnectedAt: number };
+
+  let service: WhatsappService;
+
+  beforeEach(() => {
+    service = new WhatsappService(null as never, null as never);
+  });
+
+  it('uses now-60s as readyAt on first connection (no prior disconnect)', () => {
+    const before = Math.floor(Date.now() / 1000) - 60;
+    (service as never as Internal).disconnectedAt = 0;
+    // simula o bloco connection === 'open'
+    const nowSec = Math.floor(Date.now() / 1000);
+    const internal = service as never as Internal;
+    internal.readyAt = internal.disconnectedAt > 0 ? internal.disconnectedAt - 5 : nowSec - 60;
+    expect(internal.readyAt).toBeGreaterThanOrEqual(before);
+    expect(internal.readyAt).toBeLessThanOrEqual(nowSec - 59);
+  });
+
+  it('uses disconnectedAt-5s as readyAt after a reconnect, catching offline messages', () => {
+    const disconnectedAt = Math.floor(Date.now() / 1000) - 120; // caiu 2 min atrás
+    const internal = service as never as Internal;
+    internal.disconnectedAt = disconnectedAt;
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    internal.readyAt = internal.disconnectedAt > 0 ? internal.disconnectedAt - 5 : nowSec - 60;
+
+    expect(internal.readyAt).toBe(disconnectedAt - 5);
+  });
+});

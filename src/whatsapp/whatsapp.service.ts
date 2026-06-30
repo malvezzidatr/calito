@@ -28,6 +28,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private sock!: WASocket;
   private readyAt = 0;
   private reconnectAttempt = 0;
+  private disconnectedAt = 0;
 
   constructor(private readonly eventEmitter: EventEmitter2, private readonly prisma: PrismaService) {}
 
@@ -63,12 +64,16 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (connection === 'open') {
-        this.readyAt = Math.floor(Date.now() / 1000) - 60;
+        // Se houve disconnect anterior, volta readyAt para capturar mensagens offline
+        const nowSec = Math.floor(Date.now() / 1000);
+        this.readyAt = this.disconnectedAt > 0 ? this.disconnectedAt - 5 : nowSec - 60;
+        this.disconnectedAt = 0;
         this.reconnectAttempt = 0;
         this.logger.log('WhatsApp conectado');
       }
 
       if (connection === 'close') {
+        this.disconnectedAt = Math.floor(Date.now() / 1000);
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         const loggedOut = statusCode === DisconnectReason.loggedOut;
 
@@ -76,6 +81,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           this.logger.warn(
             'Sessão encerrada pelo usuário. Limpando credenciais e reiniciando pareamento...',
           );
+          this.disconnectedAt = 0;
           this.reconnectAttempt = 0;
           await this.clearAuthState();
           void this.connect();
