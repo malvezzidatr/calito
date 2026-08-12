@@ -7,17 +7,29 @@ import {
   type SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
 import type { PrismaService } from '../prisma/prisma.service';
+import { decryptJson, encryptJson, isEncryptedPayload, loadAuthEncryptionKey } from './utils/auth-crypto';
 
 export async function createPrismaAuthState(prisma: PrismaService): Promise<{
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
 }> {
+  // Chave carregada uma vez (lazy: só quando o bot de fato inicializa a sessão),
+  // igual ao padrão de outros segredos lazy do projeto (MP_ACCESS_TOKEN etc.).
+  const encryptionKey = loadAuthEncryptionKey(process.env.WHATSAPP_AUTH_ENCRYPTION_KEY);
+
   async function readData<T>(type: string, name: string): Promise<T | null> {
     const record = await prisma.whatsappAuth.findUnique({
       where: { type_name: { type, name } },
     });
     if (!record) return null;
-    return JSON.parse(JSON.stringify(record.data), BufferJSON.reviver) as T;
+
+    // Registros gravados antes da criptografia (CS-123) continuam legíveis;
+    // o próximo writeData já os regrava cifrados.
+    const plain = isEncryptedPayload(record.data)
+      ? decryptJson<unknown>(record.data, encryptionKey)
+      : record.data;
+
+    return JSON.parse(JSON.stringify(plain), BufferJSON.reviver) as T;
   }
 
   async function writeData(
@@ -33,11 +45,12 @@ export async function createPrismaAuthState(prisma: PrismaService): Promise<{
     }
 
     const serialized = JSON.parse(JSON.stringify(value, BufferJSON.replacer));
+    const encrypted = encryptJson(serialized, encryptionKey);
 
     await prisma.whatsappAuth.upsert({
       where: { type_name: { type, name } },
-      create: { type, name, data: serialized },
-      update: { data: serialized },
+      create: { type, name, data: encrypted },
+      update: { data: encrypted },
     });
   }
 
