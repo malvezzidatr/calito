@@ -11,6 +11,6 @@ import { FoodsModule } from '../foods/foods.module';
 @Module({
   imports: [AiModule, UsersModule, WhatsappModule, FoodsModule],
   providers: [MealsRepository, MealsService, DailyRecapService, ParsedMessagesRepository],
-  exports: [MealsRepository, MealsService],
+  exports: [MealsRepository, MealsService, ParsedMessagesRepository],
 })
 export class MealsModule {}
