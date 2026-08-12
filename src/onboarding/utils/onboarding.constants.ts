@@ -16,3 +16,6 @@ export const OnboardingStep = {
 } as const;
 
 export type OnboardingStep = typeof OnboardingStep[keyof typeof OnboardingStep];
+
+/** Sem verificação de consentimento parental viável por WhatsApp (Art. 14 LGPD). */
+export const MINIMUM_AGE = 18;

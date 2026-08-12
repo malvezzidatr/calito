@@ -124,6 +124,16 @@ export const HEIGHT_QUESTION = `Sua altura? (em cm)`
 
 export const AGE_QUESTION = `Sua idade?`
 
+/**
+ * Menor de 18: não temos como verificar consentimento parental por WhatsApp
+ * (Art. 14 LGPD exige consentimento específico e em destaque de responsável
+ * legal), então a idade mínima de uso é 18 — não retoma a pergunta, encerra
+ * o onboarding e o registro é apagado (minimização).
+ */
+export const AGE_UNDERAGE_FAREWELL = `Por enquanto o Calito é só pra maiores de 18 anos — ainda não temos como confirmar consentimento de responsável legal por aqui. 🙏
+
+Se quiser, volta a nos procurar quando fizer 18!`
+
 export const GENDER_QUESTION = `Sexo biológico? (M/F)`;
 
 export const ACTIVITY_QUESTION = `E qual seu nível de atividade?

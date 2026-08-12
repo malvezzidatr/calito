@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from '../users/users.repository';
-import { OnboardingStep } from './utils/onboarding.constants';
+import { MINIMUM_AGE, OnboardingStep } from './utils/onboarding.constants';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { AiService } from '../ai/ai.service';
 import {
-  ACTIVITY_QUESTION, AGE_QUESTION, CONFIRM_INVALID, CONSENT_FAREWELL, CONSENT_INVALID,
+  ACTIVITY_QUESTION, AGE_QUESTION, AGE_UNDERAGE_FAREWELL, CONFIRM_INVALID, CONSENT_FAREWELL, CONSENT_INVALID,
   formatNutritionistGoalsConfirmation, formatNutritionistProfileConfirmation,
   GENDER_QUESTION, GOAL_IS_GAIN, GOAL_IS_LOSE, GOAL_IS_MAINTAIN, GOAL_QUESTION, HEIGHT_QUESTION,
   INVALID_OPTION, LGPD_MESSAGE, NUTRITIONIST_CHOICE_QUESTION, NUTRITIONIST_GOALS_PARSE_ERROR,
@@ -339,9 +339,21 @@ export class OnboardingService {
 
     private async handleWaitingAge(phone: string, text: string, jid: string) {
         const age = parseInteger(text);
-        if (age === null || age < 13 || age > 90) {
+        if (age === null || age > 90) {
             await this.whatsapp.sendText(jid, INVALID_OPTION);
             await this.whatsapp.sendText(jid, AGE_QUESTION);
+            return;
+        }
+
+        if (age < MINIMUM_AGE) {
+            // Sem forma de verificar consentimento parental por WhatsApp (Art. 14
+            // LGPD): não atende menor de idade. Apaga o registro (minimização).
+            try {
+                await this.users.deleteByPhone(phone);
+            } catch (err) {
+                this.logger.warn(`Falha ao apagar registro de menor de idade ${phone}: ${(err as Error).message}`);
+            }
+            await this.whatsapp.sendText(jid, AGE_UNDERAGE_FAREWELL);
             return;
         }
 
