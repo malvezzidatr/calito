@@ -107,6 +107,11 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       if (type !== 'notify') return;
 
       for (const msg of messages) {
+        // CS-140: nunca processar mensagens enviadas pelo próprio bot —
+        // sem isso, uma resposta futura que ecoe (ex. chat consigo mesmo)
+        // pode virar loop de auto-resposta.
+        if (msg.key.fromMe) continue;
+
         const ts = Number(msg.messageTimestamp ?? 0);
         if (ts < this.readyAt) continue;
 
