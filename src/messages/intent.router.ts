@@ -51,7 +51,7 @@ export class IntentRouter {
 
   async route(intent: Intent, phone: string, text: string, jid: string): Promise<void> {
     const handler = this.handlers[intent];
-    this.logger.log(`Routing intent=${intent} phone=${phone}`);
+    this.logger.log(`Routing intent=${intent} phone=${redactPhone(phone)}`);
     await handler(phone, text, jid);
   }
 
