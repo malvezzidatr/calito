@@ -136,6 +136,10 @@ export function formatProfile(profile: ProfileView): string {
   return lines.join('\n');
 }
 
+export const EXPORT_DATA_INTRO = 'Aqui está uma cópia completa dos seus dados (perfil, metas e todas as refeições registradas), em formato estruturado 📦';
+
+export const EXPORT_DATA_TECH_ERROR = 'Tive um problema técnico ao montar seu export 😬 Pode tentar de novo daqui a pouquinho?';
+
 export const UPDATE_WEIGHT_QUESTION = '⚖️ Qual seu peso atual? Me manda em kg (ex.: 75)';
 
 export const UPDATE_WEIGHT_TECH_ERROR = 'Tive um problema técnico ao atualizar seu peso 😬 Pode tentar de novo daqui a pouquinho?';
@@ -224,6 +228,7 @@ export const HELP_MESSAGE = [
   '• "meu perfil" (mostra seus dados e metas)',
   '• "agora quero ganhar massa" (muda o objetivo)',
   '• "atualiza meu peso pra 75" (recalcula as metas)',
+  '• "exportar meus dados" (cópia completa de tudo que guardo sobre você)',
   '',
   'É só mandar do seu jeito que eu te entendo 💪',
 ].join('\n');

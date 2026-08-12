@@ -110,6 +110,23 @@ export class MealsRepository {
     });
   }
 
+  /** Todas as refeições do usuário, sem corte de data — usado na exportação de dados (Art. 18 V LGPD). */
+  findAllByUser(user_id: string) {
+    return this.prisma.meal.findMany({
+      where: { user_id },
+      orderBy: { created_at: 'asc' },
+      select: {
+        meal_type: true,
+        description: true,
+        calories: true,
+        protein: true,
+        carbs: true,
+        fat: true,
+        created_at: true,
+      },
+    });
+  }
+
   deleteById(meal_id: string) {
     return this.prisma.meal.delete({
       where: { id: meal_id },
