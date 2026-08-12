@@ -81,7 +81,8 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "setupFiles": [
-      "dotenv/config"
+      "dotenv/config",
+      "reflect-metadata"
     ]
   }
 }

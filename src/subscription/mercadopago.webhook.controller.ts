@@ -2,11 +2,7 @@ import { Body, Controller, Headers, HttpCode, Logger, Post } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { SubscriptionService } from './subscription.service';
 import { verifyMercadoPagoSignature } from './utils/mercadopago.signature';
-
-type MercadoPagoNotification = {
-  type?: string;
-  data?: { id?: string | number };
-};
+import { MercadoPagoNotificationDto } from './dto/mercadopago-notification.dto';
 
 @Controller('webhooks/mercadopago')
 export class MercadoPagoWebhookController {
@@ -20,7 +16,7 @@ export class MercadoPagoWebhookController {
   @Post()
   @HttpCode(200)
   async handle(
-    @Body() body: MercadoPagoNotification,
+    @Body() body: MercadoPagoNotificationDto,
     @Headers('x-signature') signature?: string,
     @Headers('x-request-id') requestId?: string,
   ): Promise<{ received: boolean }> {
@@ -63,7 +59,7 @@ export class MercadoPagoWebhookController {
     return verifyMercadoPagoSignature({ dataId: paymentId, signatureHeader: signature, requestId, secret });
   }
 
-  private extractPaymentId(body: MercadoPagoNotification): string | null {
+  private extractPaymentId(body: MercadoPagoNotificationDto): string | null {
     if (body?.type === 'payment' && body.data?.id != null) {
       return String(body.data.id);
     }
