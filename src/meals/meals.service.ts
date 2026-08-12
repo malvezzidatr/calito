@@ -263,7 +263,7 @@ export class MealsService {
 
     private async performDelete(meal: { id: string; meal_type: MealType; description: string; calories: number }, user_id: string, jid: string, dateLabel: string = 'hoje') {
         try {
-            await this.mealsRepository.deleteById(meal.id);
+            await this.mealsRepository.deleteById(meal.id, user_id);
         } catch (err) {
             this.logger.error(`Falha ao apagar refeição ${meal.id} do user ${user_id}: ${(err as Error).message}`);
             await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_DELETE);
@@ -294,7 +294,7 @@ export class MealsService {
             }
 
             try {
-                await this.mealsRepository.deleteById(lastMeal.id);
+                await this.mealsRepository.deleteById(lastMeal.id, user.id);
             } catch (err) {
                 this.logger.error(`Falha ao apagar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
                 await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_DELETE);
@@ -356,7 +356,7 @@ export class MealsService {
             const mealType = extraction.meal_type ?? target.meal_type;
 
             try {
-                await this.mealsRepository.updateById(target.id, {
+                await this.mealsRepository.updateById(target.id, user.id, {
                     meal_type: mealType,
                     description: extraction.description,
                     calories: extraction.calories,
@@ -409,7 +409,7 @@ export class MealsService {
             };
 
             try {
-                await this.mealsRepository.updateById(target.id, {
+                await this.mealsRepository.updateById(target.id, user.id, {
                     meal_type: mealType,
                     description,
                     calories: extraction.calories,
@@ -503,7 +503,7 @@ export class MealsService {
             const mealType = extraction.meal_type ?? lastMeal.meal_type;
 
             try {
-                await this.mealsRepository.updateById(lastMeal.id, {
+                await this.mealsRepository.updateById(lastMeal.id, user.id, {
                     meal_type: mealType,
                     description: extraction.description,
                     calories: extraction.calories,
@@ -639,7 +639,7 @@ export class MealsService {
             };
 
             try {
-                await this.mealsRepository.updateById(lastMeal.id, {
+                await this.mealsRepository.updateById(lastMeal.id, user.id, {
                     meal_type: mealType,
                     description,
                     calories: extraction.calories,

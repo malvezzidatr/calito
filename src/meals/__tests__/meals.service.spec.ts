@@ -558,7 +558,7 @@ describe('MealsService', () => {
 
       expect(findLastByUser).toHaveBeenCalledWith('user-1');
       expect(deleteById).toHaveBeenCalledTimes(1);
-      expect(deleteById).toHaveBeenCalledWith('meal-42');
+      expect(deleteById).toHaveBeenCalledWith('meal-42', 'user-1');
 
       const [jid, message] = sendText.mock.calls[0];
       expect(jid).toBe('jid-1');
@@ -578,8 +578,8 @@ describe('MealsService', () => {
       await service.deleteLast('phone-1', 'jid-1');
 
       expect(deleteById).toHaveBeenCalledTimes(2);
-      expect(deleteById).toHaveBeenNthCalledWith(1, 'meal-2');
-      expect(deleteById).toHaveBeenNthCalledWith(2, 'meal-1');
+      expect(deleteById).toHaveBeenNthCalledWith(1, 'meal-2', 'user-1');
+      expect(deleteById).toHaveBeenNthCalledWith(2, 'meal-1', 'user-1');
     });
 
     it('sends a technical-error message when deletion throws and does NOT confirm', async () => {
@@ -641,7 +641,7 @@ describe('MealsService', () => {
       expect(messages[0].content).toContain('era 1 ovo, não 2');
 
       expect(updateById).toHaveBeenCalledTimes(1);
-      expect(updateById).toHaveBeenCalledWith('meal-42', {
+      expect(updateById).toHaveBeenCalledWith('meal-42', 'user-1', {
         meal_type: 'BREAKFAST',
         description: '1 ovo',
         calories: 70,
@@ -672,7 +672,7 @@ describe('MealsService', () => {
 
       await service.editLast('phone-1', 'era peixe, não frango', 'jid-1');
 
-      expect(updateById).toHaveBeenCalledWith('meal-42', expect.objectContaining({ meal_type: 'LUNCH' }));
+      expect(updateById).toHaveBeenCalledWith('meal-42', 'user-1', expect.objectContaining({ meal_type: 'LUNCH' }));
     });
 
     it('sends a friendly fallback and does NOT update when the AI returns invalid JSON', async () => {
@@ -850,7 +850,7 @@ describe('MealsService', () => {
       expect(secondMessages[0].content).toContain('corrige meu almoço pra carne com salada');
 
       expect(updateById).toHaveBeenCalledTimes(1);
-      expect(updateById).toHaveBeenCalledWith('meal-1', {
+      expect(updateById).toHaveBeenCalledWith('meal-1', 'user-1', {
         meal_type: 'LUNCH',
         description: 'carne com salada',
         calories: 420,
@@ -902,7 +902,7 @@ describe('MealsService', () => {
       await service.editMeal('phone-1', 'corrige o lanche das 16h pra 1 maçã', 'jid-1');
 
       expect(updateById).toHaveBeenCalledTimes(1);
-      expect(updateById).toHaveBeenCalledWith('meal-afternoon', expect.objectContaining({ description: '1 maçã' }));
+      expect(updateById).toHaveBeenCalledWith('meal-afternoon', 'user-1', expect.objectContaining({ description: '1 maçã' }));
     });
 
     it('replies with time-not-found when reference includes time but no match has that time', async () => {
@@ -933,7 +933,7 @@ describe('MealsService', () => {
 
       await service.editMeal('phone-1', 'corrige o almoço pra frango grelhado', 'jid-1');
 
-      expect(updateById).toHaveBeenCalledWith('meal-1', expect.objectContaining({ meal_type: 'LUNCH' }));
+      expect(updateById).toHaveBeenCalledWith('meal-1', 'user-1', expect.objectContaining({ meal_type: 'LUNCH' }));
     });
 
     it('forwards re-extraction clarification without updating', async () => {
@@ -1034,7 +1034,7 @@ describe('MealsService', () => {
       await service.editMeal('phone-1', 'corrige meu almoço pra carne moída e salada', 'jid-1');
 
       expect(updateById).toHaveBeenCalledTimes(1);
-      expect(updateById).toHaveBeenCalledWith('meal-1', {
+      expect(updateById).toHaveBeenCalledWith('meal-1', 'user-1', {
         meal_type: 'LUNCH',
         description: '100 carne moída, 1 salada',
         calories: 255,
@@ -1328,7 +1328,7 @@ describe('MealsService', () => {
 
       await service.editLast('5511999', 'era 1 ovo, não 2', '5511999@s.whatsapp.net');
 
-      expect(updateById).toHaveBeenCalledWith('meal-42', {
+      expect(updateById).toHaveBeenCalledWith('meal-42', 'user-1', {
         meal_type: 'LUNCH',
         description: '1 ovo, 4 arroz',
         calories: 232,
@@ -1401,7 +1401,7 @@ describe('MealsService', () => {
 
       await service.editLast('5511999', 'so frango', '5511999@s.whatsapp.net');
 
-      expect(updateById).toHaveBeenCalledWith('meal-42', expect.objectContaining({ meal_type: 'DINNER' }));
+      expect(updateById).toHaveBeenCalledWith('meal-42', 'user-1', expect.objectContaining({ meal_type: 'DINNER' }));
     });
   });
 });
