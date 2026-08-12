@@ -10,6 +10,7 @@ import { SubscriptionService } from '../subscription/subscription.service';
 import { MEDIA_NOT_SUPPORTED, RATE_LIMITED } from './messages/general.messages';
 import { UserMessageLock } from './user-message.lock';
 import { MessageRateLimiter } from './message-rate-limiter';
+import { MessageIdempotency } from './message-idempotency';
 import { redactPhone, redactText } from '../common/utils/log-redactor';
 
 @Injectable()
@@ -24,12 +25,24 @@ export class MessagesHandler {
     private readonly whatsapp: WhatsappService,
     private readonly lock: UserMessageLock,
     private readonly rateLimiter: MessageRateLimiter,
+    private readonly idempotency: MessageIdempotency,
   ) {}
 
   @OnEvent('whatsapp.message')
   async handle(msg: IncomingMessage) {
     const from = msg.key.remoteJid;
     if (!from || from === 'status@broadcast' || from.endsWith('@g.us')) return;
+
+    // CS-138: a janela de reconexão do WhatsappService pode reentregar uma
+    // mensagem já processada — sem isso, uma refeição pode duplicar.
+    const messageId = msg.key.id;
+    if (messageId) {
+      if (this.idempotency.wasSeen(messageId)) {
+        this.logger.warn(`Mensagem duplicada ignorada (id=${messageId})`);
+        return;
+      }
+      this.idempotency.markSeen(messageId);
+    }
 
     // Quando o WhatsApp usa LID (remoteJid = <id>@lid), o telefone real
     // vem em remoteJidAlt como <phone>@s.whatsapp.net.
