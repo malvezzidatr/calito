@@ -131,6 +131,23 @@ describe('validateMealExtraction', () => {
       const { [field]: _, ...withoutField } = validRaw;
       expect(() => validateMealExtraction(withoutField)).toThrow(new RegExp(field));
     });
+
+    // CS-127: sem teto, alucinação do LLM (ex.: calories: 1e15) passava direto.
+    it('rejects calories above the plausible ceiling', () => {
+      expect(() => validateMealExtraction({ ...validRaw, calories: 20_001 })).toThrow(/calories/);
+    });
+
+    it('accepts calories exactly at the ceiling', () => {
+      expect(() => validateMealExtraction({ ...validRaw, calories: 20_000 })).not.toThrow();
+    });
+
+    it.each(['protein', 'carbs', 'fat'] as const)('rejects %s above the plausible ceiling', (field) => {
+      expect(() => validateMealExtraction({ ...validRaw, [field]: 2_001 })).toThrow(new RegExp(field));
+    });
+
+    it.each(['calories', 'protein', 'carbs', 'fat'] as const)('rejects a LLM-hallucinated absurd %s', (field) => {
+      expect(() => validateMealExtraction({ ...validRaw, [field]: 1e15 })).toThrow(new RegExp(field));
+    });
   });
 
   describe('meal_type', () => {
