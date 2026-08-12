@@ -66,6 +66,11 @@ export class MessagesHandler {
       return;
     }
 
+    if (this.onboarding.needsReconsent(user)) {
+      await this.onboarding.requestReconsent(phone, fromPhone);
+      return;
+    }
+
     if (user.onboarding_step === UserPendingState.WaitingDeleteConfirm) {
       await this.users.handleDeleteConfirmation(phone, realText, fromPhone);
       return;

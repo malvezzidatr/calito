@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UsersRepository } from 'src/users/users.repository';
+import { UsersRepository } from '../users/users.repository';
 import { OnboardingStep } from './utils/onboarding.constants';
-import { WhatsappService } from 'src/whatsapp/whatsapp.service';
-import { AiService } from 'src/ai/ai.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { AiService } from '../ai/ai.service';
 import {
   ACTIVITY_QUESTION, AGE_QUESTION, CONFIRM_INVALID, CONSENT_FAREWELL, CONSENT_INVALID,
   formatNutritionistGoalsConfirmation, formatNutritionistProfileConfirmation,
@@ -10,7 +10,7 @@ import {
   INVALID_OPTION, LGPD_MESSAGE, NUTRITIONIST_CHOICE_QUESTION, NUTRITIONIST_GOALS_PARSE_ERROR,
   NUTRITIONIST_GOALS_QUESTION, NUTRITIONIST_GOALS_REDO, NUTRITIONIST_PROFILE_PARSE_ERROR,
   NUTRITIONIST_GOAL_QUESTION, NUTRITIONIST_PROFILE_QUESTION, NUTRITIONIST_PROFILE_REDO,
-  nutritionistWelcomeMessage, WEIGHT_QUESTION, welcomeMessage,
+  nutritionistWelcomeMessage, RECONSENT_SUCCESS, WEIGHT_QUESTION, welcomeMessage,
 } from './utils/onboarding.messages';
 import { calcGoals } from './utils/nutrition.calculator';
 import { parseDecimal, parseHeightCm, parseInteger } from './utils/numeric.parser';
@@ -20,7 +20,9 @@ import { validateNutritionistGoals } from './utils/nutritionist-goals.validation
 import { isNutritionistProfileClarification, NUTRITIONIST_PROFILE_PROMPT, NutritionistProfileResult } from './utils/nutritionist-profile.prompt';
 import { validateNutritionistProfile } from './utils/nutritionist-profile.validation';
 import { parseYesNo } from '../common/utils/yes-no.parser';
-import { SubscriptionService } from 'src/subscription/subscription.service';
+import { SubscriptionService } from '../subscription/subscription.service';
+import { CURRENT_LGPD_CONSENT_VERSION } from './utils/lgpd.config';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class OnboardingService {
@@ -35,6 +37,7 @@ export class OnboardingService {
     ) {
         this.handlers = {
             [OnboardingStep.WaitingConsent]:                    this.handleWaitingConsent.bind(this),
+            [OnboardingStep.WaitingReconsent]:                  this.handleWaitingReconsent.bind(this),
             [OnboardingStep.WaitingNutritionistChoice]:         this.handleWaitingNutritionistChoice.bind(this),
             [OnboardingStep.WaitingNutritionistGoal]:           this.handleWaitingNutritionistGoal.bind(this),
             [OnboardingStep.WaitingNutritionistGoals]:          this.handleWaitingNutritionistGoals.bind(this),
@@ -74,9 +77,50 @@ export class OnboardingService {
             await this.users.update(phone, {
                 consent_given: true,
                 consent_date: new Date(),
+                consent_version: CURRENT_LGPD_CONSENT_VERSION,
                 onboarding_step: OnboardingStep.WaitingNutritionistChoice,
             });
             await this.whatsapp.sendText(jid, NUTRITIONIST_CHOICE_QUESTION);
+            return;
+        }
+        if (choice === 'no') {
+            // Minimização (LGPD Art. 6 III): quem recusa não tem o telefone retido.
+            try {
+                await this.users.deleteByPhone(phone);
+            } catch (err) {
+                this.logger.warn(`Falha ao apagar registro pré-consentimento de ${phone}: ${(err as Error).message}`);
+            }
+            await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
+            return;
+        }
+        await this.whatsapp.sendText(jid, CONSENT_INVALID);
+    }
+
+    /**
+     * Reconsentimento (Art. 8º §2): dispara quando o usuário já onboardado tem
+     * consent_version diferente do texto vigente — ex.: LGPD_MESSAGE mudou depois
+     * que ele consentiu. Ao contrário do onboarding inicial, "sim" aqui só atualiza
+     * o registro de consentimento e retoma o uso normal, sem refazer o cadastro.
+     */
+    needsReconsent(user: Pick<User, 'consent_version' | 'onboarding_step'>): boolean {
+        return user.onboarding_step === null && user.consent_version !== CURRENT_LGPD_CONSENT_VERSION;
+    }
+
+    async requestReconsent(phone: string, jid: string): Promise<void> {
+        await this.users.update(phone, { onboarding_step: OnboardingStep.WaitingReconsent });
+        await this.whatsapp.sendText(jid, LGPD_MESSAGE);
+    }
+
+    private async handleWaitingReconsent(phone: string, text: string, jid: string) {
+        const choice = parseYesNo(text);
+        if (choice === 'yes') {
+            await this.users.update(phone, {
+                consent_given: true,
+                consent_date: new Date(),
+                consent_version: CURRENT_LGPD_CONSENT_VERSION,
+                onboarding_step: null,
+            });
+            await this.whatsapp.sendText(jid, RECONSENT_SUCCESS);
             return;
         }
         if (choice === 'no') {

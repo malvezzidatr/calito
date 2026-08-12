@@ -53,8 +53,9 @@ model User {
   carbs_goal Int?
   fat_goal Int?
 
-  consent_given Boolean @default(false) 
+  consent_given Boolean @default(false)
   consent_date DateTime?
+  consent_version String?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   meals Meal[]

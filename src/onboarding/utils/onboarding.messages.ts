@@ -105,6 +105,8 @@ Se mudar de ideia, é só me chamar de novo. 👋
 
 export const CONSENT_INVALID = `Não entendi. Pra continuar preciso de "sim" ou "não". 🙂`
 
+export const RECONSENT_SUCCESS = `Valeu por confirmar! Pode continuar de onde parou 🙂`
+
 export const GOAL_IS_LOSE = `Então vamos focar em emagrecer! 🙂
 Para isso precisamos diminuir um pouco a meta calórica diária
 `

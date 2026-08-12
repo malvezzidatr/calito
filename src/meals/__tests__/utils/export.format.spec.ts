@@ -23,6 +23,7 @@ function buildUser(overrides: Partial<User> = {}): User {
     fat_goal: 70,
     consent_given: true,
     consent_date: new Date('2026-01-01T00:00:00.000Z'),
+    consent_version: '2026-08-12',
     created_at: new Date('2025-12-01T00:00:00.000Z'),
     updated_at: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
