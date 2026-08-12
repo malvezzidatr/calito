@@ -7,6 +7,7 @@ import { matchActivity, matchGender, matchGoal } from '../onboarding/utils/profi
 import { calcGoals, Goals } from '../onboarding/utils/nutrition.calculator';
 import { parseDecimal, parseHeightCm, parseInteger } from '../onboarding/utils/numeric.parser';
 import { MINIMUM_AGE } from '../onboarding/utils/onboarding.constants';
+import { redactPhone } from '../common/utils/log-redactor';
 import {
   DELETE_ACCOUNT_CANCELLED,
   DELETE_ACCOUNT_CONFIRMATION_QUESTION,
@@ -233,7 +234,7 @@ export class UsersService {
     try {
       await this.usersRepository.update(phone, { goal, ...goals, onboarding_step: null });
     } catch (err) {
-      this.logger.error(`Falha ao atualizar objetivo de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao atualizar objetivo de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, UPDATE_GOAL_TECH_ERROR);
       return;
     }
@@ -256,7 +257,7 @@ export class UsersService {
       }
       await this.usersRepository.update(phone, { weight, ...goals, onboarding_step: null });
     } catch (err) {
-      this.logger.error(`Falha ao atualizar peso de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao atualizar peso de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, UPDATE_WEIGHT_TECH_ERROR);
       return;
     }
@@ -278,7 +279,7 @@ export class UsersService {
       }
       await this.usersRepository.update(phone, { height, ...goals, onboarding_step: null });
     } catch (err) {
-      this.logger.error(`Falha ao atualizar altura de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao atualizar altura de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, UPDATE_HEIGHT_TECH_ERROR);
       return;
     }
@@ -300,7 +301,7 @@ export class UsersService {
       }
       await this.usersRepository.update(phone, { age, ...goals, onboarding_step: null });
     } catch (err) {
-      this.logger.error(`Falha ao atualizar idade de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao atualizar idade de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, UPDATE_AGE_TECH_ERROR);
       return;
     }
@@ -322,7 +323,7 @@ export class UsersService {
       }
       await this.usersRepository.update(phone, { gender, ...goals, onboarding_step: null });
     } catch (err) {
-      this.logger.error(`Falha ao atualizar sexo biológico de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao atualizar sexo biológico de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, UPDATE_GENDER_TECH_ERROR);
       return;
     }
@@ -344,7 +345,7 @@ export class UsersService {
       }
       await this.usersRepository.update(phone, { activity_level: activityLevel, ...goals, onboarding_step: null });
     } catch (err) {
-      this.logger.error(`Falha ao atualizar nível de atividade de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao atualizar nível de atividade de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, UPDATE_ACTIVITY_TECH_ERROR);
       return;
     }
@@ -374,7 +375,7 @@ export class UsersService {
     try {
       await this.usersRepository.deleteByPhone(phone);
     } catch (err) {
-      this.logger.error(`Falha ao deletar conta de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao deletar conta de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, DELETE_ACCOUNT_TECH_ERROR);
       return;
     }
