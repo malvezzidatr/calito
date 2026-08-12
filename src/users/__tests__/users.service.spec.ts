@@ -4,7 +4,14 @@ jest.mock('../../whatsapp/whatsapp.service', () => ({
 
 import { User } from '@prisma/client';
 import { UsersService } from '../users.service';
-import { UPDATE_GOAL_QUESTION, UPDATE_WEIGHT_QUESTION } from '../../messages/messages/general.messages';
+import {
+  UPDATE_GOAL_QUESTION,
+  UPDATE_WEIGHT_QUESTION,
+  UPDATE_HEIGHT_QUESTION,
+  UPDATE_AGE_QUESTION,
+  UPDATE_GENDER_QUESTION,
+  UPDATE_ACTIVITY_QUESTION,
+} from '../../messages/messages/general.messages';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -185,6 +192,83 @@ describe('UsersService', () => {
 
       expect(update).not.toHaveBeenCalled();
       expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_WEIGHT_QUESTION);
+    });
+  });
+
+  describe('updateHeight', () => {
+    it('updates the height and recalculates targets', async () => {
+      await service.updateHeight('5511999', 'atualiza minha altura pra 190', 'jid-1');
+
+      const [, data] = update.mock.calls[0];
+      expect(data).toMatchObject({ height: 190, onboarding_step: null });
+      expect(typeof data.calorie_goal).toBe('number');
+    });
+
+    it('parks in WaitingHeightUpdate when no height is given', async () => {
+      await service.updateHeight('5511999', 'quero corrigir minha altura', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: 'waiting_height_update' });
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_HEIGHT_QUESTION);
+    });
+  });
+
+  describe('handleHeightUpdate', () => {
+    it('applies a valid height reply', async () => {
+      await service.handleHeightUpdate('5511999', '185', 'jid-1');
+
+      const [, data] = update.mock.calls[0];
+      expect(data).toMatchObject({ height: 185, onboarding_step: null });
+    });
+  });
+
+  describe('updateAge', () => {
+    it('updates the age and recalculates targets', async () => {
+      await service.updateAge('5511999', 'atualiza minha idade pra 40', 'jid-1');
+
+      const [, data] = update.mock.calls[0];
+      expect(data).toMatchObject({ age: 40, onboarding_step: null });
+      expect(typeof data.calorie_goal).toBe('number');
+    });
+
+    it('rejects an age below the minimum instead of applying it', async () => {
+      await service.updateAge('5511999', 'tenho 12 anos', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: 'waiting_age_update' });
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_AGE_QUESTION);
+    });
+  });
+
+  describe('updateGender', () => {
+    it('updates the gender and recalculates targets', async () => {
+      await service.updateGender('5511999', 'corrige meu sexo pra feminino', 'jid-1');
+
+      const [, data] = update.mock.calls[0];
+      expect(data).toMatchObject({ gender: 'FEMALE', onboarding_step: null });
+      expect(typeof data.calorie_goal).toBe('number');
+    });
+
+    it('parks in WaitingGenderUpdate when the reply is not a recognized gender', async () => {
+      await service.updateGender('5511999', 'sei lá', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: 'waiting_gender_update' });
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_GENDER_QUESTION);
+    });
+  });
+
+  describe('updateActivity', () => {
+    it('updates the activity level and recalculates targets', async () => {
+      await service.updateActivity('5511999', 'atualiza meu nível de atividade pra intenso', 'jid-1');
+
+      const [, data] = update.mock.calls[0];
+      expect(data).toMatchObject({ activity_level: 'INTENSE', onboarding_step: null });
+      expect(typeof data.calorie_goal).toBe('number');
+    });
+
+    it('parks in WaitingActivityUpdate when the reply is not a recognized level', async () => {
+      await service.updateActivity('5511999', 'sei lá', 'jid-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', { onboarding_step: 'waiting_activity_update' });
+      expect(sendText).toHaveBeenCalledWith('jid-1', UPDATE_ACTIVITY_QUESTION);
     });
   });
 });

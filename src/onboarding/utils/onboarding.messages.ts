@@ -105,6 +105,8 @@ Se mudar de ideia, é só me chamar de novo. 👋
 
 export const CONSENT_INVALID = `Não entendi. Pra continuar preciso de "sim" ou "não". 🙂`
 
+export const RECONSENT_SUCCESS = `Valeu por confirmar! Pode continuar de onde parou 🙂`
+
 export const GOAL_IS_LOSE = `Então vamos focar em emagrecer! 🙂
 Para isso precisamos diminuir um pouco a meta calórica diária
 `
@@ -121,6 +123,16 @@ Qual seu peso? (em kg)`
 export const HEIGHT_QUESTION = `Sua altura? (em cm)`
 
 export const AGE_QUESTION = `Sua idade?`
+
+/**
+ * Menor de 18: não temos como verificar consentimento parental por WhatsApp
+ * (Art. 14 LGPD exige consentimento específico e em destaque de responsável
+ * legal), então a idade mínima de uso é 18 — não retoma a pergunta, encerra
+ * o onboarding e o registro é apagado (minimização).
+ */
+export const AGE_UNDERAGE_FAREWELL = `Por enquanto o Calito é só pra maiores de 18 anos — ainda não temos como confirmar consentimento de responsável legal por aqui. 🙏
+
+Se quiser, volta a nos procurar quando fizer 18!`
 
 export const GENDER_QUESTION = `Sexo biológico? (M/F)`;
 

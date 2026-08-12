@@ -9,9 +9,10 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MealsModule } from './meals/meals.module';
 import { FoodsModule } from './foods/foods.module';
+import { RetentionModule } from './retention/retention.module';
 
 @Module({
-  imports: [MealsModule, PrismaModule, UsersModule, WhatsappModule, EventEmitterModule.forRoot(), MessagesModule, OnboardingModule, ConfigModule.forRoot({ isGlobal: true }), ScheduleModule.forRoot(), FoodsModule],
+  imports: [MealsModule, PrismaModule, UsersModule, WhatsappModule, EventEmitterModule.forRoot(), MessagesModule, OnboardingModule, ConfigModule.forRoot({ isGlobal: true }), ScheduleModule.forRoot(), FoodsModule, RetentionModule],
   controllers: [],
   providers: [],
 })

@@ -136,6 +136,10 @@ export function formatProfile(profile: ProfileView): string {
   return lines.join('\n');
 }
 
+export const EXPORT_DATA_INTRO = 'Aqui está uma cópia completa dos seus dados (perfil, metas e todas as refeições registradas), em formato estruturado 📦';
+
+export const EXPORT_DATA_TECH_ERROR = 'Tive um problema técnico ao montar seu export 😬 Pode tentar de novo daqui a pouquinho?';
+
 export const UPDATE_WEIGHT_QUESTION = '⚖️ Qual seu peso atual? Me manda em kg (ex.: 75)';
 
 export const UPDATE_WEIGHT_TECH_ERROR = 'Tive um problema técnico ao atualizar seu peso 😬 Pode tentar de novo daqui a pouquinho?';
@@ -154,6 +158,88 @@ export function formatWeightUpdateSuccess(weight: number, goals: GoalTargets): s
 
 export function formatWeightSavedKeepingTargets(weight: number): string {
   return `Atualizei seu peso pra *${weight} kg* ⚖️ Como suas metas foram definidas no seu cadastro, elas continuam as mesmas. 👌`;
+}
+
+function formatFieldUpdateSuccess(fieldLabel: string, goals: GoalTargets): string {
+  return [
+    `Pronto! Atualizei ${fieldLabel} ✅`,
+    '',
+    'Recalculei suas metas diárias:',
+    `🔥 ${goals.calorie_goal.toLocaleString('pt-BR')} kcal`,
+    `🥩 ${goals.protein_goal}g de proteína`,
+    `🍚 ${goals.carbs_goal}g de carboidrato`,
+    `🧈 ${goals.fat_goal}g de gordura`,
+  ].join('\n');
+}
+
+function formatFieldSavedKeepingTargets(fieldLabel: string): string {
+  return `Atualizei ${fieldLabel} ✅ Como suas metas foram definidas no seu cadastro, elas continuam as mesmas. 👌`;
+}
+
+const GENDER_LABELS: Record<'MALE' | 'FEMALE', string> = { MALE: 'masculino', FEMALE: 'feminino' };
+
+const ACTIVITY_LABELS: Record<'SEDENTARY' | 'LIGHT' | 'MODERATE' | 'INTENSE' | 'VERY_INTENSE', string> = {
+  SEDENTARY: 'sedentário',
+  LIGHT: 'levemente ativo',
+  MODERATE: 'moderadamente ativo',
+  INTENSE: 'intenso',
+  VERY_INTENSE: 'muito intenso',
+};
+
+export const UPDATE_HEIGHT_QUESTION = '📏 Qual sua altura? Me manda em cm (ex.: 175)';
+export const UPDATE_HEIGHT_TECH_ERROR = 'Tive um problema técnico ao atualizar sua altura 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatHeightUpdateSuccess(height: number, goals: GoalTargets): string {
+  return formatFieldUpdateSuccess(`sua altura pra *${height} cm* 📏`, goals);
+}
+
+export function formatHeightSavedKeepingTargets(height: number): string {
+  return formatFieldSavedKeepingTargets(`sua altura pra *${height} cm* 📏`);
+}
+
+export const UPDATE_AGE_QUESTION = '🎂 Qual sua idade?';
+export const UPDATE_AGE_TECH_ERROR = 'Tive um problema técnico ao atualizar sua idade 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatAgeUpdateSuccess(age: number, goals: GoalTargets): string {
+  return formatFieldUpdateSuccess(`sua idade pra *${age} anos* 🎂`, goals);
+}
+
+export function formatAgeSavedKeepingTargets(age: number): string {
+  return formatFieldSavedKeepingTargets(`sua idade pra *${age} anos* 🎂`);
+}
+
+export const UPDATE_GENDER_QUESTION = '⚧️ Sexo biológico? (M/F)';
+export const UPDATE_GENDER_TECH_ERROR = 'Tive um problema técnico ao atualizar seu sexo biológico 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatGenderUpdateSuccess(gender: 'MALE' | 'FEMALE', goals: GoalTargets): string {
+  return formatFieldUpdateSuccess(`seu sexo biológico pra *${GENDER_LABELS[gender]}* ⚧️`, goals);
+}
+
+export function formatGenderSavedKeepingTargets(gender: 'MALE' | 'FEMALE'): string {
+  return formatFieldSavedKeepingTargets(`seu sexo biológico pra *${GENDER_LABELS[gender]}* ⚧️`);
+}
+
+export const UPDATE_ACTIVITY_QUESTION = [
+  '🏃 Qual seu nível de atividade física?',
+  '1 - Sedentário',
+  '2 - Levemente ativo',
+  '3 - Moderadamente ativo',
+  '4 - Intenso',
+  '5 - Muito intenso',
+].join('\n');
+export const UPDATE_ACTIVITY_TECH_ERROR = 'Tive um problema técnico ao atualizar seu nível de atividade 😬 Pode tentar de novo daqui a pouquinho?';
+
+export function formatActivityUpdateSuccess(
+  activity: 'SEDENTARY' | 'LIGHT' | 'MODERATE' | 'INTENSE' | 'VERY_INTENSE',
+  goals: GoalTargets,
+): string {
+  return formatFieldUpdateSuccess(`seu nível de atividade pra *${ACTIVITY_LABELS[activity]}* 🏃`, goals);
+}
+
+export function formatActivitySavedKeepingTargets(
+  activity: 'SEDENTARY' | 'LIGHT' | 'MODERATE' | 'INTENSE' | 'VERY_INTENSE',
+): string {
+  return formatFieldSavedKeepingTargets(`seu nível de atividade pra *${ACTIVITY_LABELS[activity]}* 🏃`);
 }
 
 export const THANKS_VARIANTS = [
@@ -224,6 +310,8 @@ export const HELP_MESSAGE = [
   '• "meu perfil" (mostra seus dados e metas)',
   '• "agora quero ganhar massa" (muda o objetivo)',
   '• "atualiza meu peso pra 75" (recalcula as metas)',
+  '• "corrige minha altura pra 180" (idem pra altura, idade, sexo e atividade)',
+  '• "exportar meus dados" (cópia completa de tudo que guardo sobre você)',
   '',
   'É só mandar do seu jeito que eu te entendo 💪',
 ].join('\n');

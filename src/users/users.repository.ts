@@ -65,4 +65,22 @@ export class UsersRepository {
       where: { phone },
     });
   }
+
+  /** Assinantes cancelados sem atividade há mais que o prazo de retenção (Art. 15-16 LGPD). */
+  findCancelledInactiveBefore(cutoff: Date) {
+    return this.prisma.user.findMany({
+      where: { status: 'CANCELLED', updated_at: { lt: cutoff } },
+    });
+  }
+
+  /**
+   * Onboarding travado antes do consentimento por mais que o prazo de retenção —
+   * defensivo: recusa explícita já é apagada na hora (ver OnboardingService), isto
+   * cobre quem simplesmente nunca respondeu (minimização, Art. 6 III).
+   */
+  findStaleUnconsentedBefore(cutoff: Date) {
+    return this.prisma.user.findMany({
+      where: { consent_given: false, onboarding_step: { not: null }, created_at: { lt: cutoff } },
+    });
+  }
 }

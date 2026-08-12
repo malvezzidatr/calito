@@ -9,6 +9,7 @@ import { IntentRouter } from './intent.router';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { MEDIA_NOT_SUPPORTED } from './messages/general.messages';
 import { UserMessageLock } from './user-message.lock';
+import { redactPhone, redactText } from '../common/utils/log-redactor';
 
 @Injectable()
 export class MessagesHandler {
@@ -40,7 +41,7 @@ export class MessagesHandler {
     const from = msg.key.remoteJid!;
     const text = this.extractText(msg);
 
-    this.logger.log(`Msg de ${from}: ${text ?? '[não-texto]'}`);
+    this.logger.log(`Msg de ${redactPhone(from)}: ${text ? redactText(text) : '[não-texto]'}`);
 
     // Sem texto utilizável: se for mídia (foto/áudio/figurinha) de um usuário já
     // cadastrado, responde que ainda não lê esse formato em vez de ignorar.
@@ -65,6 +66,11 @@ export class MessagesHandler {
       return;
     }
 
+    if (this.onboarding.needsReconsent(user)) {
+      await this.onboarding.requestReconsent(phone, fromPhone);
+      return;
+    }
+
     if (user.onboarding_step === UserPendingState.WaitingDeleteConfirm) {
       await this.users.handleDeleteConfirmation(phone, realText, fromPhone);
       return;
@@ -77,6 +83,26 @@ export class MessagesHandler {
 
     if (user.onboarding_step === UserPendingState.WaitingWeightUpdate) {
       await this.users.handleWeightUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingHeightUpdate) {
+      await this.users.handleHeightUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingAgeUpdate) {
+      await this.users.handleAgeUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingGenderUpdate) {
+      await this.users.handleGenderUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingActivityUpdate) {
+      await this.users.handleActivityUpdate(phone, realText, fromPhone);
       return;
     }
 

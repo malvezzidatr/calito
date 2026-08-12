@@ -38,6 +38,8 @@ import { startOfDaysAgo, startOfNextDay } from './utils/day-bounds';
 import { buildWeeklySummary } from './utils/weekly.summary';
 import { detectMacro } from './utils/macro.detect';
 import { inferMealTypeByHour } from './utils/meal-type.infer';
+import { buildDataExport } from './utils/export.format';
+import { EXPORT_DATA_INTRO, EXPORT_DATA_TECH_ERROR } from '../messages/messages/general.messages';
 
 @Injectable()
 export class MealsService {
@@ -300,6 +302,21 @@ export class MealsService {
             }
 
             await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.description, lastMeal.calories));
+        });
+    }
+
+    /** Direito de acesso e portabilidade (Art. 18 II e V LGPD): cópia estruturada de perfil + refeições. */
+    async exportData(phone: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            try {
+                const meals = await this.mealsRepository.findAllByUser(user.id);
+                const exportJson = buildDataExport(user, meals);
+                await this.whatsappService.sendText(jid, EXPORT_DATA_INTRO);
+                await this.whatsappService.sendText(jid, '```' + exportJson + '```');
+            } catch (err) {
+                this.logger.error(`Falha ao exportar dados do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, EXPORT_DATA_TECH_ERROR);
+            }
         });
     }
 
