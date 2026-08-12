@@ -77,4 +77,25 @@ describe('MercadoPagoWebhookController', () => {
       expect(activateFromPayment).not.toHaveBeenCalled();
     });
   });
+
+  describe('missing MP_WEBHOOK_SECRET (CS-124)', () => {
+    it('rejects webhooks in production (fail-closed)', async () => {
+      configGet.mockImplementation((key: string) => (key === 'NODE_ENV' ? 'production' : undefined));
+      controller = buildController();
+
+      const result = await controller.handle({ type: 'payment', data: { id: 12345 } });
+
+      expect(activateFromPayment).not.toHaveBeenCalled();
+      expect(result).toEqual({ received: true });
+    });
+
+    it('still accepts webhooks outside production (dev/test)', async () => {
+      configGet.mockImplementation((key: string) => (key === 'NODE_ENV' ? 'test' : undefined));
+      controller = buildController();
+
+      await controller.handle({ type: 'payment', data: { id: 12345 } });
+
+      expect(activateFromPayment).toHaveBeenCalledWith('12345');
+    });
+  });
 });

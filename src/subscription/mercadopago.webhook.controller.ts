@@ -46,13 +46,17 @@ export class MercadoPagoWebhookController {
   }
 
   /**
-   * Sem MP_WEBHOOK_SECRET a validação fica desativada (boot sem segredo, igual
-   * ao MP_ACCESS_TOKEN lazy) — o segredo entra via env no deploy. Com o segredo
-   * configurado, só passa quem traz a assinatura HMAC correta.
+   * Sem MP_WEBHOOK_SECRET, em produção o webhook falha fechado (rejeita tudo) —
+   * CS-124. Em dev/test segue liberado pra não travar ambiente local sem o segredo
+   * configurado. Com o segredo presente, só passa quem traz a assinatura HMAC correta.
    */
   private isAuthentic(paymentId: string, signature?: string, requestId?: string): boolean {
     const secret = this.config.get<string>('MP_WEBHOOK_SECRET');
     if (!secret) {
+      if (this.config.get<string>('NODE_ENV') === 'production') {
+        this.logger.error('MP_WEBHOOK_SECRET não configurada em produção — rejeitando webhook');
+        return false;
+      }
       this.logger.warn('MP_WEBHOOK_SECRET não configurada — validação de assinatura do webhook desativada');
       return true;
     }
