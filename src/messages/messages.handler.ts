@@ -86,6 +86,26 @@ export class MessagesHandler {
       return;
     }
 
+    if (user.onboarding_step === UserPendingState.WaitingHeightUpdate) {
+      await this.users.handleHeightUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingAgeUpdate) {
+      await this.users.handleAgeUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingGenderUpdate) {
+      await this.users.handleGenderUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingActivityUpdate) {
+      await this.users.handleActivityUpdate(phone, realText, fromPhone);
+      return;
+    }
+
     if (user.onboarding_step !== null) {
       const result = await this.onboarding.handleStep(user.onboarding_step, phone, realText, fromPhone);
       if (result === 'handled') return;
