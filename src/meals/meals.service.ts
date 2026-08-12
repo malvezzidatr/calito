@@ -40,6 +40,7 @@ import { detectMacro } from './utils/macro.detect';
 import { inferMealTypeByHour } from './utils/meal-type.infer';
 import { buildDataExport } from './utils/export.format';
 import { EXPORT_DATA_INTRO, EXPORT_DATA_TECH_ERROR } from '../messages/messages/general.messages';
+import { redactText } from '../common/utils/log-redactor';
 
 @Injectable()
 export class MealsService {
@@ -392,7 +393,7 @@ export class MealsService {
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
-                this.logger.warn(`[local] all items failed on edit for meal=${target.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                this.logger.warn(`[local] all items failed on edit for meal=${target.id} foods=${redactText(JSON.stringify(parsed.foods.map((f) => f.food)))}`);
                 await this.whatsappService.sendText(jid, MEAL_EDIT_CALC_FAILED);
                 return;
             }
@@ -545,7 +546,7 @@ export class MealsService {
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
-                this.logger.warn(`[local] all items failed for user=${user.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                this.logger.warn(`[local] all items failed for user=${user.id} foods=${redactText(JSON.stringify(parsed.foods.map((f) => f.food)))}`);
                 await this.whatsappService.sendText(jid, MEAL_CALC_FAILED);
                 return;
             }
@@ -622,7 +623,7 @@ export class MealsService {
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
-                this.logger.warn(`[local] all items failed on edit for meal=${lastMeal.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                this.logger.warn(`[local] all items failed on edit for meal=${lastMeal.id} foods=${redactText(JSON.stringify(parsed.foods.map((f) => f.food)))}`);
                 await this.whatsappService.sendText(jid, MEAL_EDIT_CALC_FAILED);
                 return;
             }
