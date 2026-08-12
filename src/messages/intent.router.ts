@@ -7,6 +7,7 @@ import { SubscriptionService } from '../subscription/subscription.service';
 import { HELP_MESSAGE, UNKNOWN_VARIANTS } from './messages/general.messages';
 import { pickGreeting } from './utils/greeting.picker';
 import { pickRandom } from '../common/utils/pick-random';
+import { redactPhone } from '../common/utils/log-redactor';
 
 type IntentHandler = (_phone: string, _text: string, jid: string) => Promise<void>;
 
