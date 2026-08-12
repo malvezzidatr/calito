@@ -23,6 +23,7 @@ import { parseYesNo } from '../common/utils/yes-no.parser';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { CURRENT_LGPD_CONSENT_VERSION } from './utils/lgpd.config';
 import { User } from '@prisma/client';
+import { redactPhone } from '../common/utils/log-redactor';
 
 @Injectable()
 export class OnboardingService {
@@ -88,7 +89,7 @@ export class OnboardingService {
             try {
                 await this.users.deleteByPhone(phone);
             } catch (err) {
-                this.logger.warn(`Falha ao apagar registro pré-consentimento de ${phone}: ${(err as Error).message}`);
+                this.logger.warn(`Falha ao apagar registro pré-consentimento de ${redactPhone(phone)}: ${(err as Error).message}`);
             }
             await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
             return;
@@ -128,7 +129,7 @@ export class OnboardingService {
             try {
                 await this.users.deleteByPhone(phone);
             } catch (err) {
-                this.logger.warn(`Falha ao apagar registro pré-consentimento de ${phone}: ${(err as Error).message}`);
+                this.logger.warn(`Falha ao apagar registro pré-consentimento de ${redactPhone(phone)}: ${(err as Error).message}`);
             }
             await this.whatsapp.sendText(jid, CONSENT_FAREWELL);
             return;
@@ -234,7 +235,7 @@ export class OnboardingService {
         if (choice === 'yes') {
             const user = await this.users.findByPhone(phone);
             if (!user || user.calorie_goal == null || user.protein_goal == null || user.carbs_goal == null || user.fat_goal == null) {
-                this.logger.error(`Onboarding por nutri incompleto pra ${phone}`);
+                this.logger.error(`Onboarding por nutri incompleto pra ${redactPhone(phone)}`);
                 return;
             }
             await this.users.update(phone, { onboarding_step: null });
@@ -351,7 +352,7 @@ export class OnboardingService {
             try {
                 await this.users.deleteByPhone(phone);
             } catch (err) {
-                this.logger.warn(`Falha ao apagar registro de menor de idade ${phone}: ${(err as Error).message}`);
+                this.logger.warn(`Falha ao apagar registro de menor de idade ${redactPhone(phone)}: ${(err as Error).message}`);
             }
             await this.whatsapp.sendText(jid, AGE_UNDERAGE_FAREWELL);
             return;
@@ -384,7 +385,7 @@ export class OnboardingService {
         if (!user) return;
 
         if (!user.gender || !user.weight || !user.height || !user.age || !user.goal) {
-            this.logger.error(`Onboarding incompleto pra ${phone}`);
+            this.logger.error(`Onboarding incompleto pra ${redactPhone(phone)}`);
             return;
         }
 
