@@ -6,6 +6,7 @@ import { UsersRepository } from '../users/users.repository';
 import { Intent } from '../ai/intents';
 import { PaymentService } from './payment.service';
 import { isSubscriptionActive, intentRequiresSubscription } from './utils/subscription.access';
+import { redactPhone } from '../common/utils/log-redactor';
 import {
   formatPaywallMessage,
   formatCheckoutMessage,
@@ -80,7 +81,7 @@ export class SubscriptionService {
         externalReference: phone,
       });
     } catch (err) {
-      this.logger.error(`Falha ao gerar cobrança Pix de ${phone}: ${(err as Error).message}`);
+      this.logger.error(`Falha ao gerar cobrança Pix de ${redactPhone(phone)}: ${(err as Error).message}`);
       await this.whatsapp.sendText(jid, CHECKOUT_ERROR);
       return;
     }
@@ -136,13 +137,13 @@ export class SubscriptionService {
 
     const user = await this.usersRepository.findByPhone(phone);
     if (!user) {
-      this.logger.warn(`Pagamento ${paymentId} aprovado para phone desconhecido ${phone}`);
+      this.logger.warn(`Pagamento ${paymentId} aprovado para phone desconhecido ${redactPhone(phone)}`);
       return;
     }
 
     // idempotência: webhook pode chegar duplicado para o mesmo pagamento
     if (user.subscription_id === paymentId && this.isActive(user)) {
-      this.logger.log(`Pagamento ${paymentId} já processado para ${phone}`);
+      this.logger.log(`Pagamento ${paymentId} já processado para ${redactPhone(phone)}`);
       return;
     }
 
