@@ -6,6 +6,8 @@
 
 import { Goal } from '@prisma/client';
 
+export const RATE_LIMITED = 'Calma aí, muita mensagem de uma vez 😅 Espera um pouquinho e manda de novo.';
+
 export const MEDIA_NOT_SUPPORTED = [
   'Ainda não consigo ler foto, áudio ou figurinha 🙈',
   '',

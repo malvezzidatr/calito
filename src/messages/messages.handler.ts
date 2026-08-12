@@ -7,8 +7,9 @@ import { UserPendingState } from '../users/utils/user-states';
 import { IntentClassifier } from '../ai/intent.classifier';
 import { IntentRouter } from './intent.router';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { MEDIA_NOT_SUPPORTED } from './messages/general.messages';
+import { MEDIA_NOT_SUPPORTED, RATE_LIMITED } from './messages/general.messages';
 import { UserMessageLock } from './user-message.lock';
+import { MessageRateLimiter } from './message-rate-limiter';
 import { redactPhone, redactText } from '../common/utils/log-redactor';
 
 @Injectable()
@@ -22,6 +23,7 @@ export class MessagesHandler {
     private readonly subscription: SubscriptionService,
     private readonly whatsapp: WhatsappService,
     private readonly lock: UserMessageLock,
+    private readonly rateLimiter: MessageRateLimiter,
   ) {}
 
   @OnEvent('whatsapp.message')
@@ -33,6 +35,13 @@ export class MessagesHandler {
     // vem em remoteJidAlt como <phone>@s.whatsapp.net.
     const fromPhone = msg.key.remoteJidAlt ?? from;
     const phone = fromPhone.split('@')[0];
+
+    // CS-125: limita rajadas por telefone antes de gastar cota de IA.
+    if (!this.rateLimiter.allow(phone)) {
+      this.logger.warn(`Rate limit atingido pra ${redactPhone(from)}`);
+      await this.whatsapp.sendText(fromPhone, RATE_LIMITED);
+      return;
+    }
 
     await this.lock.run(phone, () => this.process(msg, phone, fromPhone));
   }
