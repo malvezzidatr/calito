@@ -7,11 +7,13 @@ import { UserPendingState } from '../users/utils/user-states';
 import { IntentClassifier } from '../ai/intent.classifier';
 import { IntentRouter } from './intent.router';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { MEDIA_NOT_SUPPORTED, RATE_LIMITED } from './messages/general.messages';
+import { MEDIA_NOT_SUPPORTED, MESSAGE_TOO_LONG, RATE_LIMITED } from './messages/general.messages';
 import { UserMessageLock } from './user-message.lock';
 import { MessageRateLimiter } from './message-rate-limiter';
 import { MessageIdempotency } from './message-idempotency';
 import { redactPhone, redactText } from '../common/utils/log-redactor';
+
+const MAX_TEXT_LENGTH = 1000;
 
 @Injectable()
 export class MessagesHandler {
@@ -72,6 +74,13 @@ export class MessagesHandler {
         const knownUser = await this.users.findByPhone(phone);
         if (knownUser) await this.whatsapp.sendText(fromPhone, MEDIA_NOT_SUPPORTED);
       }
+      return;
+    }
+
+    // CS-139: mensagem gigante viraria prompt gigante pra IA — corta cedo.
+    if (text.length > MAX_TEXT_LENGTH) {
+      this.logger.warn(`Mensagem de ${redactPhone(from)} rejeitada por tamanho (${text.length} chars)`);
+      await this.whatsapp.sendText(fromPhone, MESSAGE_TOO_LONG);
       return;
     }
 

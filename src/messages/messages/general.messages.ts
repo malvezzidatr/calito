@@ -8,6 +8,8 @@ import { Goal } from '@prisma/client';
 
 export const RATE_LIMITED = 'Calma aí, muita mensagem de uma vez 😅 Espera um pouquinho e manda de novo.';
 
+export const MESSAGE_TOO_LONG = 'Essa mensagem tá grande demais 😅 Resume em algumas frases o que você comeu que eu calculo certinho.';
+
 export const MEDIA_NOT_SUPPORTED = [
   'Ainda não consigo ler foto, áudio ou figurinha 🙈',
   '',
