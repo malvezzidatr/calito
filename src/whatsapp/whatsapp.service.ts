@@ -30,6 +30,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readyAt = 0;
   private reconnectAttempt = 0;
   private disconnectedAt = 0;
+  // CS-142: connect() é chamado recursivamente após loggedOut e via
+  // setTimeout no backoff — sem essa flag, duas chamadas concorrentes
+  // podiam sobrepor sockets/estado de auth.
+  private connecting = false;
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
@@ -46,6 +50,12 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connect() {
+    if (this.connecting) {
+      this.logger.warn('connect() chamado enquanto outra conexão já estava em andamento — ignorando.');
+      return;
+    }
+    this.connecting = true;
+
     const { state, saveCreds } = await createPrismaAuthState(this.prisma);
     const { version, isLatest } = await fetchLatestBaileysVersion();
     this.logger.log(
@@ -118,6 +128,8 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         this.eventEmitter.emit('whatsapp.message', msg);
       }
     });
+
+    this.connecting = false;
   }
 
   private async notifyAdminQr(qr: string): Promise<void> {
