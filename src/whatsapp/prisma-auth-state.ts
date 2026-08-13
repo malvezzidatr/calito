@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   proto,
   initAuthCreds,
@@ -8,6 +9,8 @@ import {
 } from '@whiskeysockets/baileys';
 import type { PrismaService } from '../prisma/prisma.service';
 import { decryptJson, encryptJson, isEncryptedPayload, loadAuthEncryptionKey } from './utils/auth-crypto';
+
+const logger = new Logger('PrismaAuthState');
 
 export async function createPrismaAuthState(prisma: PrismaService): Promise<{
   state: AuthenticationState;
@@ -38,9 +41,11 @@ export async function createPrismaAuthState(prisma: PrismaService): Promise<{
     value: unknown | null,
   ): Promise<void> {
     if (value === null || value === undefined) {
+      // CS-143: erro engolido antes não distinguia "registro já não existe"
+      // de falha real (ex. conexão caindo) — agora fica visível no log.
       await prisma.whatsappAuth
         .delete({ where: { type_name: { type, name } } })
-        .catch(() => undefined);
+        .catch((err) => logger.debug(`Falha ao remover auth key (${type}/${name}): ${(err as Error).message}`));
       return;
     }
 
