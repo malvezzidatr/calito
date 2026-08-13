@@ -15,7 +15,7 @@ export class MessageRateLimiter implements OnModuleDestroy {
   private readonly hits = new Map<string, number[]>();
   // CS-141: sem isso, telefones que pararam de mandar mensagem nunca saem
   // do Map — memory leak lento proporcional a números únicos já vistos.
-  private readonly cleanupTimer = setInterval(() => this.evictStale(), CLEANUP_INTERVAL_MS);
+  private readonly cleanupTimer = setInterval(() => this.evictStale(), CLEANUP_INTERVAL_MS).unref();
 
   onModuleDestroy() {
     clearInterval(this.cleanupTimer);
