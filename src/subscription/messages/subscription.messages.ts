@@ -17,14 +17,14 @@ export function formatTrialStarted(trialEndsAt: Date, trialDays: number): string
   return [
     `🎁 Seus ${trialDays} dias grátis começaram!`,
     '',
-    `Você tem o Calito completo até ${formatDate(trialEndsAt)} — registra à vontade.`,
+    `Você tem o Ingesta completo até ${formatDate(trialEndsAt)} — registra à vontade.`,
     'Quando o teste acabar eu te aviso, aí é só assinar pra continuar. Bora! 💪',
   ].join('\n');
 }
 
 export function formatTrialEndingReminder(priceBRL: number): string {
   return [
-    '⏳ Seu teste grátis do Calito termina amanhã!',
+    '⏳ Seu teste grátis do Ingesta termina amanhã!',
     '',
     `Pra não perder o registro das suas refeições, garante a assinatura por ${formatBRL(priceBRL)}/mês.`,
     'Manda *assinar* que eu já te passo o Pix 🚀',
@@ -33,7 +33,7 @@ export function formatTrialEndingReminder(priceBRL: number): string {
 
 export function formatPaywallMessage(priceBRL: number): string {
   return [
-    '🔒 Seu teste grátis do Calito chegou ao fim 🙌',
+    '🔒 Seu teste grátis do Ingesta chegou ao fim 🙌',
     '',
     `Pra continuar registrando suas refeições, ativa a assinatura por apenas ${formatBRL(priceBRL)}/mês.`,
     'Manda *assinar* pra continuar 💪',
@@ -42,7 +42,7 @@ export function formatPaywallMessage(priceBRL: number): string {
 
 export function formatCheckoutMessage(priceBRL: number): string {
   return [
-    `💳 Assinatura do Calito: ${formatBRL(priceBRL)}/mês`,
+    `💳 Assinatura do Ingesta: ${formatBRL(priceBRL)}/mês`,
     '',
     'Paga com Pix copiando o código que vou mandar logo abaixo 👇',
     'É só colar na opção *Pix Copia e Cola* do seu banco.',
@@ -63,7 +63,7 @@ export const PIX_EXPIRED_REISSUE = 'Seu Pix anterior expirou ⏱️ Gerei um nov
 
 export function formatRenewalReminder(priceBRL: number, expiresAt: Date): string {
   return [
-    `⚠️ Sua assinatura do Calito termina amanhã (${formatDate(expiresAt)}).`,
+    `⚠️ Sua assinatura do Ingesta termina amanhã (${formatDate(expiresAt)}).`,
     '',
     `Pra não perder o acesso, renova por ${formatBRL(priceBRL)}/mês.`,
     'Manda *assinar* que eu já te passo o Pix 🚀',
@@ -72,7 +72,7 @@ export function formatRenewalReminder(priceBRL: number, expiresAt: Date): string
 
 export function formatSubscriptionExpired(priceBRL: number): string {
   return [
-    '🔒 Sua assinatura do Calito venceu.',
+    '🔒 Sua assinatura do Ingesta venceu.',
     '',
     `Pra voltar a registrar suas refeições, renova por ${formatBRL(priceBRL)}/mês.`,
     'Manda *assinar* pra reativar 💪',

@@ -76,7 +76,7 @@ export class SubscriptionService {
     try {
       charge = await this.paymentService.createPixCharge({
         amountBRL: price,
-        description: 'Assinatura mensal Calito',
+        description: 'Assinatura mensal Ingesta',
         payerEmail: `${phone}@calito.app`,
         externalReference: phone,
       });

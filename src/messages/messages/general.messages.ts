@@ -287,7 +287,7 @@ export const UNKNOWN_VARIANTS = [
 ] as const;
 
 export const HELP_MESSAGE = [
-  '👋 Eu sou o Calito, seu parceiro de nutrição. Veja o que eu já sei fazer:',
+  '👋 Eu sou o Ingesta, seu assistente de registro alimentar. Veja o que eu já sei fazer:',
   '',
   '🍽️ *Registrar refeições*',
   'Manda o que comeu, eu calculo calorias e macros:',
