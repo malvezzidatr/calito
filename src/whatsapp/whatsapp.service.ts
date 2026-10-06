@@ -14,7 +14,6 @@ import {
   type WAMessage,
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
-import * as qrcodeTerminal from 'qrcode-terminal';
 import pino from 'pino';
 import { createPrismaAuthState } from './prisma-auth-state';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,6 +29,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readyAt = 0;
   private reconnectAttempt = 0;
   private disconnectedAt = 0;
+  private pairingQr: string | null = null;
   // CS-142: connect() é chamado recursivamente após loggedOut e via
   // setTimeout no backoff — sem essa flag, duas chamadas concorrentes
   // podiam sobrepor sockets/estado de auth.
@@ -76,12 +76,13 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-          this.logger.error('WhatsApp precisa parear — escaneia o QR abaixo:');
-          qrcodeTerminal.generate(qr, { small: true });
+          this.pairingQr = qr;
+          this.logger.warn('WhatsApp precisa parear. Abra /whatsapp/qr para visualizar o QR.');
           void this.notifyAdminQr(qr);
         }
 
         if (connection === 'open') {
+          this.pairingQr = null;
           // Se houve disconnect anterior, volta readyAt para capturar mensagens offline
           const nowSec = Math.floor(Date.now() / 1000);
           this.readyAt = this.disconnectedAt > 0 ? this.disconnectedAt - 5 : nowSec - 60;
@@ -200,6 +201,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   getSocket(): WASocket {
     return this.sock;
+  }
+
+  getPairingQr(): string | null {
+    return this.pairingQr;
   }
 }
 
