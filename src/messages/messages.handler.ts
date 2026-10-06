@@ -84,11 +84,7 @@ export class MessagesHandler {
       return;
     }
 
-    // Dev-only: só processa mensagens com prefixo "calito" pra não criar
-    // User de terceiros no banco enquanto se testa no número pessoal.
-    // Remover quando o bot for pra número dedicado (Épico 9 / deploy).
-    if (!/^\s*calito\b/i.test(text)) return;
-    const realText = text.replace(/^\s*calito\b\s*/i, '');
+    const realText = text;
 
     const user = await this.users.findByPhone(phone);
 
