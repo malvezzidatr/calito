@@ -7,7 +7,7 @@ const CLEANUP_INTERVAL_MS = 10 * 60_000;
 /**
  * Limita a frequência de mensagens processadas por telefone (CS-125).
  * Sem isso, um único usuário em rajada consome cota de IA compartilhada
- * (Groq) e degrada o serviço pra todo mundo. UserMessageLock só serializa,
+ * o provedor de IA e degrada o serviço pra todo mundo. UserMessageLock só serializa,
  * não limita — este limiter roda antes dele.
  */
 @Injectable()

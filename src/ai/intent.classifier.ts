@@ -22,7 +22,7 @@ export class IntentClassifier {
         },
       );
     } catch (err) {
-      this.logger.warn(`Falha ao chamar Groq: ${(err as Error).message}`);
+      this.logger.warn(`Falha ao chamar OpenAI: ${(err as Error).message}`);
       return 'unknown';
     }
 
