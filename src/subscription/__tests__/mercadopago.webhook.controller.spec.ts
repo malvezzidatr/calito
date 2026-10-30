@@ -29,6 +29,11 @@ describe('MercadoPagoWebhookController', () => {
     expect(result).toEqual({ received: true });
   });
 
+  it('handles the full order notification payload', async () => {
+    await controller.handle({ type: 'order', action: 'order.processed', api_version: 'v1', data: { id: 'ORD123', status: 'processed', transactions: { payments: [] } } });
+    expect(activateFromPayment).toHaveBeenCalledWith('ORD123');
+  });
+
   it('ignores notifications without a payment id', async () => {
     await controller.handle({ type: 'plan', data: {} });
 
