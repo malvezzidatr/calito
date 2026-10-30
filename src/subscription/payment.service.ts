@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MercadoPagoConfig, Payment } from 'mercadopago';
+import { randomUUID } from 'crypto';
+import { MercadoPagoConfig, Order, Payment } from 'mercadopago';
 import { ConfigurationError } from '../common/errors/configuration.error';
 
 export type PixCharge = {
@@ -20,6 +21,7 @@ export type PaymentInfo = {
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
   private payment?: Payment;
+  private order?: Order;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -34,25 +36,37 @@ export class PaymentService {
     return this.payment;
   }
 
+  private orderClient(): Order {
+    if (!this.order) {
+      const accessToken = this.config.get<string>('MP_ACCESS_TOKEN');
+      if (!accessToken) throw new ConfigurationError('MP_ACCESS_TOKEN não configurada');
+      this.order = new Order(new MercadoPagoConfig({ accessToken }));
+    }
+    return this.order;
+  }
+
   async createPixCharge(input: {
     amountBRL: number;
     description: string;
     payerEmail: string;
     externalReference: string;
   }): Promise<PixCharge> {
-    const notificationUrl = this.config.get<string>('MP_WEBHOOK_URL');
-    const result = await this.client().create({
+    const amount = input.amountBRL.toFixed(2);
+    const result = await this.orderClient().create({
       body: {
-        transaction_amount: input.amountBRL,
+        type: 'online',
+        processing_mode: 'automatic',
+        total_amount: amount,
         description: input.description,
-        payment_method_id: 'pix',
         payer: { email: input.payerEmail },
         external_reference: input.externalReference,
-        ...(notificationUrl ? { notification_url: notificationUrl } : {}),
+        transactions: { payments: [{ amount, payment_method: { id: 'pix', type: 'bank_transfer' } }] },
       },
+      requestOptions: { idempotencyKey: randomUUID() },
     });
 
-    const transaction = result.point_of_interaction?.transaction_data;
+    const transaction = result.transactions?.payments?.[0]?.payment_method;
+    if (!result.id || !transaction?.qr_code) throw new Error('Order Pix sem ID ou código de pagamento');
     return {
       paymentId: String(result.id),
       qrCode: transaction?.qr_code ?? '',
@@ -61,6 +75,18 @@ export class PaymentService {
   }
 
   async getPayment(paymentId: string): Promise<PaymentInfo> {
+    if (paymentId.startsWith('ORD')) {
+      const result = await this.orderClient().get({ id: paymentId });
+      const transaction = result.transactions?.payments?.[0];
+      const approved = result.status === 'processed' && transaction?.status === 'processed';
+      const pending = result.status === 'action_required' && transaction?.status_detail === 'waiting_transfer';
+      return {
+        id: result.id ?? paymentId,
+        status: approved ? 'approved' : pending ? 'pending' : result.status ?? 'unknown',
+        externalReference: result.external_reference ?? null,
+        qrCode: transaction?.payment_method?.qr_code ?? '',
+      };
+    }
     const result = await this.client().get({ id: paymentId });
     return {
       id: String(result.id),
