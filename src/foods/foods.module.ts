@@ -8,6 +8,6 @@ import { AiModule } from '../ai/ai.module';
 @Module({
   imports: [PrismaModule, AiModule],
   providers: [FoodsService, EstimatedFoodsRepository, FoodEstimator],
-  exports:   [FoodsService, FoodEstimator],
+  exports:   [FoodsService, FoodEstimator, EstimatedFoodsRepository],
 })
 export class FoodsModule {}

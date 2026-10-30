@@ -38,6 +38,9 @@ import { startOfDaysAgo, startOfNextDay } from './utils/day-bounds';
 import { buildWeeklySummary } from './utils/weekly.summary';
 import { detectMacro } from './utils/macro.detect';
 import { inferMealTypeByHour } from './utils/meal-type.infer';
+import { buildDataExport } from './utils/export.format';
+import { EXPORT_DATA_INTRO, EXPORT_DATA_TECH_ERROR } from '../messages/messages/general.messages';
+import { redactText } from '../common/utils/log-redactor';
 
 @Injectable()
 export class MealsService {
@@ -261,7 +264,7 @@ export class MealsService {
 
     private async performDelete(meal: { id: string; meal_type: MealType; description: string; calories: number }, user_id: string, jid: string, dateLabel: string = 'hoje') {
         try {
-            await this.mealsRepository.deleteById(meal.id);
+            await this.mealsRepository.deleteById(meal.id, user_id);
         } catch (err) {
             this.logger.error(`Falha ao apagar refeição ${meal.id} do user ${user_id}: ${(err as Error).message}`);
             await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_DELETE);
@@ -292,7 +295,7 @@ export class MealsService {
             }
 
             try {
-                await this.mealsRepository.deleteById(lastMeal.id);
+                await this.mealsRepository.deleteById(lastMeal.id, user.id);
             } catch (err) {
                 this.logger.error(`Falha ao apagar refeição ${lastMeal.id} do user ${user.id}: ${(err as Error).message}`);
                 await this.whatsappService.sendText(jid, MEAL_TECH_ERROR_DELETE);
@@ -300,6 +303,21 @@ export class MealsService {
             }
 
             await this.whatsappService.sendText(jid, formatDeleteConfirmation(lastMeal.meal_type, lastMeal.description, lastMeal.calories));
+        });
+    }
+
+    /** Direito de acesso e portabilidade (Art. 18 II e V LGPD): cópia estruturada de perfil + refeições. */
+    async exportData(phone: string, jid: string) {
+        await this.withUser(phone, async (user) => {
+            try {
+                const meals = await this.mealsRepository.findAllByUser(user.id);
+                const exportJson = buildDataExport(user, meals);
+                await this.whatsappService.sendText(jid, EXPORT_DATA_INTRO);
+                await this.whatsappService.sendText(jid, '```' + exportJson + '```');
+            } catch (err) {
+                this.logger.error(`Falha ao exportar dados do user ${user.id}: ${(err as Error).message}`);
+                await this.whatsappService.sendText(jid, EXPORT_DATA_TECH_ERROR);
+            }
         });
     }
 
@@ -339,7 +357,7 @@ export class MealsService {
             const mealType = extraction.meal_type ?? target.meal_type;
 
             try {
-                await this.mealsRepository.updateById(target.id, {
+                await this.mealsRepository.updateById(target.id, user.id, {
                     meal_type: mealType,
                     description: extraction.description,
                     calories: extraction.calories,
@@ -375,7 +393,7 @@ export class MealsService {
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
-                this.logger.warn(`[local] all items failed on edit for meal=${target.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                this.logger.warn(`[local] all items failed on edit for meal=${target.id} foods=${redactText(JSON.stringify(parsed.foods.map((f) => f.food)))}`);
                 await this.whatsappService.sendText(jid, MEAL_EDIT_CALC_FAILED);
                 return;
             }
@@ -392,7 +410,7 @@ export class MealsService {
             };
 
             try {
-                await this.mealsRepository.updateById(target.id, {
+                await this.mealsRepository.updateById(target.id, user.id, {
                     meal_type: mealType,
                     description,
                     calories: extraction.calories,
@@ -486,7 +504,7 @@ export class MealsService {
             const mealType = extraction.meal_type ?? lastMeal.meal_type;
 
             try {
-                await this.mealsRepository.updateById(lastMeal.id, {
+                await this.mealsRepository.updateById(lastMeal.id, user.id, {
                     meal_type: mealType,
                     description: extraction.description,
                     calories: extraction.calories,
@@ -528,7 +546,7 @@ export class MealsService {
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
-                this.logger.warn(`[local] all items failed for user=${user.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                this.logger.warn(`[local] all items failed for user=${user.id} foods=${redactText(JSON.stringify(parsed.foods.map((f) => f.food)))}`);
                 await this.whatsappService.sendText(jid, MEAL_CALC_FAILED);
                 return;
             }
@@ -605,7 +623,7 @@ export class MealsService {
             const calc = await this.foodsService.calculateWithFallback(parsed.foods);
 
             if (calc.matched.length === 0 && calc.estimated.length === 0) {
-                this.logger.warn(`[local] all items failed on edit for meal=${lastMeal.id} foods=${JSON.stringify(parsed.foods.map((f) => f.food))}`);
+                this.logger.warn(`[local] all items failed on edit for meal=${lastMeal.id} foods=${redactText(JSON.stringify(parsed.foods.map((f) => f.food)))}`);
                 await this.whatsappService.sendText(jid, MEAL_EDIT_CALC_FAILED);
                 return;
             }
@@ -622,7 +640,7 @@ export class MealsService {
             };
 
             try {
-                await this.mealsRepository.updateById(lastMeal.id, {
+                await this.mealsRepository.updateById(lastMeal.id, user.id, {
                     meal_type: mealType,
                     description,
                     calories: extraction.calories,

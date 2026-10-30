@@ -1,5 +1,6 @@
 export const OnboardingStep = {
     WaitingConsent:                  'waiting_consent',
+    WaitingReconsent:                'waiting_reconsent',
     WaitingNutritionistChoice:       'waiting_nutritionist_choice',
     WaitingNutritionistGoal:         'waiting_nutritionist_goal',
     WaitingNutritionistGoals:        'waiting_nutritionist_goals',
@@ -15,3 +16,6 @@ export const OnboardingStep = {
 } as const;
 
 export type OnboardingStep = typeof OnboardingStep[keyof typeof OnboardingStep];
+
+/** Sem verificação de consentimento parental viável por WhatsApp (Art. 14 LGPD). */
+export const MINIMUM_AGE = 18;

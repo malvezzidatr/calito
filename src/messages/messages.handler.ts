@@ -7,8 +7,13 @@ import { UserPendingState } from '../users/utils/user-states';
 import { IntentClassifier } from '../ai/intent.classifier';
 import { IntentRouter } from './intent.router';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { MEDIA_NOT_SUPPORTED } from './messages/general.messages';
+import { MEDIA_NOT_SUPPORTED, MESSAGE_TOO_LONG, RATE_LIMITED } from './messages/general.messages';
 import { UserMessageLock } from './user-message.lock';
+import { MessageRateLimiter } from './message-rate-limiter';
+import { MessageIdempotency } from './message-idempotency';
+import { redactPhone, redactText } from '../common/utils/log-redactor';
+
+const MAX_TEXT_LENGTH = 1000;
 
 @Injectable()
 export class MessagesHandler {
@@ -21,6 +26,8 @@ export class MessagesHandler {
     private readonly subscription: SubscriptionService,
     private readonly whatsapp: WhatsappService,
     private readonly lock: UserMessageLock,
+    private readonly rateLimiter: MessageRateLimiter,
+    private readonly idempotency: MessageIdempotency,
   ) {}
 
   @OnEvent('whatsapp.message')
@@ -28,10 +35,28 @@ export class MessagesHandler {
     const from = msg.key.remoteJid;
     if (!from || from === 'status@broadcast' || from.endsWith('@g.us')) return;
 
+    // CS-138: a janela de reconexão do WhatsappService pode reentregar uma
+    // mensagem já processada — sem isso, uma refeição pode duplicar.
+    const messageId = msg.key.id;
+    if (messageId) {
+      if (this.idempotency.wasSeen(messageId)) {
+        this.logger.warn(`Mensagem duplicada ignorada (id=${messageId})`);
+        return;
+      }
+      this.idempotency.markSeen(messageId);
+    }
+
     // Quando o WhatsApp usa LID (remoteJid = <id>@lid), o telefone real
     // vem em remoteJidAlt como <phone>@s.whatsapp.net.
     const fromPhone = msg.key.remoteJidAlt ?? from;
     const phone = fromPhone.split('@')[0];
+
+    // CS-125: limita rajadas por telefone antes de gastar cota de IA.
+    if (!this.rateLimiter.allow(phone)) {
+      this.logger.warn(`Rate limit atingido pra ${redactPhone(from)}`);
+      await this.whatsapp.sendText(fromPhone, RATE_LIMITED);
+      return;
+    }
 
     await this.lock.run(phone, () => this.process(msg, phone, fromPhone));
   }
@@ -40,7 +65,7 @@ export class MessagesHandler {
     const from = msg.key.remoteJid!;
     const text = this.extractText(msg);
 
-    this.logger.log(`Msg de ${from}: ${text ?? '[não-texto]'}`);
+    this.logger.log(`Msg de ${redactPhone(from)}: ${text ? redactText(text) : '[não-texto]'}`);
 
     // Sem texto utilizável: se for mídia (foto/áudio/figurinha) de um usuário já
     // cadastrado, responde que ainda não lê esse formato em vez de ignorar.
@@ -52,16 +77,24 @@ export class MessagesHandler {
       return;
     }
 
-    // Dev-only: só processa mensagens com prefixo "calito" pra não criar
-    // User de terceiros no banco enquanto se testa no número pessoal.
-    // Remover quando o bot for pra número dedicado (Épico 9 / deploy).
-    if (!/^\s*calito\b/i.test(text)) return;
-    const realText = text.replace(/^\s*calito\b\s*/i, '');
+    // CS-139: mensagem gigante viraria prompt gigante pra IA — corta cedo.
+    if (text.length > MAX_TEXT_LENGTH) {
+      this.logger.warn(`Mensagem de ${redactPhone(from)} rejeitada por tamanho (${text.length} chars)`);
+      await this.whatsapp.sendText(fromPhone, MESSAGE_TOO_LONG);
+      return;
+    }
+
+    const realText = text;
 
     const user = await this.users.findByPhone(phone);
 
     if (!user) {
       await this.onboarding.startNewUser(phone, fromPhone);
+      return;
+    }
+
+    if (this.onboarding.needsReconsent(user)) {
+      await this.onboarding.requestReconsent(phone, fromPhone);
       return;
     }
 
@@ -77,6 +110,26 @@ export class MessagesHandler {
 
     if (user.onboarding_step === UserPendingState.WaitingWeightUpdate) {
       await this.users.handleWeightUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingHeightUpdate) {
+      await this.users.handleHeightUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingAgeUpdate) {
+      await this.users.handleAgeUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingGenderUpdate) {
+      await this.users.handleGenderUpdate(phone, realText, fromPhone);
+      return;
+    }
+
+    if (user.onboarding_step === UserPendingState.WaitingActivityUpdate) {
+      await this.users.handleActivityUpdate(phone, realText, fromPhone);
       return;
     }
 

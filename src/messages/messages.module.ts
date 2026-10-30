@@ -8,9 +8,11 @@ import { UsersModule } from 'src/users/users.module';
 import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { IntentRouter } from './intent.router';
 import { UserMessageLock } from './user-message.lock';
+import { MessageRateLimiter } from './message-rate-limiter';
+import { MessageIdempotency } from './message-idempotency';
 
 @Module({
   imports: [OnboardingModule, AiModule, WhatsappModule, MealsModule, UsersModule, SubscriptionModule],
-  providers: [MessagesHandler, IntentRouter, UserMessageLock],
+  providers: [MessagesHandler, IntentRouter, UserMessageLock, MessageRateLimiter, MessageIdempotency],
 })
 export class MessagesModule {}

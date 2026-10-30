@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './prompts/ai.prompts';
 import { ConfigurationError } from '../common/errors/configuration.error';
 
@@ -18,25 +18,26 @@ const RETRY_BASE_MS = 2000;
 @Injectable()
 export class AiService implements OnModuleInit {
   private readonly logger = new Logger(AiService.name);
-  private client!: Groq;
+  private client!: OpenAI;
   private model!: string;
   private defaultTemperature!: number;
 
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
-    const apiKey = this.config.get<string>('GROQ_API_KEY');
-    if (!apiKey) throw new ConfigurationError('GROQ_API_KEY não configurada');
+    const apiKey = this.config.get<string>('OPENAI_API_KEY');
+    if (!apiKey) throw new ConfigurationError('OPENAI_API_KEY não configurada');
 
-    this.client = new Groq({ apiKey });
-    this.model = this.config.get<string>('GROQ_MODEL') ?? 'llama-3.3-70b-versatile';
-    this.defaultTemperature = Number(this.config.get('GROQ_TEMPERATURE') ?? 0.2);
+    this.client = new OpenAI({ apiKey });
+    this.model = this.config.get<string>('OPENAI_MODEL') ?? 'gpt-6-luna';
+    this.defaultTemperature = Number(this.config.get('OPENAI_TEMPERATURE') ?? 0.2);
   }
 
   async chat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
     const params = {
       model: opts.model ?? this.model,
       temperature: opts.temperature ?? this.defaultTemperature,
+      reasoning_effort: 'none' as const,
       ...(opts.responseFormat === 'json' && {
         response_format: { type: 'json_object' as const },
       }),
@@ -49,7 +50,7 @@ export class AiService implements OnModuleInit {
     const completion = await this.withRetry(() => this.client.chat.completions.create(params));
 
     const content = completion.choices[0]?.message?.content;
-    if (!content) throw new Error('Resposta vazia do Groq');
+    if (!content) throw new Error('Resposta vazia da OpenAI');
 
     const usage = completion.usage;
     this.logger.debug(
@@ -67,7 +68,7 @@ export class AiService implements OnModuleInit {
         const isRateLimit = (err as { status?: number }).status === 429;
         if (isRateLimit && attempt < MAX_RETRIES) {
           const delayMs = Math.pow(2, attempt) * RETRY_BASE_MS;
-          this.logger.warn(`Rate limit Groq — retry ${attempt + 1}/${MAX_RETRIES} em ${delayMs}ms`);
+          this.logger.warn(`Rate limit OpenAI — retry ${attempt + 1}/${MAX_RETRIES} em ${delayMs}ms`);
           await this.sleep(delayMs);
           continue;
         }

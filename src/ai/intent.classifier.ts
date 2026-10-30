@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { INTENT_CLASSIFIER_PROMPT } from './prompts/intent.prompt';
 import { Intent, isIntent } from './intents';
+import { redactText } from '../common/utils/log-redactor';
 
 @Injectable()
 export class IntentClassifier {
@@ -21,17 +22,17 @@ export class IntentClassifier {
         },
       );
     } catch (err) {
-      this.logger.warn(`Falha ao chamar Groq: ${(err as Error).message}`);
+      this.logger.warn(`Falha ao chamar OpenAI: ${(err as Error).message}`);
       return 'unknown';
     }
 
     try {
       const parsed = JSON.parse(reply) as { intent?: unknown };
       if (isIntent(parsed.intent)) return parsed.intent;
-      this.logger.warn(`Intent inválido: ${reply} (mensagem: "${text}")`);
+      this.logger.warn(`Intent inválido: ${reply} (mensagem: ${redactText(text)})`);
       return 'unknown';
     } catch {
-      this.logger.warn(`JSON inválido: ${reply} (mensagem: "${text}")`);
+      this.logger.warn(`JSON inválido: ${reply} (mensagem: ${redactText(text)})`);
       return 'unknown';
     }
   }

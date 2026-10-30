@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AiService } from '../ai.service';
 import { IntentClassifier } from '../intent.classifier';
 
-const HAS_KEY = !!process.env.GROQ_API_KEY;
+const HAS_KEY = !!process.env.OPENAI_API_KEY;
 const describeMaybe = HAS_KEY ? describe : describe.skip;
 
 describeMaybe('IntentClassifier (integration)', () => {

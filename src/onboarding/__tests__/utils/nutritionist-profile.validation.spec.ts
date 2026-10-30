@@ -37,7 +37,7 @@ describe('validateNutritionistProfile', () => {
     });
 
     it('accepts values at range boundaries', () => {
-      expect(() => validateNutritionistProfile({ weight: 20, height: 100, age: 13, gender: 'MALE' })).not.toThrow();
+      expect(() => validateNutritionistProfile({ weight: 20, height: 100, age: 18, gender: 'MALE' })).not.toThrow();
       expect(() => validateNutritionistProfile({ weight: 350, height: 250, age: 90, gender: 'FEMALE' })).not.toThrow();
     });
   });

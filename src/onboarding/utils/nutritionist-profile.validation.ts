@@ -4,7 +4,9 @@ import { InvalidNutritionistProfileError } from '../exceptions/onboarding.errors
 const RANGES = {
   weight: { min: 20,  max: 350 },
   height: { min: 100, max: 250 },
-  age:    { min: 13,  max: 90  },
+  // 18: sem consentimento parental verificável por WhatsApp (Art. 14 LGPD), o
+  // Calito não atende menores — mesmo prazo do fluxo de onboarding sem nutri.
+  age:    { min: 18,  max: 90  },
 } as const;
 
 const GENDERS = ['MALE', 'FEMALE'] as const;

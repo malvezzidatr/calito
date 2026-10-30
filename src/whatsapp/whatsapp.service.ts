@@ -14,7 +14,6 @@ import {
   type WAMessage,
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
-import * as qrcodeTerminal from 'qrcode-terminal';
 import pino from 'pino';
 import { createPrismaAuthState } from './prisma-auth-state';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,6 +29,15 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readyAt = 0;
   private reconnectAttempt = 0;
   private disconnectedAt = 0;
+  private pairingQr: string | null = null;
+  // CS-142: connect() é chamado recursivamente após loggedOut e via
+  // setTimeout no backoff — sem essa flag, duas chamadas concorrentes
+  // podiam sobrepor sockets/estado de auth.
+  private connecting = false;
+  private shuttingDown = false;
+  private reconnectTimer?: ReturnType<typeof setTimeout>;
+  private saveCreds?: () => Promise<void>;
+  private pendingCredsSave: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
@@ -42,77 +50,146 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
+    this.shuttingDown = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = undefined;
+    }
+
+    try {
+      await this.pendingCredsSave;
+      await this.saveCreds?.();
+    } catch (err) {
+      this.logger.error(
+        `Falha ao persistir credenciais antes do encerramento: ${(err as Error).message}`,
+      );
+    }
+
     this.sock?.end(undefined);
   }
 
   private async connect() {
-    const { state, saveCreds } = await createPrismaAuthState(this.prisma);
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    this.logger.log(
-      `Usando WA v${version.join('.')} (latest=${isLatest})`,
-    );
+    if (this.shuttingDown) return;
 
-    this.sock = makeWASocket({
-      version,
-      auth: state,
-      logger: pino({ level: 'silent' }),
-    });
+    if (this.connecting) {
+      this.logger.warn(
+        'connect() chamado enquanto outra conexão já estava em andamento — ignorando.',
+      );
+      return;
+    }
+    this.connecting = true;
 
-    this.sock.ev.on('creds.update', saveCreds);
+    try {
+      const { state, saveCreds } = await createPrismaAuthState(this.prisma);
+      const { version, isLatest } = await fetchLatestBaileysVersion();
+      if (this.shuttingDown) return;
 
-    this.sock.ev.on('connection.update', async (update) => {
-      const { connection, lastDisconnect, qr } = update;
+      this.logger.log(`Usando WA v${version.join('.')} (latest=${isLatest})`);
 
-      if (qr) {
-        this.logger.error('WhatsApp precisa parear — escaneia o QR abaixo:');
-        qrcodeTerminal.generate(qr, { small: true });
-        void this.notifyAdminQr(qr);
-      }
+      this.sock = makeWASocket({
+        version,
+        auth: state,
+        logger: pino({ level: 'silent' }),
+      });
+      this.saveCreds = saveCreds;
 
-      if (connection === 'open') {
-        // Se houve disconnect anterior, volta readyAt para capturar mensagens offline
-        const nowSec = Math.floor(Date.now() / 1000);
-        this.readyAt = this.disconnectedAt > 0 ? this.disconnectedAt - 5 : nowSec - 60;
-        this.disconnectedAt = 0;
-        this.reconnectAttempt = 0;
-        this.logger.log('WhatsApp conectado');
-      }
+      this.sock.ev.on('creds.update', () => {
+        this.pendingCredsSave = this.pendingCredsSave
+          .then(saveCreds)
+          .catch((err) => {
+            this.logger.error(
+              `Falha ao persistir credenciais do WhatsApp: ${(err as Error).message}`,
+            );
+          });
+      });
 
-      if (connection === 'close') {
-        this.disconnectedAt = Math.floor(Date.now() / 1000);
-        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-        const loggedOut = statusCode === DisconnectReason.loggedOut;
+      this.sock.ev.on('connection.update', (update) => {
+        void (async () => {
+          if (this.shuttingDown) return;
+          const { connection, lastDisconnect, qr } = update;
 
-        if (loggedOut) {
-          this.logger.warn(
-            'Sessão encerrada pelo usuário. Limpando credenciais e reiniciando pareamento...',
-          );
-          this.disconnectedAt = 0;
-          this.reconnectAttempt = 0;
-          await this.clearAuthState();
-          void this.connect();
-          return;
+          if (qr) {
+            this.pairingQr = qr;
+            this.logger.warn(
+              'WhatsApp precisa parear. Abra /whatsapp/qr para visualizar o QR.',
+            );
+            void this.notifyAdminQr(qr);
+          }
+
+          if (connection === 'open') {
+            this.pairingQr = null;
+            // Se houve disconnect anterior, volta readyAt para capturar mensagens offline
+            const nowSec = Math.floor(Date.now() / 1000);
+            this.readyAt =
+              this.disconnectedAt > 0 ? this.disconnectedAt - 5 : nowSec - 60;
+            this.disconnectedAt = 0;
+            this.reconnectAttempt = 0;
+            this.logger.log('WhatsApp conectado');
+          }
+
+          if (connection === 'close') {
+            this.disconnectedAt = Math.floor(Date.now() / 1000);
+            const statusCode = (lastDisconnect?.error as Boom)?.output
+              ?.statusCode;
+            const loggedOut = statusCode === Number(DisconnectReason.loggedOut);
+
+            if (loggedOut) {
+              this.logger.warn(
+                'Sessão encerrada pelo usuário. Limpando credenciais e reiniciando pareamento...',
+              );
+              this.disconnectedAt = 0;
+              this.reconnectAttempt = 0;
+              await this.clearAuthState();
+              void this.connect();
+              return;
+            }
+
+            const delayMs = this.nextReconnectDelayMs();
+            this.logger.warn(
+              `Conexão caiu (code=${statusCode}). Reconectando em ${delayMs}ms (tentativa ${this.reconnectAttempt})...`,
+            );
+            this.scheduleReconnect(delayMs);
+          }
+        })();
+      });
+
+      this.sock.ev.on('messages.upsert', ({ messages, type }) => {
+        if (type !== 'notify') return;
+
+        for (const msg of messages) {
+          // CS-140: nunca processar mensagens enviadas pelo próprio bot —
+          // sem isso, uma resposta futura que ecoe (ex. chat consigo mesmo)
+          // pode virar loop de auto-resposta.
+          if (msg.key.fromMe) continue;
+
+          const ts = Number(msg.messageTimestamp ?? 0);
+          if (ts < this.readyAt) continue;
+
+          this.eventEmitter.emit('whatsapp.message', msg);
         }
+      });
+    } catch (err) {
+      // Falha ao subir a sessão (ex.: Postgres ainda indisponível no boot do
+      // container). Sem esse catch a exceção sobe pelo onModuleInit e derruba
+      // o app inteiro — vira crash-loop até o banco responder. Aqui só
+      // reagenda com o mesmo backoff exponencial das quedas de conexão.
+      const delayMs = this.nextReconnectDelayMs();
+      this.logger.error(
+        `Falha ao inicializar a sessão do WhatsApp: ${(err as Error).message}. Nova tentativa em ${delayMs}ms (tentativa ${this.reconnectAttempt}).`,
+      );
+      this.scheduleReconnect(delayMs);
+    } finally {
+      this.connecting = false;
+    }
+  }
 
-        const delayMs = this.nextReconnectDelayMs();
-        this.logger.warn(
-          `Conexão caiu (code=${statusCode}). Reconectando em ${delayMs}ms (tentativa ${this.reconnectAttempt})...`,
-        );
-        setTimeout(() => void this.connect(), delayMs);
-      }
-    });
-
-    this.sock.ev.on('messages.upsert', ({ messages, type }) => {
-
-      if (type !== 'notify') return;
-
-      for (const msg of messages) {
-        const ts = Number(msg.messageTimestamp ?? 0);
-        if (ts < this.readyAt) continue;
-
-        this.eventEmitter.emit('whatsapp.message', msg);
-      }
-    });
+  private scheduleReconnect(delayMs: number) {
+    if (this.shuttingDown) return;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = undefined;
+      void this.connect();
+    }, delayMs);
   }
 
   private async notifyAdminQr(qr: string): Promise<void> {
@@ -122,23 +199,34 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'whatsapp_qr_required', qr, ts: new Date().toISOString() }),
+        body: JSON.stringify({
+          event: 'whatsapp_qr_required',
+          qr,
+          ts: new Date().toISOString(),
+        }),
       });
       this.logger.log('Admin notificado sobre QR via ADMIN_WEBHOOK_URL');
     } catch (err) {
-      this.logger.warn(`Falha ao notificar admin sobre QR: ${(err as Error).message}`);
+      this.logger.warn(
+        `Falha ao notificar admin sobre QR: ${(err as Error).message}`,
+      );
     }
   }
 
   nextReconnectDelayMs(): number {
-    const delay = Math.min(Math.pow(2, this.reconnectAttempt) * RECONNECT_BASE_MS, RECONNECT_CAP_MS);
+    const delay = Math.min(
+      Math.pow(2, this.reconnectAttempt) * RECONNECT_BASE_MS,
+      RECONNECT_CAP_MS,
+    );
     this.reconnectAttempt++;
     return delay;
   }
 
   private async clearAuthState() {
     const { count } = await this.prisma.whatsappAuth.deleteMany({});
-    this.logger.log(`Credenciais do WhatsApp removidas do banco (${count} registros).`);
+    this.logger.log(
+      `Credenciais do WhatsApp removidas do banco (${count} registros).`,
+    );
   }
 
   async sendText(to: string, text: string) {
@@ -170,6 +258,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   getSocket(): WASocket {
     return this.sock;
+  }
+
+  getPairingQr(): string | null {
+    return this.pairingQr;
   }
 }
 

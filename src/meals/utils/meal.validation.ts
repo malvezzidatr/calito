@@ -4,8 +4,14 @@ import { InvalidMealExtractionError } from '../exceptions/meals.errors';
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] as const;
 type MealTypeEnum = typeof MEAL_TYPES[number];
 
-function isFiniteNonNegative(n: unknown): n is number {
-  return typeof n === 'number' && Number.isFinite(n) && n >= 0;
+// Teto plausível pra uma refeição inteira (soma de vários itens) — CS-127.
+// Sem isso, uma alucinação do LLM (ex.: calories: 1e15) passava direto e
+// era persistida em Meal, além do cache global (EstimatedFood/ParsedMessageCache).
+const MAX_MEAL_CALORIES = 20_000;
+const MAX_MEAL_MACRO_GRAMS = 2_000;
+
+function isFiniteInRange(n: unknown, min: number, max: number): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;
 }
 
 export function validateMealExtraction(rawInput: unknown): MealExtractionResult {
@@ -22,10 +28,17 @@ export function validateMealExtraction(rawInput: unknown): MealExtractionResult 
     throw new InvalidMealExtractionError('description must be a non-empty string');
   }
 
+  const max: Record<'calories' | 'protein' | 'carbs' | 'fat', number> = {
+    calories: MAX_MEAL_CALORIES,
+    protein: MAX_MEAL_MACRO_GRAMS,
+    carbs: MAX_MEAL_MACRO_GRAMS,
+    fat: MAX_MEAL_MACRO_GRAMS,
+  };
+
   for (const field of ['calories', 'protein', 'carbs', 'fat'] as const) {
-    if (!isFiniteNonNegative(raw[field])) {
+    if (!isFiniteInRange(raw[field], 0, max[field])) {
       throw new InvalidMealExtractionError(
-        `${field} must be a non-negative finite number (got ${JSON.stringify(raw[field])})`,
+        `${field} must be a finite number in [0, ${max[field]}] (got ${JSON.stringify(raw[field])})`,
       );
     }
   }

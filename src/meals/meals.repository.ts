@@ -110,15 +110,36 @@ export class MealsRepository {
     });
   }
 
-  deleteById(meal_id: string) {
-    return this.prisma.meal.delete({
-      where: { id: meal_id },
+  /** Todas as refeições do usuário, sem corte de data — usado na exportação de dados (Art. 18 V LGPD). */
+  findAllByUser(user_id: string) {
+    return this.prisma.meal.findMany({
+      where: { user_id },
+      orderBy: { created_at: 'asc' },
+      select: {
+        meal_type: true,
+        description: true,
+        calories: true,
+        protein: true,
+        carbs: true,
+        fat: true,
+        created_at: true,
+      },
     });
   }
 
-  updateById(meal_id: string, data: UpdateMealInput) {
+  // CS-129: exige user_id no where — defesa em profundidade. Hoje todo
+  // call-site já resolve meal_id a partir de queries pré-filtradas por
+  // user_id, mas assim um bug futuro que passe um id de outro usuário falha
+  // (P2025, registro não encontrado) em vez de apagar/editar silenciosamente.
+  deleteById(meal_id: string, user_id: string) {
+    return this.prisma.meal.delete({
+      where: { id: meal_id, user_id },
+    });
+  }
+
+  updateById(meal_id: string, user_id: string, data: UpdateMealInput) {
     return this.prisma.meal.update({
-      where: { id: meal_id },
+      where: { id: meal_id, user_id },
       data: {
         meal_type: data.meal_type,
         description: data.description,

@@ -60,7 +60,7 @@ describe('TrialReminderService', () => {
 
     expect(sendText).toHaveBeenCalledTimes(1);
     expect(sendText.mock.calls[0][0]).toBe('5522222@s.whatsapp.net');
-    expect(sendText.mock.calls[0][1]).toContain('teste grátis do Calito chegou ao fim');
+    expect(sendText.mock.calls[0][1]).toContain('teste grátis do Ingesta chegou ao fim');
   });
 
   it('skips a failing send and keeps notifying the rest', async () => {

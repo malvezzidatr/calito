@@ -29,4 +29,12 @@ export class ParsedMessagesRepository {
       update: {},
     });
   }
+
+  /** Purga por idade (Art. 15 LGPD) — é cache de otimização, não histórico de negócio. */
+  async deleteOlderThan(cutoff: Date): Promise<number> {
+    const result = await this.prisma.parsedMessageCache.deleteMany({
+      where: { updated_at: { lt: cutoff } },
+    });
+    return result.count;
+  }
 }

@@ -33,10 +33,12 @@ const FREE_INTENTS: ReadonlySet<Intent> = new Set<Intent>([
   'help',
   'subscribe',
   'delete_account',
+  'export_data',
   'greeting',
 ]);
 
-/** Intents que continuam liberados mesmo sem assinatura (ajuda, assinar, apagar conta, saudação). */
+/** Intents que continuam liberados mesmo sem assinatura (ajuda, assinar, apagar conta, exportar dados, saudação).
+ * Exclusão e exportação são direitos do titular (LGPD Art. 18) e não podem ficar atrás de paywall. */
 export function intentRequiresSubscription(intent: Intent): boolean {
   return !FREE_INTENTS.has(intent);
 }
