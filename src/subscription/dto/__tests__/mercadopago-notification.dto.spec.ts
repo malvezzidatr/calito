@@ -8,6 +8,16 @@ async function validatePlain(plain: unknown) {
 }
 
 describe('MercadoPagoNotificationDto (CS-128)', () => {
+  it('accepts a real Payments webhook under the global whitelist policy', async () => {
+    const instance = plainToInstance(MercadoPagoNotificationDto, {
+      action: 'payment.updated', api_version: 'v1', data: { id: '123456' },
+      date_created: '2026-10-30T19:06:40Z', id: 987654,
+      live_mode: true, type: 'payment', user_id: '12345',
+    });
+    const errors = await validate(instance, { whitelist: true, forbidNonWhitelisted: true });
+    expect(errors).toHaveLength(0);
+    expect(instance.data?.id).toBe('123456');
+  });
   it('accepts a valid payment notification with string id', async () => {
     const errors = await validatePlain({ type: 'payment', data: { id: '12345' } });
     expect(errors).toHaveLength(0);

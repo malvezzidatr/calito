@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 /**
  * Payload do webhook do Mercado Pago (CS-128). Antes o controller usava um
@@ -18,6 +18,27 @@ class MercadoPagoNotificationDataDto {
 }
 
 export class MercadoPagoNotificationDto {
+  // Campos de metadados enviados pelo Mercado Pago em notificações payment.
+  // A validação global rejeita propriedades não declaradas; esses campos não
+  // são usados para autorizar o pagamento, que é consultado na API após HMAC.
+  @Allow()
+  action?: unknown;
+
+  @Allow()
+  api_version?: unknown;
+
+  @Allow()
+  date_created?: unknown;
+
+  @Allow()
+  id?: unknown;
+
+  @Allow()
+  live_mode?: unknown;
+
+  @Allow()
+  user_id?: unknown;
+
   // O MP manda vários tipos de notificação ("payment", "plan",
   // "subscription_preapproval", etc.) — só validamos que é string; a
   // decisão de qual processar é do controller (extractPaymentId).
