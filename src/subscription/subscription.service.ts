@@ -142,7 +142,7 @@ export class SubscriptionService {
     }
 
     // idempotência: webhook pode chegar duplicado para o mesmo pagamento
-    if (user.subscription_id === paymentId && this.isActive(user)) {
+    if (user.subscription_id === paymentId && user.status === 'ACTIVE' && user.subscription_expires_at != null) {
       this.logger.log(`Pagamento ${paymentId} já processado para ${redactPhone(phone)}`);
       return;
     }

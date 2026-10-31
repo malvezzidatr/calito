@@ -164,6 +164,19 @@ describe('SubscriptionService', () => {
       expect(sendText).toHaveBeenCalledWith('5511999@s.whatsapp.net', expect.stringContaining('Pagamento confirmado'));
     });
 
+    it('activates an approved payment even while the free trial is active', async () => {
+      getPayment.mockResolvedValue({ id: 'pay-1', status: 'approved', externalReference: '5511999' });
+      findByPhone.mockResolvedValue({
+        phone: '5511999', subscription_id: 'pay-1', status: 'INACTIVE',
+        subscription_expires_at: null, trial_ends_at: new Date(Date.now() + 86400000),
+      });
+
+      await service.activateFromPayment('pay-1');
+
+      expect(update).toHaveBeenCalledWith('5511999', expect.objectContaining({ status: 'ACTIVE' }));
+      expect(sendText).toHaveBeenCalledWith('5511999@s.whatsapp.net', expect.stringContaining('Pagamento confirmado'));
+    });
+
     it('ignores a payment that is not approved', async () => {
       getPayment.mockResolvedValue({ id: 'pay-1', status: 'pending', externalReference: '5511999' });
 

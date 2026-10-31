@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { SubscriptionService } from './subscription.service';
 import { verifyMercadoPagoSignature } from './utils/mercadopago.signature';
 import { MercadoPagoNotificationDto } from './dto/mercadopago-notification.dto';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 
 @Controller('webhooks/mercadopago')
 export class MercadoPagoWebhookController {
@@ -16,11 +18,14 @@ export class MercadoPagoWebhookController {
   @Post()
   @HttpCode(200)
   async handle(
-    @Body() body: MercadoPagoNotificationDto,
+    @Body() body: unknown,
     @Headers('x-signature') signature?: string,
     @Headers('x-request-id') requestId?: string,
   ): Promise<{ received: boolean }> {
-    const paymentId = this.extractPaymentId(body);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return { received: true };
+    const notification = plainToInstance(MercadoPagoNotificationDto, body);
+    if (validateSync(notification, { whitelist: true }).length) return { received: true };
+    const paymentId = this.extractPaymentId(notification);
     if (!paymentId) {
       return { received: true };
     }
@@ -60,7 +65,7 @@ export class MercadoPagoWebhookController {
   }
 
   private extractPaymentId(body: MercadoPagoNotificationDto): string | null {
-    if (body?.type === 'payment' && body.data?.id != null) {
+    if ((body?.type === 'payment' || body?.type === 'order') && body.data?.id != null) {
       return String(body.data.id);
     }
     return null;
