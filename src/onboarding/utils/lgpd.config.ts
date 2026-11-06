@@ -11,4 +11,4 @@ export const LGPD_DPO_CONTACT = 'malvezzi.dev@gmail.com';
  * nova finalidade) — usuários com uma versão diferente da atual são levados
  * a reconsentir antes de continuar (Art. 8º §2 — ônus da prova do consentimento).
  */
-export const CURRENT_LGPD_CONSENT_VERSION = '2026-08-12';
+export const CURRENT_LGPD_CONSENT_VERSION = '2026-11-05-photo';

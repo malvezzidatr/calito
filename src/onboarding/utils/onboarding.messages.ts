@@ -7,9 +7,9 @@ export const LGPD_MESSAGE = `Olá! 👋 Sou o Ingesta, seu assistente de registr
 
 Antes de começar, preciso do seu OK sobre seus dados 🔒
 
-📋 Coleto seu telefone, dados corporais (peso, altura, idade, sexo), refeições e metas.
+📋 Coleto seu telefone, dados corporais (peso, altura, idade, sexo), refeições e metas. As fotos de refeições enviadas são processadas para identificar alimentos e não são armazenadas pelo Calito.
 ⚕️ Parte disso é *dado de saúde* (sensível). Você está autorizando, de forma específica, que eu trate esses dados pra calcular calorias, macros e acompanhar seu progresso.
-🤝 Pra funcionar, uso parceiros que processam seus dados: uma inteligência artificial que interpreta o que você comeu (em servidores fora do Brasil), o Mercado Pago (pagamento) e ferramentas de monitoramento técnico. Não vendo seus dados nem uso pra publicidade.
+🤝 Pra funcionar, uso parceiros que processam seus dados: uma inteligência artificial que interpreta o que você comeu e as fotos enviadas (em servidores fora do Brasil), o Mercado Pago (pagamento) e ferramentas de monitoramento técnico. Não vendo seus dados nem uso pra publicidade.
 🗑️ Você pode pedir pra apagar tudo a qualquer momento.
 📬 Dúvidas ou pedidos sobre seus dados? Fala com a gente: ${LGPD_DPO_CONTACT}
 ⚠️ O Ingesta NÃO substitui a orientação de um nutricionista.

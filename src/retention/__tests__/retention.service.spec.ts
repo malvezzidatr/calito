@@ -20,7 +20,7 @@ describe('RetentionService', () => {
 
     service = new RetentionService(
       { findCancelledInactiveBefore, findStaleUnconsentedBefore, deleteByPhone } as never,
-      { deleteOlderThan: deleteOlderThanParsed } as never,
+      { deleteOlderThan: deleteOlderThanParsed, deleteExpiredPhotoDrafts: jest.fn().mockResolvedValue(0) } as never,
       { deleteOlderThan: deleteOlderThanEstimated } as never,
     );
   });
