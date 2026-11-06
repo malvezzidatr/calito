@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PhotoMealService } from './photo-meal.service';
 import { MealsRepository } from './meals.repository';
 import { MealsService } from './meals.service';
 import { DailyRecapService } from './daily-recap.service';
@@ -10,7 +11,7 @@ import { FoodsModule } from '../foods/foods.module';
 
 @Module({
   imports: [AiModule, UsersModule, WhatsappModule, FoodsModule],
-  providers: [MealsRepository, MealsService, DailyRecapService, ParsedMessagesRepository],
-  exports: [MealsRepository, MealsService, ParsedMessagesRepository],
+  providers: [PhotoMealService, MealsRepository, MealsService, DailyRecapService, ParsedMessagesRepository],
+  exports: [PhotoMealService, MealsRepository, MealsService, ParsedMessagesRepository],
 })
 export class MealsModule {}
