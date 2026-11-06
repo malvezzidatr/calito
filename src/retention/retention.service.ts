@@ -35,6 +35,11 @@ export class RetentionService {
     await this.purgeStaleCaches();
   }
 
+  @Cron('0 * * * *', { name: 'photo-draft-purge', timeZone: RETENTION_TIMEZONE })
+  async purgePhotoDrafts(): Promise<void> {
+    await this.parsedMessages.deleteExpiredPhotoDrafts(new Date());
+  }
+
   private async purgeCancelledAccounts(): Promise<void> {
     const cutoff = this.daysAgo(CANCELLED_ACCOUNT_RETENTION_DAYS);
     const stale = await this.usersRepository.findCancelledInactiveBefore(cutoff);

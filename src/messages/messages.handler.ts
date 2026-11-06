@@ -1,4 +1,6 @@
+import { PhotoMealService } from '../meals/photo-meal.service';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { WhatsappService, type IncomingMessage } from '../whatsapp/whatsapp.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
@@ -28,6 +30,8 @@ export class MessagesHandler {
     private readonly lock: UserMessageLock,
     private readonly rateLimiter: MessageRateLimiter,
     private readonly idempotency: MessageIdempotency,
+    private readonly photoMeals: PhotoMealService,
+    private readonly config: ConfigService,
   ) {}
 
   @OnEvent('whatsapp.message')
@@ -64,12 +68,19 @@ export class MessagesHandler {
   private async process(msg: IncomingMessage, phone: string, fromPhone: string) {
     const from = msg.key.remoteJid!;
     const text = this.extractText(msg);
+    const image = this.unwrap(msg)?.imageMessage;
+    const photoMealsEnabled = this.config.get<string>('PHOTO_MEALS_ENABLED') !== 'false';
 
-    this.logger.log(`Msg de ${redactPhone(from)}: ${text ? redactText(text) : '[não-texto]'}`);
+    this.logger.log(`Msg de ${redactPhone(from)}: ${image ? '[imagem]' : text ? redactText(text) : '[não-texto]'}`);
+
+    if (image && !photoMealsEnabled) {
+      await this.whatsapp.sendText(fromPhone, 'O registro por foto está indisponível no momento. Descreva sua refeição em texto.');
+      return;
+    }
 
     // Sem texto utilizável: se for mídia (foto/áudio/figurinha) de um usuário já
     // cadastrado, responde que ainda não lê esse formato em vez de ignorar.
-    if (!text) {
+    if (!text && !image) {
       if (this.isMediaMessage(msg)) {
         const knownUser = await this.users.findByPhone(phone);
         if (knownUser) await this.whatsapp.sendText(fromPhone, MEDIA_NOT_SUPPORTED);
@@ -78,13 +89,13 @@ export class MessagesHandler {
     }
 
     // CS-139: mensagem gigante viraria prompt gigante pra IA — corta cedo.
-    if (text.length > MAX_TEXT_LENGTH) {
+    if (text && text.length > MAX_TEXT_LENGTH) {
       this.logger.warn(`Mensagem de ${redactPhone(from)} rejeitada por tamanho (${text.length} chars)`);
       await this.whatsapp.sendText(fromPhone, MESSAGE_TOO_LONG);
       return;
     }
 
-    const realText = text;
+    const realText = text ?? '';
 
     const user = await this.users.findByPhone(phone);
 
@@ -95,6 +106,11 @@ export class MessagesHandler {
 
     if (this.onboarding.needsReconsent(user)) {
       await this.onboarding.requestReconsent(phone, fromPhone);
+      return;
+    }
+
+    if (image && user.onboarding_step !== null) {
+      await this.whatsapp.sendText(fromPhone, 'Conclua a etapa atual antes de enviar uma foto de refeição.');
       return;
     }
 
@@ -137,6 +153,31 @@ export class MessagesHandler {
       const result = await this.onboarding.handleStep(user.onboarding_step, phone, realText, fromPhone);
       if (result === 'handled') return;
     }
+
+    if (image) {
+      if (!this.subscription.isActive(user)) {
+        await this.subscription.sendPaywall(fromPhone);
+        return;
+      }
+      await this.photoMeals.receive(user, fromPhone, msg, image, realText);
+      return;
+    }
+
+    // Comandos de acesso e privacidade continuam disponíveis durante um rascunho.
+    const command = realText.trim().toLowerCase();
+    if (/^(assinar|quero assinar)$/.test(command)) {
+      await this.router.route('subscribe', phone, realText, fromPhone);
+      return;
+    }
+    if (/^(apagar minha conta|excluir minha conta)$/.test(command)) {
+      await this.router.route('delete_account', phone, realText, fromPhone);
+      return;
+    }
+    if (/^(exportar meus dados|exportar dados)$/.test(command)) {
+      await this.router.route('export_data', phone, realText, fromPhone);
+      return;
+    }
+    if (photoMealsEnabled && await this.photoMeals.handlePending(user, fromPhone, realText, this.subscription.isActive(user))) return;
 
     const intent = await this.classifier.classify(realText);
     this.logger.log(`Intent classificada: ${intent}`);

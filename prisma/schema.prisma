@@ -59,6 +59,7 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   meals Meal[]
+  photoMealDraft PhotoMealDraft?
 }
 
 enum MealType {
@@ -69,6 +70,7 @@ enum MealType {
 }
 model Meal {
   id String @id @default(uuid())
+  photo_message_id String? @unique
   user_id String
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   meal_type MealType
@@ -116,4 +118,17 @@ model ParsedMessageCache {
   meal_type String?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+model PhotoMealDraft {
+  id String @id @default(uuid())
+  user_id String @unique
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  foods Json
+  meal_type String?
+  message_id String?
+  expires_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([expires_at])
 }

@@ -60,6 +60,26 @@ export class AiService implements OnModuleInit {
     return content;
   }
 
+  async analyzeImage(image: Buffer, mimeType: string, caption: string, systemPrompt: string): Promise<string> {
+    const completion = await this.withRetry(() => this.client.chat.completions.create({
+      model: this.config.get<string>('OPENAI_VISION_MODEL') ?? this.model,
+      temperature: 0.2,
+      reasoning_effort: 'none',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: [
+          { type: 'text', text: caption || 'Identifique a refeição nesta imagem.' },
+          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${image.toString('base64')}` } },
+        ] },
+      ],
+    }));
+    this.logger.debug(`vision tokens: prompt=${completion.usage?.prompt_tokens} completion=${completion.usage?.completion_tokens}`);
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error('Resposta vazia da análise de imagem');
+    return content;
+  }
+
   private async withRetry<T>(fn: () => Promise<T>): Promise<T> {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {

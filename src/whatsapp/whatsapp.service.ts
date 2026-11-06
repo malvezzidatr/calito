@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   makeWASocket,
+  downloadMediaMessage,
   fetchLatestBaileysVersion,
   DisconnectReason,
   type WASocket,
@@ -254,6 +255,25 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     }
 
     return this.sock.sendMessage(to, { text });
+  }
+
+  async downloadImage(msg: IncomingMessage, maxBytes = 5 * 1024 * 1024): Promise<Buffer> {
+    const stream = await downloadMediaMessage(msg, 'stream', {}, {
+      logger: pino({ level: 'silent' }),
+      reuploadRequest: this.sock.updateMediaMessage,
+    });
+    const chunks: Buffer[] = [];
+    let total = 0;
+    for await (const chunk of stream) {
+      const bytes = Buffer.from(chunk);
+      total += bytes.length;
+      if (total > maxBytes) {
+        stream.destroy();
+        throw new Error('Imagem excede o limite permitido');
+      }
+      chunks.push(bytes);
+    }
+    return Buffer.concat(chunks, total);
   }
 
   getSocket(): WASocket {
